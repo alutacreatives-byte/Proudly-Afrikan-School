@@ -1,0 +1,6 @@
+{
+  "name": "Proudly Afrikan School",
+  "description": "The unified African learning super-app combining Study, Quiz, Build, My Sets, and Planner into one seamless educational ecosystem.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
