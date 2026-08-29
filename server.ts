@@ -6,6 +6,7 @@ import { createServer as createViteServer } from 'vite';
 import { registerStudyRoutes } from './src/server/studyHandler';
 import { registerBuildRoutes } from './src/server/buildHandler';
 import { registerQuizRoutes } from './src/server/quizHandler';
+import { registerAccountRoutes } from './src/server/accountHandler';
 
 dotenv.config();
 
@@ -28,6 +29,8 @@ app.get('/api/health', (_req, res) => {
       quiz: true,
       planner: true,
       mysets: true,
+      pricing: true,
+      account: true,
     },
     hasGeminiKey: !!process.env.GEMINI_API_KEY,
   });
@@ -37,6 +40,7 @@ app.get('/api/health', (_req, res) => {
 registerStudyRoutes(app);
 registerBuildRoutes(app);
 registerQuizRoutes(app);
+registerAccountRoutes(app);
 
 // Vite middleware for development & Static hosting for production
 async function startServer() {

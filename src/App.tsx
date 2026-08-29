@@ -5,6 +5,10 @@ import QuizApp from './quiz/App';
 import BuildApp from './build/App';
 import { MySetsWorkspace } from './mysets/MySetsWorkspace';
 import { CentralPlannerView } from './planner/CentralPlannerView';
+import { PricingView } from './pricing/PricingView';
+import { AuthCreditProvider } from './context/AuthCreditContext';
+import { AuthModal } from './components/auth/AuthModal';
+import { AccountModal } from './components/auth/AccountModal';
 import { StudySet, AppView as StudyAppView } from './study/types';
 import { Quiz } from './quiz/types';
 import { SavedResource } from './build/types';
@@ -13,7 +17,7 @@ import { getRecentQuizzes } from './quiz/utils/quizShare';
 import { getSavedResources } from './build/utils/storage';
 import { StudyTutorModal } from './study/components/StudyTutorModal';
 
-export default function App() {
+function AppContent() {
   const [activeTab, setActiveTab] = useState<MainNavTab>('STUDY');
 
   // Cross-Platform Active Content State
@@ -44,7 +48,7 @@ export default function App() {
     calculateSavedCount();
   }, [activeTab]);
 
-  // Check URL parameters for direct shared links (e.g. ?quiz=... or ?tab=quiz or ?tab=build)
+  // Check URL parameters for direct shared links (e.g. ?quiz=... or ?tab=quiz or ?tab=build or ?tab=pricing)
   useEffect(() => {
     try {
       const params = new URLSearchParams(window.location.search);
@@ -52,7 +56,7 @@ export default function App() {
         setActiveTab('QUIZ');
       } else if (params.get('tab')) {
         const tab = params.get('tab')?.toUpperCase();
-        if (tab === 'STUDY' || tab === 'QUIZ' || tab === 'BUILD' || tab === 'MY SETS' || tab === 'PLANNER') {
+        if (tab === 'STUDY' || tab === 'QUIZ' || tab === 'BUILD' || tab === 'MY SETS' || tab === 'PLANNER' || tab === 'PRICING') {
           setActiveTab(tab as MainNavTab);
         }
       }
@@ -88,7 +92,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF7F0] text-[#161616]">
-      {/* Universal Top Navigation Header: STUDY · QUIZ · BUILD · MY SETS · PLANNER */}
+      {/* Universal Top Navigation Header: STUDY · QUIZ · BUILD · MY SETS · PLANNER · PRICING */}
       <MasterHeader
         activeTab={activeTab}
         onSelectTab={handleSelectTab}
@@ -144,6 +148,12 @@ export default function App() {
             onExploreSets={() => setActiveTab('STUDY')}
           />
         )}
+
+        {activeTab === 'PRICING' && (
+          <PricingView
+            onNavigateToTab={handleSelectTab}
+          />
+        )}
       </main>
 
       {/* Global AI Tutor Modal */}
@@ -155,6 +165,22 @@ export default function App() {
           activeSetTitle={selectedStudySet?.title}
         />
       )}
+
+      {/* Global Auth Modal */}
+      <AuthModal />
+
+      {/* Global Account Modal */}
+      <AccountModal
+        onNavigateToPricing={() => handleSelectTab('PRICING')}
+      />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthCreditProvider>
+      <AppContent />
+    </AuthCreditProvider>
   );
 }

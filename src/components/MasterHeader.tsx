@@ -10,10 +10,13 @@ import {
   Sparkles, 
   Flame,
   ArrowUpRight,
-  User
+  User,
+  Zap,
+  Tag
 } from 'lucide-react';
+import { useAuthCredit } from '../context/AuthCreditContext';
 
-export type MainNavTab = 'STUDY' | 'QUIZ' | 'BUILD' | 'MY SETS' | 'PLANNER';
+export type MainNavTab = 'STUDY' | 'QUIZ' | 'BUILD' | 'MY SETS' | 'PLANNER' | 'PRICING';
 
 interface MasterHeaderProps {
   activeTab: MainNavTab;
@@ -30,6 +33,7 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [logoError, setLogoError] = useState(false);
+  const { user, availableCredits, isAuthenticated, openAuthModal, openAccountModal } = useAuthCredit();
 
   const navItems: { id: MainNavTab; label: string; icon: React.ComponentType<{ className?: string }>; color: string; badge?: number }[] = [
     { id: 'STUDY', label: 'STUDY', icon: BookOpen, color: '#D92B8A' },
@@ -37,6 +41,7 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
     { id: 'BUILD', label: 'BUILD', icon: Layers, color: '#E6425E' },
     { id: 'MY SETS', label: 'MY SETS', icon: FolderOpen, color: '#7C3AED', badge: savedItemCount > 0 ? savedItemCount : undefined },
     { id: 'PLANNER', label: 'PLANNER', icon: Calendar, color: '#059669' },
+    { id: 'PRICING', label: 'PRICING', icon: Tag, color: '#2563EB' },
   ];
 
   const getTabActiveStyle = (tabId: MainNavTab) => {
@@ -51,6 +56,8 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
         return 'bg-[#161616] text-white border-[#161616] shadow-[2.5px_2.5px_0px_#7C3AED]';
       case 'PLANNER':
         return 'bg-[#161616] text-white border-[#161616] shadow-[2.5px_2.5px_0px_#059669]';
+      case 'PRICING':
+        return 'bg-[#161616] text-white border-[#161616] shadow-[2.5px_2.5px_0px_#2563EB]';
       default:
         return 'bg-[#161616] text-white border-[#161616] shadow-[2.5px_2.5px_0px_#D92B8A]';
     }
@@ -67,7 +74,7 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
           </span>
           <span className="text-stone-600 hidden md:inline">|</span>
           <span className="text-stone-300 font-medium hidden md:inline">
-            STUDY · QUIZ · BUILD · MY SETS · PLANNER
+            STUDY · QUIZ · BUILD · MY SETS · PLANNER · PRICING
           </span>
         </div>
         <div className="flex items-center gap-4 text-[10px] sm:text-[11px] font-mono font-bold text-stone-300">
@@ -112,12 +119,12 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
               </span>
             </div>
             <span className="font-mono text-[10px] sm:text-[11px] font-semibold text-stone-500 tracking-wide mt-0.5 hidden sm:inline">
-              Learn · Test · Create · Plan
+              Learn · Test · Create · Plan · Pricing
             </span>
           </div>
         </div>
 
-        {/* Desktop Main Menu: STUDY · QUIZ · BUILD · MY SETS · PLANNER */}
+        {/* Desktop Main Menu: STUDY · QUIZ · BUILD · MY SETS · PLANNER · PRICING */}
         <nav className="hidden lg:flex items-center gap-1.5 p-1 bg-white/70 border-2 border-[#161616] rounded-2xl shadow-[2px_2px_0px_#161616]">
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -126,7 +133,7 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
               <button
                 key={item.id}
                 onClick={() => onSelectTab(item.id)}
-                className={`px-3.5 py-2 rounded-xl font-display font-black text-xs tracking-wider uppercase flex items-center gap-2 transition-all cursor-pointer ${
+                className={`px-3 py-2 rounded-xl font-display font-black text-xs tracking-wider uppercase flex items-center gap-1.5 transition-all cursor-pointer ${
                   isActive
                     ? getTabActiveStyle(item.id)
                     : 'text-stone-800 hover:bg-[#FAF7F0] hover:text-[#161616]'
@@ -146,12 +153,42 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
           })}
         </nav>
 
-        {/* Right Actions */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        {/* Right Actions: Credits & Account & AI Tutor */}
+        <div className="flex items-center gap-2 sm:gap-2.5">
+          {/* AI Credits Badge / Button */}
+          <button
+            onClick={openAccountModal}
+            title="View AI Credits & Account"
+            className="tactile-btn bg-white hover:bg-stone-50 text-[#161616] border-2 border-[#161616] px-2.5 sm:px-3 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer shadow-[2px_2px_0px_#161616]"
+          >
+            <Zap className="w-3.5 h-3.5 text-[#D92B8A]" />
+            <span className="hidden sm:inline">{availableCredits.toLocaleString()}</span>
+            <span className="text-[10px] text-stone-500">cr</span>
+          </button>
+
+          {/* Account / User Button */}
+          {isAuthenticated && user ? (
+            <button
+              onClick={openAccountModal}
+              className="tactile-btn bg-[#161616] hover:bg-stone-800 text-white border-2 border-[#161616] px-2.5 sm:px-3.5 py-2 rounded-xl text-xs font-display font-black flex items-center gap-1.5 cursor-pointer uppercase tracking-wider shadow-[2px_2px_0px_#D92B8A]"
+            >
+              <User className="w-3.5 h-3.5 text-[#D92B8A]" />
+              <span className="hidden md:inline truncate max-w-[90px]">{user.name.split(' ')[0]}</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => openAuthModal('signin')}
+              className="tactile-btn bg-[#161616] hover:bg-stone-800 text-white border-2 border-[#161616] px-3 sm:px-3.5 py-2 rounded-xl text-xs font-display font-black flex items-center gap-1.5 cursor-pointer uppercase tracking-wider shadow-[2px_2px_0px_#D92B8A]"
+            >
+              <User className="w-3.5 h-3.5 text-[#D92B8A]" />
+              <span>Sign In</span>
+            </button>
+          )}
+
           {onOpenTutor && (
             <button
               onClick={onOpenTutor}
-              className="tactile-btn bg-white hover:bg-[#FDEAF4] text-[#161616] border-2 border-[#161616] px-3 sm:px-4 py-2 rounded-xl text-xs font-display font-black flex items-center gap-1.5 cursor-pointer uppercase tracking-wider shadow-[2px_2px_0px_#161616]"
+              className="tactile-btn bg-white hover:bg-[#FDEAF4] text-[#161616] border-2 border-[#161616] px-2.5 sm:px-3.5 py-2 rounded-xl text-xs font-display font-black flex items-center gap-1.5 cursor-pointer uppercase tracking-wider shadow-[2px_2px_0px_#161616]"
             >
               <Sparkles className="w-3.5 h-3.5 text-[#D92B8A]" />
               <span className="hidden sm:inline">AI TUTOR</span>
@@ -200,8 +237,33 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
               </button>
             );
           })}
+
+          <div className="pt-2 border-t border-stone-200 flex gap-2">
+            <button
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                openAccountModal();
+              }}
+              className="flex-1 py-2.5 px-3 rounded-xl bg-[#FAF7F0] border-2 border-[#161616] text-[#161616] font-display font-black text-xs uppercase flex items-center justify-center gap-1.5"
+            >
+              <Zap className="w-3.5 h-3.5 text-[#D92B8A]" />
+              <span>Credits: {availableCredits.toLocaleString()}</span>
+            </button>
+            <button
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                if (isAuthenticated) openAccountModal();
+                else openAuthModal('signin');
+              }}
+              className="flex-1 py-2.5 px-3 rounded-xl bg-[#161616] text-white border-2 border-[#161616] font-display font-black text-xs uppercase flex items-center justify-center gap-1.5"
+            >
+              <User className="w-3.5 h-3.5 text-[#D92B8A]" />
+              <span>{isAuthenticated ? 'Account' : 'Sign In'}</span>
+            </button>
+          </div>
         </div>
       )}
     </header>
   );
 };
+
