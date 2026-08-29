@@ -5,30 +5,20 @@ import {
   Plus, 
   Sparkles, 
   BookOpen, 
-  FileText, 
   Layers, 
-  CheckCircle2, 
   Trash2, 
   Copy, 
-  ExternalLink, 
   Download, 
   Clock, 
-  Calendar, 
-  Tag, 
   ArrowRight,
-  Filter,
-  BarChart2,
-  GraduationCap,
-  PlayCircle
+  GraduationCap
 } from 'lucide-react';
 import { StorageService } from '../study/services/storageService';
-import { getSavedResources, deleteResourceFromStorage, saveResourceToStorage } from '../build/utils/storage';
 import { getRecentQuizzes, saveRecentQuiz } from '../quiz/utils/quizShare';
 import { StudySet } from '../study/types';
-import { SavedResource, ToolType } from '../build/types';
 import { Quiz } from '../quiz/types';
 
-export type ContentKind = 'all' | 'study-set' | 'quiz' | 'exam' | 'worksheet' | 'lesson-plan' | 'presentation' | 'course' | 'learning-path' | 'pdf-quiz' | 'pdf-studypack';
+export type ContentKind = 'all' | 'study-set' | 'quiz';
 
 export interface UnifiedItem {
   id: string;
@@ -43,27 +33,21 @@ export interface UnifiedItem {
   durationMinutes?: number;
   originalStudySet?: StudySet;
   originalQuiz?: Quiz;
-  originalBuildResource?: SavedResource;
 }
 
 interface MySetsWorkspaceProps {
   onOpenStudySet: (set: StudySet, view?: 'study' | 'flashcards' | 'practice') => void;
   onOpenQuiz: (quiz: Quiz) => void;
-  onOpenBuildResource: (resource: SavedResource) => void;
   onNavigateToStudy: () => void;
   onNavigateToQuiz: () => void;
-  onNavigateToBuild: (tool?: ToolType) => void;
   onAddToPlanner?: (item: UnifiedItem) => void;
 }
 
 export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
   onOpenStudySet,
   onOpenQuiz,
-  onOpenBuildResource,
   onNavigateToStudy,
   onNavigateToQuiz,
-  onNavigateToBuild,
-  onAddToPlanner,
 }) => {
   const [selectedKind, setSelectedKind] = useState<ContentKind>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -72,7 +56,6 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
 
   // Loaded items
   const [studySets, setStudySets] = useState<StudySet[]>([]);
-  const [buildResources, setBuildResources] = useState<SavedResource[]>([]);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [notification, setNotification] = useState<string | null>(null);
 
@@ -82,13 +65,6 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
       setStudySets(sets);
     } catch (e) {
       console.warn('Failed loading study sets', e);
-    }
-
-    try {
-      const resources = getSavedResources();
-      setBuildResources(resources);
-    } catch (e) {
-      console.warn('Failed loading build resources', e);
     }
 
     try {
@@ -146,71 +122,8 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
       });
     });
 
-    // Build Resources
-    buildResources.forEach((res) => {
-      let label = 'Build Resource';
-      let kind: ContentKind = 'worksheet';
-      let itemCount = 0;
-      let itemCountLabel = '1 Document';
-
-      if (res.type === 'exam') {
-        kind = 'exam';
-        label = 'Exam Paper';
-        itemCount = (res as any).totalMarks || 50;
-        itemCountLabel = `${itemCount} Marks`;
-      } else if (res.type === 'worksheet') {
-        kind = 'worksheet';
-        label = 'Worksheet';
-        itemCount = (res as any).exercises?.length || 4;
-        itemCountLabel = `${itemCount} Exercises`;
-      } else if (res.type === 'lesson-plan') {
-        kind = 'lesson-plan';
-        label = 'Lesson Plan';
-        itemCount = (res as any).activities?.length || 3;
-        itemCountLabel = `${itemCount} Activities`;
-      } else if (res.type === 'presentation') {
-        kind = 'presentation';
-        label = 'Presentation Slides';
-        itemCount = (res as any).slides?.length || 6;
-        itemCountLabel = `${itemCount} Slides`;
-      } else if (res.type === 'course') {
-        kind = 'course';
-        label = 'Course Outline';
-        itemCount = (res as any).modules?.length || 4;
-        itemCountLabel = `${itemCount} Modules`;
-      } else if (res.type === 'learning-path') {
-        kind = 'learning-path';
-        label = 'Learning Path';
-        itemCount = (res as any).stages?.length || 4;
-        itemCountLabel = `${itemCount} Stages`;
-      } else if (res.type === 'pdf-quiz') {
-        kind = 'pdf-quiz';
-        label = 'PDF Quiz';
-        itemCount = (res as any).questions?.length || 5;
-        itemCountLabel = `${itemCount} Questions`;
-      } else if (res.type === 'pdf-studypack') {
-        kind = 'pdf-studypack';
-        label = 'PDF Study Pack';
-        itemCountLabel = 'Complete Pack';
-      }
-
-      items.push({
-        id: `build-${res.id}`,
-        kind,
-        kindLabel: label,
-        title: res.title,
-        description: res.description || `Created in Proudly Afrikan Build.`,
-        categoryOrSubject: res.subject || 'General Education',
-        createdAt: res.createdAt || new Date().toISOString(),
-        itemCount,
-        itemCountLabel,
-        durationMinutes: 30,
-        originalBuildResource: res,
-      });
-    });
-
     return items;
-  }, [studySets, quizzes, buildResources]);
+  }, [studySets, quizzes]);
 
   // Unique subjects for filter
   const subjectsList = useMemo(() => {
@@ -269,9 +182,6 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
       const qs = quizzes.filter(q => q.id !== item.originalQuiz?.id);
       localStorage.setItem('proudly_afrikan_recent_quizzes', JSON.stringify(qs));
       showToast('Quiz removed.');
-    } else if (item.originalBuildResource) {
-      deleteResourceFromStorage(item.originalBuildResource.id);
-      showToast('Resource removed.');
     }
     loadAllContent();
   };
@@ -297,15 +207,6 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
       };
       saveRecentQuiz(dup);
       showToast('Quiz duplicated.');
-    } else if (item.originalBuildResource) {
-      const dup: SavedResource = {
-        ...item.originalBuildResource,
-        id: `res-${Date.now()}`,
-        title: `${item.originalBuildResource.title} (Copy)`,
-        createdAt: new Date().toISOString(),
-      };
-      saveResourceToStorage(dup);
-      showToast('Resource duplicated.');
     }
     loadAllContent();
   };
@@ -313,7 +214,7 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
   // Export JSON handler
   const handleExportJson = (item: UnifiedItem, e: React.MouseEvent) => {
     e.stopPropagation();
-    const data = item.originalStudySet || item.originalQuiz || item.originalBuildResource;
+    const data = item.originalStudySet || item.originalQuiz;
     if (!data) return;
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -331,8 +232,6 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
       onOpenStudySet(item.originalStudySet, 'study');
     } else if (item.kind === 'quiz' && item.originalQuiz) {
       onOpenQuiz(item.originalQuiz);
-    } else if (item.originalBuildResource) {
-      onOpenBuildResource(item.originalBuildResource);
     }
   };
 
@@ -343,17 +242,6 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
         return 'bg-[#FDEAF4] text-[#D92B8A] border-[#F7B5D8]';
       case 'quiz':
         return 'bg-[#FFF3EC] text-[#E05A2B] border-[#FFD0B8]';
-      case 'exam':
-        return 'bg-[#FEE2E2] text-[#DC2626] border-[#FECACA]';
-      case 'worksheet':
-        return 'bg-[#FEF3C7] text-[#D97706] border-[#FDE68A]';
-      case 'lesson-plan':
-        return 'bg-[#E0E7FF] text-[#4F46E5] border-[#C7D2FE]';
-      case 'presentation':
-        return 'bg-[#EDE9FE] text-[#7C3AED] border-[#DDD6FE]';
-      case 'course':
-      case 'learning-path':
-        return 'bg-[#ECFDF5] text-[#059669] border-[#A7F3D0]';
       default:
         return 'bg-stone-100 text-stone-700 border-stone-200';
     }
@@ -393,7 +281,7 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
               MY SETS & SAVED RESOURCES
             </h1>
             <p className="text-stone-600 text-sm sm:text-base max-w-2xl font-body">
-              Your central workspace containing all created study sets, interactive quizzes, exams, lesson plans, worksheets, and presentations across Proudly Afrikan School.
+              Your central workspace containing all created study sets, active recall flashcards, and interactive quizzes across Proudly Afrikan School.
             </p>
           </div>
 
@@ -408,25 +296,18 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
             </button>
             <button
               onClick={onNavigateToQuiz}
-              className="tactile-btn bg-[#FAF7F0] hover:bg-[#FFF3EC] text-[#161616] font-display font-black text-xs px-4 py-2.5 rounded-xl flex items-center gap-1.5 cursor-pointer uppercase tracking-wider"
+              className="tactile-btn bg-[#161616] text-white hover:bg-stone-800 font-display font-black text-xs px-4 py-2.5 rounded-xl flex items-center gap-1.5 cursor-pointer uppercase tracking-wider"
             >
               <Plus className="w-3.5 h-3.5 text-[#E05A2B]" />
               <span>+ QUIZ</span>
-            </button>
-            <button
-              onClick={() => onNavigateToBuild()}
-              className="tactile-btn bg-[#161616] text-white hover:bg-stone-800 font-display font-black text-xs px-4 py-2.5 rounded-xl flex items-center gap-1.5 cursor-pointer uppercase tracking-wider"
-            >
-              <Plus className="w-3.5 h-3.5 text-[#E6425E]" />
-              <span>+ BUILD RESOURCE</span>
             </button>
           </div>
         </div>
 
         {/* Stats Strip */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+        <div className="grid grid-cols-3 gap-3 sm:gap-4">
           <div className="bg-white border-2 border-[#1A1A1A] p-4 rounded-2xl shadow-[2.5px_2.5px_0px_#1A1A1A]">
-            <div className="text-[11px] font-mono font-bold text-stone-500 uppercase">Total Items</div>
+            <div className="text-[11px] font-mono font-bold text-stone-500 uppercase">Total Resources</div>
             <div className="text-2xl sm:text-3xl font-display font-black text-[#161616] mt-1">{unifiedItems.length}</div>
           </div>
           <div className="bg-[#FAF7F0] border-2 border-[#1A1A1A] p-4 rounded-2xl shadow-[2.5px_2.5px_0px_#1A1A1A]">
@@ -436,10 +317,6 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
           <div className="bg-[#FAF7F0] border-2 border-[#1A1A1A] p-4 rounded-2xl shadow-[2.5px_2.5px_0px_#1A1A1A]">
             <div className="text-[11px] font-mono font-bold text-[#E05A2B] uppercase">Quizzes</div>
             <div className="text-2xl sm:text-3xl font-display font-black text-[#161616] mt-1">{quizzes.length}</div>
-          </div>
-          <div className="bg-[#FAF7F0] border-2 border-[#1A1A1A] p-4 rounded-2xl shadow-[2.5px_2.5px_0px_#1A1A1A]">
-            <div className="text-[11px] font-mono font-bold text-[#C92A45] uppercase">Build Resources</div>
-            <div className="text-2xl sm:text-3xl font-display font-black text-[#161616] mt-1">{buildResources.length}</div>
           </div>
         </div>
 
@@ -451,7 +328,7 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
               <Search className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Search all sets, quizzes, exams, or topics..."
+                placeholder="Search all sets, quizzes, or topics..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full bg-[#FAF7F0] border-2 border-[#1A1A1A] rounded-xl pl-9 pr-4 py-2 text-xs sm:text-sm font-mono font-semibold text-[#161616] focus:outline-none focus:bg-white transition-all placeholder:text-stone-400"
@@ -491,12 +368,6 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
               { id: 'all', label: 'All Content' },
               { id: 'study-set', label: 'Study Sets' },
               { id: 'quiz', label: 'Quizzes' },
-              { id: 'exam', label: 'Exams' },
-              { id: 'worksheet', label: 'Worksheets' },
-              { id: 'lesson-plan', label: 'Lesson Plans' },
-              { id: 'presentation', label: 'Presentations' },
-              { id: 'course', label: 'Courses' },
-              { id: 'learning-path', label: 'Learning Paths' },
             ].map((tab) => {
               const count = tab.id === 'all' 
                 ? unifiedItems.length 
@@ -505,7 +376,7 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
                 <button
                   key={tab.id}
                   onClick={() => setSelectedKind(tab.id as ContentKind)}
-                  className={`px-3 py-1.5 rounded-xl border-2 transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                  className={`px-3.5 py-1.5 rounded-xl border-2 transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
                     selectedKind === tab.id
                       ? 'bg-[#161616] text-white border-[#161616] shadow-[2px_2px_0px_#D92B8A]'
                       : 'bg-[#FAF7F0] text-stone-700 border-[#1A1A1A] hover:bg-stone-100'
@@ -529,7 +400,7 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
             <FolderOpen className="w-12 h-12 text-stone-300 mx-auto" />
             <h3 className="text-lg font-display font-black uppercase text-[#161616]">No Content Found</h3>
             <p className="text-xs sm:text-sm font-mono text-stone-500 max-w-md mx-auto">
-              No matching resources found for this filter. Create a new study set, generate a quiz, or build a lesson plan.
+              No matching resources found for this filter. Create a new study set or generate an interactive quiz.
             </p>
             <div className="flex justify-center gap-3 pt-2">
               <button

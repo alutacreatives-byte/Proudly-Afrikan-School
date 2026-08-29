@@ -2,14 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { MasterHeader, MainNavTab } from './components/MasterHeader';
 import StudyApp from './study/App';
 import QuizApp from './quiz/App';
-import BuildApp from './build/App';
 import { MySetsWorkspace } from './mysets/MySetsWorkspace';
 import { CentralPlannerView } from './planner/CentralPlannerView';
 import { StudySet, AppView as StudyAppView } from './study/types';
 import { Quiz } from './quiz/types';
-import { SavedResource, ToolType } from './build/types';
 import { StorageService } from './study/services/storageService';
-import { getSavedResources } from './build/utils/storage';
 import { getRecentQuizzes } from './quiz/utils/quizShare';
 import { StudyTutorModal } from './study/components/StudyTutorModal';
 
@@ -21,9 +18,6 @@ export default function App() {
   const [studyInitialView, setStudyInitialView] = useState<StudyAppView>('home');
   
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
-  
-  const [selectedBuildTool, setSelectedBuildTool] = useState<ToolType | null>(null);
-  const [selectedBuildResource, setSelectedBuildResource] = useState<SavedResource | null>(null);
 
   // Global AI Tutor Modal
   const [isTutorOpen, setIsTutorOpen] = useState<boolean>(false);
@@ -36,8 +30,7 @@ export default function App() {
     try {
       const sets = StorageService.getAllStudySets().length;
       const quizzes = getRecentQuizzes().length;
-      const buildResources = getSavedResources().length;
-      setTotalSavedCount(sets + quizzes + buildResources);
+      setTotalSavedCount(sets + quizzes);
     } catch (e) {
       setTotalSavedCount(0);
     }
@@ -55,7 +48,7 @@ export default function App() {
         setActiveTab('QUIZ');
       } else if (params.get('tab')) {
         const tab = params.get('tab')?.toUpperCase();
-        if (tab === 'STUDY' || tab === 'QUIZ' || tab === 'BUILD' || tab === 'MY SETS' || tab === 'PLANNER') {
+        if (tab === 'STUDY' || tab === 'QUIZ' || tab === 'MY SETS' || tab === 'PLANNER') {
           setActiveTab(tab as MainNavTab);
         }
       }
@@ -85,21 +78,9 @@ export default function App() {
     setActiveTab('QUIZ');
   };
 
-  const handleOpenBuildResourceFromAnywhere = (resource: SavedResource) => {
-    setSelectedBuildResource(resource);
-    setSelectedBuildTool(null);
-    setActiveTab('BUILD');
-  };
-
-  const handleNavigateToBuildWithTool = (tool?: ToolType) => {
-    setSelectedBuildTool(tool || null);
-    setSelectedBuildResource(null);
-    setActiveTab('BUILD');
-  };
-
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF7F0] text-[#161616]">
-      {/* Universal Top Navigation Header: STUDY · QUIZ · BUILD · MY SETS · PLANNER */}
+      {/* Universal Top Navigation Header: STUDY · QUIZ · MY SETS · PLANNER */}
       <MasterHeader
         activeTab={activeTab}
         onSelectTab={handleSelectTab}
@@ -133,29 +114,12 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'BUILD' && (
-          <BuildApp
-            key={
-              selectedBuildResource
-                ? `build-res-${selectedBuildResource.id}`
-                : selectedBuildTool
-                ? `build-tool-${selectedBuildTool}`
-                : 'build-default'
-            }
-            initialTool={selectedBuildTool}
-            initialResource={selectedBuildResource}
-            onNavigateToTab={handleSelectTab}
-          />
-        )}
-
         {activeTab === 'MY SETS' && (
           <MySetsWorkspace
             onOpenStudySet={handleOpenStudySetFromAnywhere}
             onOpenQuiz={handleOpenQuizFromAnywhere}
-            onOpenBuildResource={handleOpenBuildResourceFromAnywhere}
             onNavigateToStudy={() => setActiveTab('STUDY')}
             onNavigateToQuiz={() => setActiveTab('QUIZ')}
-            onNavigateToBuild={handleNavigateToBuildWithTool}
           />
         )}
 
