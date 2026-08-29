@@ -3,21 +3,14 @@ import {
   Check, 
   Sparkles, 
   Zap, 
-  HelpCircle, 
   Mail, 
-  ShieldCheck, 
   ArrowRight, 
-  CreditCard, 
-  GraduationCap, 
-  BookOpen, 
-  Layers, 
-  FileText, 
-  Award,
   CheckCircle2,
-  AlertCircle
+  Clock,
+  HelpCircle
 } from 'lucide-react';
 import { useAuthCredit } from '../context/AuthCreditContext';
-import { PLANS, PlanTier, AI_CREDIT_COSTS, AI_ACTION_LABELS, AiActionType } from '../types/authCredit';
+import { PLANS, PlanTier, AI_CREDIT_COSTS } from '../types/authCredit';
 
 interface PricingViewProps {
   onNavigateToTab?: (tab: any) => void;
@@ -135,7 +128,7 @@ export const PricingView: React.FC<PricingViewProps> = ({ onNavigateToTab }) => 
               >
                 {/* Popular Badge */}
                 {isPopular && (
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3.5 py-0.5 rounded-full bg-[#D92B8A] text-white font-display font-black text-[10px] tracking-widest uppercase border border-[#161616] shadow-[1.5px_1.5px_0px_#161616]">
+                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3.5 py-0.5 rounded-full bg-[#D92B8A] text-white font-display font-black text-[10px] tracking-widest uppercase border border-[#161616] shadow-[1.5px_1.5px_0px_#161616] whitespace-nowrap">
                     ★ MOST POPULAR
                   </div>
                 )}
@@ -289,44 +282,32 @@ export const PricingView: React.FC<PricingViewProps> = ({ onNavigateToTab }) => 
           </div>
         </div>
 
-        {/* Payment & Support Info Card */}
-        <div className="p-6 sm:p-8 rounded-3xl bg-white border-2 border-[#161616] shadow-[4px_4px_0px_#7C3AED] grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-          <div className="space-y-3">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-[#F5F3FF] text-[#7C3AED] font-mono text-xs font-bold uppercase">
-              <CreditCard className="w-4 h-4" />
-              <span>PayPal Business Ready</span>
+        {/* Direct Customer Support & Institutional Inquiries Card */}
+        <div className="p-6 sm:p-8 rounded-3xl bg-white border-2 border-[#161616] shadow-[4px_4px_0px_#161616] flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div className="space-y-2 max-w-2xl">
+            <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#D92B8A] uppercase">
+              <Mail className="w-4 h-4" />
+              <span>Direct Customer & Institutional Support</span>
             </div>
             <h3 className="font-display font-black text-2xl text-[#161616] uppercase tracking-tight">
-              Aluta Creatives PayPal Subscriptions
+              support@proudlyafrikan.org
             </h3>
             <p className="font-sans text-xs sm:text-sm text-stone-600 leading-relaxed">
-              Proudly Afrikan School payment processing is structured for the Aluta Creatives PayPal Business account, supporting recurring automated renewal, monthly credit top-ups, and flexible plan management.
+              For any questions regarding billing, custom institutional quotas, school purchase orders, or account access, our support team is ready to assist you.
             </p>
           </div>
 
-          <div className="p-5 rounded-2xl bg-[#FAF7F0] border-2 border-[#161616] space-y-3">
-            <div className="flex items-center gap-2 text-xs font-mono font-bold text-stone-600 uppercase">
-              <Mail className="w-4 h-4 text-[#D92B8A]" />
-              <span>Direct Customer Support</span>
-            </div>
-            <h4 className="font-display font-black text-lg text-[#161616]">
-              support@proudlyafrikan.org
-            </h4>
-            <p className="font-sans text-xs text-stone-600">
-              For any questions regarding billing, custom institutional quotas, school purchase orders, or account access, our team is ready to help.
-            </p>
-            <a
-              href="mailto:support@proudlyafrikan.org"
-              className="inline-flex items-center gap-2 text-xs font-display font-black uppercase text-[#D92B8A] hover:underline"
-            >
-              <span>Email Support Team</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </a>
-          </div>
+          <a
+            href="mailto:support@proudlyafrikan.org"
+            className="px-5 py-3 rounded-2xl bg-[#161616] hover:bg-stone-800 text-white font-display font-black text-xs uppercase tracking-wider border-2 border-[#161616] shadow-[3px_3px_0px_#D92B8A] inline-flex items-center gap-2 cursor-pointer transition-all shrink-0 hover:translate-x-[1px] hover:translate-y-[1px]"
+          >
+            <span>Contact Support</span>
+            <ArrowRight className="w-4 h-4" />
+          </a>
         </div>
       </div>
 
-      {/* Plan Selection / Subscription Modal (PayPal Preparation) */}
+      {/* Plan Selection / Subscription Modal */}
       {selectedPlanForCheckout && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
           <div 
@@ -363,16 +344,6 @@ export const PricingView: React.FC<PricingViewProps> = ({ onNavigateToTab }) => 
                   +{PLANS[selectedPlanForCheckout].monthlyCredits.toLocaleString()} AI Credits
                 </span>
               </div>
-            </div>
-
-            <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-300 text-amber-900 text-xs font-mono space-y-1">
-              <div className="font-bold flex items-center gap-1.5">
-                <AlertCircle className="w-3.5 h-3.5 text-amber-700" />
-                <span>PayPal Business Gateway Readiness</span>
-              </div>
-              <p className="font-sans text-[11px] leading-relaxed text-amber-800">
-                Payment receiver: <strong>Aluta Creatives PayPal Business</strong>. In development/preview mode, clicking confirm will immediately activate your plan and credit balance.
-              </p>
             </div>
 
             <div className="flex gap-3">

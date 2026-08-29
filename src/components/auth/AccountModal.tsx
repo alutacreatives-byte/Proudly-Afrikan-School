@@ -297,7 +297,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({ onNavigateToPricing 
                     Payment Provider
                   </span>
                   <span className="font-mono font-bold text-xs text-[#161616]">
-                    {subscription.provider === 'paypal' ? 'PayPal Business (Aluta Creatives)' : 'None (Free Tier)'}
+                    {subscription.planId === 'FREE' ? 'None (Free Tier)' : 'Active Plan Subscription'}
                   </span>
                 </div>
 

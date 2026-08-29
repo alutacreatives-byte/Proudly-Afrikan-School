@@ -8,7 +8,6 @@ import {
   UserProfile
 } from './types';
 import { StorageService } from './services/storageService';
-import { Header } from './components/Header';
 import { HomeScreen } from './components/HomeScreen';
 import { SubjectExplorer } from './components/SubjectExplorer';
 import { FlashcardsView } from './components/FlashcardsView';
@@ -296,21 +295,6 @@ export default function App({
 
   return (
     <div id="app-root" className="min-h-screen bg-[#FDFBF7] text-[#161616] flex flex-col font-sans selection:bg-[#D92B8A] selection:text-white">
-      {/* Dynamic 4-Destination Top Navigation Header */}
-      <Header
-        currentView={currentView}
-        onNavigate={handleNavigate}
-        stats={stats}
-        reviewCount={reviewItems.length}
-        onCreateSetClick={(method, topic) => handleOpenCreateModal(method || 'topic', topic || '', 'lesson-plan')}
-        onOpenTutor={handleOpenGlobalTutor}
-        currentUser={currentUser}
-        onLogout={() => {
-          const guest = StorageService.loginUser('guest@afrikanstudy.org', 'Guest Scholar');
-          handleUserChanged(guest);
-        }}
-      />
-
       {/* Main Content Viewport */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6">
         {/* DESTINATION 1: STUDY */}

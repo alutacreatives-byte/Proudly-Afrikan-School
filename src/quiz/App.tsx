@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Header } from './components/Header';
 import { Hero } from './components/Hero';
 import { ThreeWaysSection } from './components/ThreeWaysSection';
 import { QuizBuilder } from './components/QuizBuilder';
@@ -266,17 +265,6 @@ export default function App({
 
   return (
     <div className="min-h-screen bg-[#F5F0E6] text-[#292929] flex flex-col justify-between selection:bg-[#E05A2B] selection:text-white">
-      {/* Top Header */}
-      <Header
-        onNewQuizClick={() => {
-          setViewState('builder');
-          scrollToTop();
-        }}
-        onScrollToSection={scrollToSection}
-        recentQuizzes={recentQuizzes}
-        onSelectRecentQuiz={handleSelectRecentQuiz}
-      />
-
       {/* Global Error Banner if API failed */}
       {globalError && (
         <div className="bg-[#FFEBE6] border-b-2 border-[#E05A2B] py-3 px-4 text-center font-mono-code text-xs sm:text-sm text-[#292929] flex items-center justify-center gap-2">
