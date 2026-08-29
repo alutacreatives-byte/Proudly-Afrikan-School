@@ -62,16 +62,7 @@ export const AuthCreditProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const saved = localStorage.getItem(STORAGE_KEYS.USER);
       if (saved) return JSON.parse(saved);
     } catch (e) {}
-    // Default initial user with 400 once-off credits
-    const now = new Date().toISOString();
-    return {
-      id: 'guest-scholar',
-      name: 'Afrikan Scholar',
-      email: 'scholar@proudlyafrikan.org',
-      role: 'student',
-      createdAt: now,
-      updatedAt: now,
-    };
+    return null; // Visitors start signed out (no fictional default user)
   });
 
   const [subscription, setSubscription] = useState<SubscriptionInfo>(() => {
@@ -84,7 +75,7 @@ export const AuthCreditProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     nextMonth.setMonth(nextMonth.getMonth() + 1);
     return {
       id: 'sub-free-initial',
-      userId: 'guest-scholar',
+      userId: 'visitor',
       planId: 'FREE',
       status: 'free_tier',
       provider: 'none',
@@ -111,11 +102,11 @@ export const AuthCreditProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return [
       {
         id: 'tx-welcome',
-        userId: 'guest-scholar',
+        userId: 'visitor',
         amount: 400,
         type: 'initial_grant',
         actionType: 'FREE_WELCOME_BONUS',
-        description: 'Welcome Bonus: 400 once-off AI credits',
+        description: 'Welcome Bonus: 400 free credits',
         timestamp: new Date().toISOString(),
         balanceAfter: 400,
       },
@@ -230,7 +221,7 @@ export const AuthCreditProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         setAvailableCredits(400);
       }
       setIsAuthModalOpen(false);
-      return { success: true, message: 'Account created with 400 once-off AI credits!' };
+      return { success: true, message: 'Account created with 400 once-off credits!' };
     } catch (err) {
       const now = new Date().toISOString();
       setUser({
@@ -243,7 +234,7 @@ export const AuthCreditProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       });
       setAvailableCredits(400);
       setIsAuthModalOpen(false);
-      return { success: true, message: 'Account created!' };
+      return { success: true, message: 'Account created with 400 free credits!' };
     } finally {
       setIsLoading(false);
     }
@@ -335,7 +326,7 @@ export const AuthCreditProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     if (availableCredits < cost) {
       return {
         success: false,
-        error: `Insufficient AI credits (${availableCredits} available, ${cost} required). Please upgrade to a Scholar or Student plan.`,
+        error: `Insufficient credits (${availableCredits} available, ${cost} required). Please upgrade your plan in Pricing.`,
         remaining: availableCredits,
       };
     }
@@ -426,7 +417,7 @@ export const AuthCreditProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       amount: addedCredits,
       type: 'allocation',
       actionType: 'PLAN_UPGRADE_ALLOCATION',
-      description: `Activated ${plan.name} Plan (+${addedCredits.toLocaleString()} AI Credits)`,
+      description: `Activated ${plan.name} Plan (+${addedCredits.toLocaleString()} Credits)`,
       timestamp: now.toISOString(),
       balanceAfter: newBalance,
     };

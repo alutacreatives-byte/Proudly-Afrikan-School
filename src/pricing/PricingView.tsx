@@ -76,7 +76,7 @@ export const PricingView: React.FC<PricingViewProps> = ({ onNavigateToTab }) => 
         <div className="max-w-5xl mx-auto text-center space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FDF2F8] border border-[#D92B8A] text-[#D92B8A] font-mono text-xs font-bold uppercase tracking-wider shadow-[1.5px_1.5px_0px_#161616]">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>African-Centred AI Learning Credits</span>
+            <span>African-Centred Learning Credits</span>
           </div>
 
           <h1 className="font-display font-black text-3xl sm:text-5xl lg:text-6xl text-[#161616] tracking-tight uppercase leading-tight">
@@ -84,7 +84,7 @@ export const PricingView: React.FC<PricingViewProps> = ({ onNavigateToTab }) => 
           </h1>
 
           <p className="font-sans text-base sm:text-lg text-stone-600 max-w-2xl mx-auto leading-relaxed">
-            Every new user gets <strong className="text-[#161616]">400 free AI credits</strong> to start. 
+            Every new user gets <strong className="text-[#161616]">400 free credits</strong> to start. 
             Upgrade to monthly plans as your revision, teaching, and study needs expand.
           </p>
 
@@ -167,7 +167,7 @@ export const PricingView: React.FC<PricingViewProps> = ({ onNavigateToTab }) => 
 
                     <div className="mt-2 flex items-center gap-1.5 text-xs font-display font-black uppercase text-[#161616]">
                       <Zap className="w-4 h-4 text-[#D92B8A]" />
-                      <span>{plan.monthlyCredits.toLocaleString()} AI Credits {plan.isOnceOff ? 'once-off' : '/ month'}</span>
+                      <span>{plan.monthlyCredits.toLocaleString()} Credits {plan.isOnceOff ? 'once-off' : '/ month'}</span>
                     </div>
                   </div>
 
@@ -219,7 +219,7 @@ export const PricingView: React.FC<PricingViewProps> = ({ onNavigateToTab }) => 
                 Normal platform use does NOT consume any credits
               </h3>
               <p className="font-sans text-stone-600 text-xs sm:text-sm max-w-3xl leading-relaxed">
-                Credits are strictly required only when you trigger AI models to synthesize new content. You can freely study existing sets, take revision quizzes, review saved collections, and manage study timetables without spending a single credit.
+                Credits are used only for creation and generation. You can freely study existing sets, take revision quizzes, review saved collections, and manage study timetables without spending a single credit.
               </p>
             </div>
 
@@ -250,11 +250,11 @@ export const PricingView: React.FC<PricingViewProps> = ({ onNavigateToTab }) => 
             <div className="flex items-center gap-2 mb-1">
               <Sparkles className="w-5 h-5 text-[#D92B8A]" />
               <h3 className="font-display font-black text-xl sm:text-2xl text-[#161616] uppercase tracking-tight">
-                AI Generation Credit Cost Schedule
+                Credit Costs
               </h3>
             </div>
             <p className="font-sans text-xs sm:text-sm text-stone-600">
-              Every generator is calibrated with fixed, predictable credit pricing:
+              Creation and generation credit cost schedule:
             </p>
           </div>
 

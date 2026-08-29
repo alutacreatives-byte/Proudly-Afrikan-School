@@ -97,10 +97,6 @@ function AppContent() {
         activeTab={activeTab}
         onSelectTab={handleSelectTab}
         savedItemCount={totalSavedCount}
-        onOpenTutor={() => {
-          setTutorMode('tutor');
-          setIsTutorOpen(true);
-        }}
       />
 
       {/* Main Content Area */}

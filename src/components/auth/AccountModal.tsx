@@ -67,12 +67,12 @@ export const AccountModal: React.FC<AccountModalProps> = ({ onNavigateToPricing 
               className="w-10 h-10 rounded-2xl flex items-center justify-center font-display font-black text-sm text-white border-2 border-[#161616] shadow-[2px_2px_0px_#161616]"
               style={{ backgroundColor: currentPlanDetails.color }}
             >
-              {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+              {user?.name ? user.name.charAt(0).toUpperCase() : 'G'}
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="font-display font-black text-lg text-[#161616] uppercase tracking-tight">
-                  {user?.name || 'Afrikan Scholar'}
+                  {user?.name || 'Visitor Account'}
                 </h3>
                 <span 
                   className="px-2 py-0.5 rounded-md font-display font-black text-[10px] text-white border border-[#161616] uppercase tracking-wider"
@@ -82,7 +82,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({ onNavigateToPricing 
                 </span>
               </div>
               <p className="font-mono text-xs text-stone-500 font-medium">
-                {user?.email || 'scholar@proudlyafrikan.org'}
+                {user?.email || 'Guest / Unauthenticated'}
               </p>
             </div>
           </div>
@@ -151,7 +151,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({ onNavigateToPricing 
                       <Zap className="w-4 h-4" />
                     </div>
                     <span className="font-display font-black text-xs uppercase tracking-wider text-stone-700">
-                      Available AI Credits
+                      Available Credits
                     </span>
                   </div>
                   <span className="font-mono text-xs font-bold text-stone-500">
@@ -164,7 +164,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({ onNavigateToPricing 
                     {availableCredits.toLocaleString()}
                   </span>
                   <span className="font-mono text-xs text-stone-500 font-semibold uppercase">
-                    AI Credits Remaining
+                    Credits Remaining
                   </span>
                 </div>
 
@@ -210,7 +210,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({ onNavigateToPricing 
                   </h4>
                 </div>
                 <p className="text-xs font-sans text-stone-700 leading-relaxed">
-                  Studying, viewing flashcards, taking quizzes, saving study sets, and using the Central Planner do <strong>not</strong> consume credits. Credits are solely dedicated to creating new AI-powered educational materials.
+                  Studying, viewing flashcards, taking quizzes, saving study sets, and using the Central Planner do <strong>not</strong> consume credits. Credits are solely dedicated to creating and generating new educational and assessment materials.
                 </p>
               </div>
             </div>

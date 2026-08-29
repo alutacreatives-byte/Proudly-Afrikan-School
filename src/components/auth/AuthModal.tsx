@@ -8,12 +8,17 @@ export const AuthModal: React.FC = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
   // Synchronize initial mode
   React.useEffect(() => {
     setMode(authModalMode);
     setErrorMsg('');
+    setName('');
+    setEmail('');
+    setPassword('');
+    setConfirmPassword('');
   }, [authModalMode, isAuthModalOpen]);
 
   if (!isAuthModalOpen) return null;
@@ -28,6 +33,14 @@ export const AuthModal: React.FC = () => {
     }
 
     if (mode === 'signup') {
+      if (!password) {
+        setErrorMsg('Please enter a password.');
+        return;
+      }
+      if (password !== confirmPassword) {
+        setErrorMsg('Passwords do not match. Please re-enter.');
+        return;
+      }
       const res = await signUp(name || email.split('@')[0], email, password);
       if (!res.success) setErrorMsg(res.message || 'Failed to create account.');
     } else {
@@ -78,10 +91,10 @@ export const AuthModal: React.FC = () => {
             </div>
             <div>
               <p className="font-display font-black text-xs text-[#D92B8A] uppercase tracking-wider">
-                400 Free AI Credits Included
+                400 Free Credits Included
               </p>
               <p className="text-[11px] font-sans text-stone-700 font-medium">
-                New accounts instantly receive 400 credits for all AI generators.
+                New registered accounts receive the Free Plan with 400 creation credits.
               </p>
             </div>
           </div>
@@ -140,6 +153,7 @@ export const AuthModal: React.FC = () => {
                 <User className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
                 <input
                   type="text"
+                  required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Sipho Ndlovu"
@@ -174,6 +188,7 @@ export const AuthModal: React.FC = () => {
               <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
               <input
                 type="password"
+                required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
@@ -182,12 +197,31 @@ export const AuthModal: React.FC = () => {
             </div>
           </div>
 
+          {mode === 'signup' && (
+            <div>
+              <label className="block text-[11px] font-mono font-bold text-stone-700 uppercase tracking-wider mb-1">
+                Confirm Password
+              </label>
+              <div className="relative">
+                <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
+                <input
+                  type="password"
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full pl-9 pr-3 py-2.5 bg-white border-2 border-[#161616] rounded-xl text-xs font-sans text-[#161616] placeholder:text-stone-400 focus:outline-hidden focus:ring-2 focus:ring-[#D92B8A]"
+                />
+              </div>
+            </div>
+          )}
+
           <button
             type="submit"
             disabled={isLoading}
             className="w-full mt-2 py-3 px-4 rounded-2xl bg-[#161616] hover:bg-stone-800 text-white font-display font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 border-2 border-[#161616] shadow-[3px_3px_0px_#D92B8A] hover:translate-x-[1px] hover:translate-y-[1px] cursor-pointer transition-all disabled:opacity-50"
           >
-            <span>{mode === 'signup' ? 'Create Free Account' : 'Sign In'}</span>
+            <span>{mode === 'signup' ? 'Create Free Account (400 Credits)' : 'Sign In'}</span>
             <ArrowRight className="w-4 h-4 text-[#D92B8A]" />
           </button>
         </form>
