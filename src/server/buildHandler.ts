@@ -129,15 +129,18 @@ Return a valid JSON object matching this schema:
 
     const parsed = await generateJsonWithGemini(prompt, 0.4);
     if (parsed) {
-      return res.json({ success: true, data: parsed });
+      const normalized = normalizeExam(parsed, subject, topic, gradeLevel, difficulty, durationMinutes, totalMarks, institutionHeader);
+      return res.json({ success: true, data: normalized });
     }
     throw new Error('Gemini returned empty response');
   } catch (error: any) {
     console.error('Error generating exam (using fallback):', error?.message || error);
+    const fallback = generateFallbackExam(subject, topic, gradeLevel, difficulty, durationMinutes, totalMarks, institutionHeader);
+    const normalized = normalizeExam(fallback, subject, topic, gradeLevel, difficulty, durationMinutes, totalMarks, institutionHeader);
     return res.json({
       success: true,
       fallbackUsed: true,
-      data: generateFallbackExam(subject, topic, gradeLevel, difficulty, durationMinutes, totalMarks, institutionHeader),
+      data: normalized,
     });
   }
 });
@@ -174,45 +177,42 @@ Return a valid JSON object matching this schema:
   "topic": "${topic}",
   "gradeLevel": "${gradeLevel}",
   "difficulty": "${difficulty}",
-  "learningObjectives": ["3-4 clear measurable student learning objectives"],
-  "estimatedCompletionTimeMinutes": 45,
-  "studentHeaderFields": { "name": true, "date": true, "score": true, "class": true },
-  "introductionOrOverview": "Engaging 2-3 sentence conceptual overview",
-  "activities": [
+  "totalMarks": 30,
+  "estimatedDurationMinutes": 45,
+  "instructions": "Answer all questions in sequence and show your reasoning.",
+  "teacherNotes": "Scoring rubric and teacher facilitation guidance",
+  "sections": [
     {
-      "id": "act-1",
-      "activityNumber": 1,
-      "type": "matching",
-      "title": "Activity 1: ...",
+      "id": "sec-1",
+      "title": "Section 1: ...",
       "instructions": "Directions for students...",
+      "marks": 10,
       "items": [
         {
           "id": "i1",
-          "prompt": "Prompt or question...",
-          "scaffoldingOrClues": "Optional clue",
-          "blankLinesCount": 3,
-          "answerKey": "Complete teacher solution",
-          "explanation": "Why this is correct"
+          "prompt": "Question or prompt...",
+          "expectedAnswer": "Complete solution and answer key"
         }
-      ],
-      "points": 10
+      ]
     }
   ],
-  "teacherSolutionsNote": "Scoring rubric and teacher facilitation guidance",
   "createdAt": "${new Date().toISOString()}"
 }`;
 
     const parsed = await generateJsonWithGemini(prompt, 0.4);
     if (parsed) {
-      return res.json({ success: true, data: parsed });
+      const normalized = normalizeWorksheet(parsed, subject, topic, gradeLevel, difficulty);
+      return res.json({ success: true, data: normalized });
     }
     throw new Error('Gemini returned empty response');
   } catch (error: any) {
     console.error('Error generating worksheet (using fallback):', error?.message || error);
+    const fallback = generateFallbackWorksheet(subject, topic, gradeLevel, difficulty);
+    const normalized = normalizeWorksheet(fallback, subject, topic, gradeLevel, difficulty);
     return res.json({
       success: true,
       fallbackUsed: true,
-      data: generateFallbackWorksheet(subject, topic, gradeLevel, difficulty),
+      data: normalized,
     });
   }
 });
@@ -251,51 +251,38 @@ Return a valid JSON object matching this schema:
   "topic": "${topic}",
   "gradeLevel": "${gradeLevel}",
   "durationMinutes": ${Number(durationMinutes) || 60},
-  "curriculumStandardsOrTheme": "Curricular theme / standards alignment",
-  "learningObjectives": [
-    {
-      "cognitive": "Cognitive objective (Bloom's taxonomy)",
-      "affectiveOrPractical": "Practical or contextual application"
-    }
-  ],
-  "keyVocabulary": [
-    { "term": "Term 1", "definition": "Clear concise definition" }
-  ],
-  "requiredResourcesAndMaterials": ["Material 1", "Material 2"],
+  "objectives": ["Learners will explain...", "Learners will calculate..."],
+  "materialsNeeded": ["Classroom whiteboard", "Student handouts", "Visual slides"],
   "phases": [
     {
-      "phaseName": "Hook & Introduction",
+      "phase": "Hook & Introduction",
       "durationMinutes": 10,
-      "teacherActions": "What teacher does...",
-      "learnerActions": "What students do...",
-      "keyQuestionsOrCheckpoints": ["Checkpoint question 1", "Checkpoint question 2"],
-      "materialsNeeded": ["Specific items"]
+      "teacherActivity": "Engaging real-world hook and inquiry question...",
+      "studentActivity": "Pair-share and brainstorm observations..."
     }
   ],
-  "assessmentStrategy": {
-    "formative": "Formative checks during lesson",
-    "summativeOrExitTicket": "Exit ticket or end-of-lesson verification"
-  },
+  "assessmentStrategy": "Formative checks during group exercises and exit ticket at closure.",
   "differentiation": {
-    "supportForStrugglingLearners": "Scaffolding strategies",
-    "extensionForAdvancedLearners": "Enrichment / challenge activities",
-    "multilingualOrContextualAdaptation": "Contextual & language support"
+    "support": "Tiered scaffolding hints and peer pairs.",
+    "extension": "Independent analytical inquiry task."
   },
-  "reflectionNotes": "Teacher post-lesson evaluation guidance",
   "createdAt": "${new Date().toISOString()}"
 }`;
 
     const parsed = await generateJsonWithGemini(prompt, 0.4);
     if (parsed) {
-      return res.json({ success: true, data: parsed });
+      const normalized = normalizeLessonPlan(parsed, subject, topic, gradeLevel, Number(durationMinutes) || 60);
+      return res.json({ success: true, data: normalized });
     }
     throw new Error('Gemini returned empty response');
   } catch (error: any) {
     console.error('Error generating lesson plan (using fallback):', error?.message || error);
+    const fallback = generateFallbackLessonPlan(subject, topic, gradeLevel, Number(durationMinutes) || 60);
+    const normalized = normalizeLessonPlan(fallback, subject, topic, gradeLevel, Number(durationMinutes) || 60);
     return res.json({
       success: true,
       fallbackUsed: true,
-      data: generateFallbackLessonPlan(subject, topic, gradeLevel, durationMinutes),
+      data: normalized,
     });
   }
 });
@@ -333,12 +320,11 @@ Return a valid JSON object matching this schema:
 {
   "id": "pdf-quiz-${Date.now()}",
   "title": "Quiz: Knowledge Assessment on ${sourceDocName.replace(/\.[^/.]+$/, '')}",
+  "sourceDocumentName": "${sourceDocName}",
   "sourceDocName": "${sourceDocName}",
-  "sourceDocSummary": "A 2-3 sentence factual summary of what this document covers.",
   "gradeLevel": "${gradeLevel}",
   "difficulty": "${difficulty}",
   "totalQuestions": ${Number(totalQuestions) || 8},
-  "afrikanQuizCompatibilityTag": "PROUDLY_AFRIKAN_QUIZ_COMPLIANT_V1",
   "questions": [
     {
       "id": "pq-1",
@@ -356,15 +342,18 @@ Return a valid JSON object matching this schema:
 
     const parsed = await generateJsonWithGemini(prompt, 0.2);
     if (parsed) {
-      return res.json({ success: true, data: parsed });
+      const normalized = normalizePdfQuiz(parsed, sourceDocName, gradeLevel, difficulty);
+      return res.json({ success: true, data: normalized });
     }
     throw new Error('Gemini returned empty response');
   } catch (error: any) {
     console.error('Error generating PDF Quiz (using fallback):', error?.message || error);
+    const fallback = generateFallbackPdfQuiz(sourceDocName, extractedText || 'Document content', totalQuestions, difficulty, gradeLevel);
+    const normalized = normalizePdfQuiz(fallback, sourceDocName, gradeLevel, difficulty);
     return res.json({
       success: true,
       fallbackUsed: true,
-      data: generateFallbackPdfQuiz(sourceDocName, extractedText || 'Document content', totalQuestions, difficulty, gradeLevel),
+      data: normalized,
     });
   }
 });
@@ -398,41 +387,36 @@ Return a valid JSON object matching this schema:
 {
   "id": "sp-${Date.now()}",
   "title": "Study Pack: ${sourceDocName.replace(/\.[^/.]+$/, '')}",
+  "sourceDocumentName": "${sourceDocName}",
   "sourceDocName": "${sourceDocName}",
+  "overview": "Comprehensive structured synopsis of the source document",
   "documentOverview": "Comprehensive structured synopsis of the source document",
   "gradeLevel": "${gradeLevel}",
-  "keyConcepts": [
-    {
-      "id": "c1",
-      "conceptName": "Key Concept Name",
-      "summary": "Core concept summary",
-      "inDepthExplanation": "In-depth pedagogical breakdown based on text",
-      "realWorldExampleOrApplication": "Practical context or application"
-    }
-  ],
+  "highYieldTakeaways": ["High-yield takeaway 1", "High-yield takeaway 2", "High-yield takeaway 3"],
+  "highYieldRevisionPoints": ["High-yield takeaway 1", "High-yield takeaway 2", "High-yield takeaway 3"],
   "essentialGlossary": [
     { "term": "Key Term", "definition": "Precise definition", "context": "Document context" }
   ],
-  "highYieldRevisionPoints": ["High-yield takeaway 1", "High-yield takeaway 2", "High-yield takeaway 3"],
   "selfCheckQuestions": [
     { "question": "Self test question", "answer": "Model answer", "hint": "Hint" }
   ],
-  "activeRecallActivities": ["Activity 1 prompt", "Activity 2 prompt"],
-  "afrikanStudyCompatibilityTag": "PROUDLY_AFRIKAN_STUDY_COMPLIANT_V1",
   "createdAt": "${new Date().toISOString()}"
 }`;
 
     const parsed = await generateJsonWithGemini(prompt, 0.3);
     if (parsed) {
-      return res.json({ success: true, data: parsed });
+      const normalized = normalizePdfStudyPack(parsed, sourceDocName, gradeLevel);
+      return res.json({ success: true, data: normalized });
     }
     throw new Error('Gemini returned empty response');
   } catch (error: any) {
     console.error('Error generating PDF Study Pack (using fallback):', error?.message || error);
+    const fallback = generateFallbackStudyPack(sourceDocName, extractedText || 'Sample text', gradeLevel);
+    const normalized = normalizePdfStudyPack(fallback, sourceDocName, gradeLevel);
     return res.json({
       success: true,
       fallbackUsed: true,
-      data: generateFallbackStudyPack(sourceDocName, extractedText || 'Sample text', gradeLevel),
+      data: normalized,
     });
   }
 });
@@ -469,14 +453,13 @@ Return a valid JSON object matching this schema:
   "subject": "${subject}",
   "topic": "${topic}",
   "targetAudience": "${audienceLevel}",
-  "presentationStyle": "${presentationStyle}",
-  "learningObjectives": ["Objective 1", "Objective 2", "Objective 3"],
+  "gradeLevel": "${audienceLevel}",
+  "themeOrColorMood": "${presentationStyle}",
   "slidesCount": ${Number(slidesCount) || 6},
   "slides": [
     {
       "id": "s-1",
       "slideNumber": 1,
-      "slideType": "title",
       "title": "Slide Title",
       "subtitle": "Slide Subtitle",
       "bulletPoints": ["Point 1", "Point 2", "Point 3", "Point 4"],
@@ -485,21 +468,23 @@ Return a valid JSON object matching this schema:
       "discussionOrEngagementPrompt": "Interactive question for audience"
     }
   ],
-  "conclusionTakeaway": "Closing synthesis statement",
   "createdAt": "${new Date().toISOString()}"
 }`;
 
     const parsed = await generateJsonWithGemini(prompt, 0.4);
     if (parsed) {
-      return res.json({ success: true, data: parsed });
+      const normalized = normalizePresentation(parsed, subject, topic, audienceLevel);
+      return res.json({ success: true, data: normalized });
     }
     throw new Error('Gemini returned empty response');
   } catch (error: any) {
     console.error('Error generating presentation (using fallback):', error?.message || error);
+    const fallback = generateFallbackPresentation(subject, topic, audienceLevel, slidesCount, presentationStyle);
+    const normalized = normalizePresentation(fallback, subject, topic, audienceLevel);
     return res.json({
       success: true,
       fallbackUsed: true,
-      data: generateFallbackPresentation(subject, topic, audienceLevel, slidesCount, presentationStyle),
+      data: normalized,
     });
   }
 });
@@ -533,48 +518,45 @@ Return a valid JSON object matching this schema:
 {
   "id": "course-${Date.now()}",
   "title": "${title || 'Curriculum Course'}",
-  "subtitle": "Modular Course Blueprint",
   "subject": "${subject}",
   "gradeLevel": "${gradeLevel}",
+  "durationWeeks": 12,
   "description": "Thorough course synopsis...",
-  "prerequisites": ["Prerequisite 1", "Prerequisite 2"],
-  "courseObjectives": ["Course Objective 1", "Course Objective 2", "Course Objective 3"],
   "targetAudience": "${targetAudience || gradeLevel}",
-  "totalEstimatedHours": 36,
+  "learningOutcomes": ["Course Objective 1", "Course Objective 2", "Course Objective 3"],
   "modules": [
     {
       "id": "mod-1",
       "moduleNumber": 1,
       "title": "Module 1: Title",
-      "overview": "Module overview and focus",
       "estimatedHours": 12,
       "lessons": [
         {
           "id": "l1-1",
-          "title": "Lesson 1.1: Lesson Title",
-          "estimatedMinutes": 60,
-          "summary": "Lesson summary",
-          "keyLearningOutcomes": ["Outcome 1", "Outcome 2"],
-          "deliveryFormat": "Lecture"
+          "lessonTitle": "Lesson 1.1: Lesson Title",
+          "learningObjective": "Core lesson objective and mechanism",
+          "recommendedActivity": "Guided analytical problem set"
         }
       ]
     }
   ],
-  "assessmentAndGradingOutline": "Breakdown of assessments and grading criteria",
   "createdAt": "${new Date().toISOString()}"
 }`;
 
     const parsed = await generateJsonWithGemini(prompt, 0.4);
     if (parsed) {
-      return res.json({ success: true, data: parsed });
+      const normalized = normalizeCourse(parsed, subject, title, gradeLevel);
+      return res.json({ success: true, data: normalized });
     }
     throw new Error('Gemini returned empty response');
   } catch (error: any) {
     console.error('Error generating course (using fallback):', error?.message || error);
+    const fallback = generateFallbackCourse(title, subject, gradeLevel, description);
+    const normalized = normalizeCourse(fallback, subject, title, gradeLevel);
     return res.json({
       success: true,
       fallbackUsed: true,
-      data: generateFallbackCourse(title, subject, gradeLevel, description),
+      data: normalized,
     });
   }
 });
@@ -602,43 +584,372 @@ Return a valid JSON object matching this schema:
   "id": "lp-${Date.now()}",
   "title": "${title || 'Learning Path Progression'}",
   "subject": "${subject}",
-  "targetCareerOrEducationalGoal": "${targetGoal || 'Comprehensive Mastery'}",
-  "totalEstimatedDuration": "${estimatedWeeks || 24} Weeks (4 Structured Stages)",
-  "overallDescription": "Detailed overview of the developmental trajectory",
-  "learningOutcomes": ["Outcome 1", "Outcome 2", "Outcome 3", "Outcome 4"],
-  "stages": [
+  "targetGoal": "${targetGoal || 'Comprehensive Mastery'}",
+  "estimatedTotalWeeks": ${Number(estimatedWeeks) || 24},
+  "milestones": [
     {
-      "id": "st-1",
-      "stageNumber": 1,
-      "tier": "Foundation / Beginner",
-      "title": "Stage 1: Foundation ...",
-      "description": "Description of this stage",
-      "estimatedWeeks": 6,
-      "keyCompetenciesToMaster": ["Competency 1", "Competency 2", "Competency 3"],
-      "recommendedModulesOrTopics": ["Topic 1", "Topic 2"],
-      "milestoneProjectOrAssessment": "Culminating milestone project for this stage",
-      "prerequisitesBeforeEntry": ["Prerequisite items"]
+      "milestoneNumber": 1,
+      "phaseName": "Phase 1: Foundations",
+      "targetWeeks": "6 Weeks",
+      "keyObjectives": ["Competency 1", "Competency 2"],
+      "milestoneProject": "Milestone capstone project"
     }
   ],
-  "certificationOrExitMilestone": "Final graduation defense or portfolio standard",
   "createdAt": "${new Date().toISOString()}"
 }`;
 
     const parsed = await generateJsonWithGemini(prompt, 0.4);
     if (parsed) {
-      return res.json({ success: true, data: parsed });
+      const normalized = normalizeLearningPath(parsed, subject, title, targetGoal);
+      return res.json({ success: true, data: normalized });
     }
     throw new Error('Gemini returned empty response');
   } catch (error: any) {
     console.error('Error generating learning path (using fallback):', error?.message || error);
+    const fallback = generateFallbackLearningPath(title, subject, targetGoal);
+    const normalized = normalizeLearningPath(fallback, subject, title, targetGoal);
     return res.json({
       success: true,
       fallbackUsed: true,
-      data: generateFallbackLearningPath(title, subject, targetGoal),
+      data: normalized,
     });
   }
 });
+}
 
+// Normalizer Functions
+function normalizeWorksheet(data: any, subject: string, topic: string, gradeLevel: string, difficulty: string) {
+  const sections = Array.isArray(data.sections) && data.sections.length > 0
+    ? data.sections
+    : Array.isArray(data.activities) && data.activities.length > 0
+    ? data.activities.map((act: any, idx: number) => ({
+        id: act.id || `sec-${idx + 1}`,
+        title: act.title || `Section ${idx + 1}: ${act.type || 'Practice'}`,
+        instructions: act.instructions || 'Complete the following inquiries.',
+        marks: Number(act.points) || 10,
+        items: (act.items || []).map((item: any, iIdx: number) => ({
+          id: item.id || `i-${iIdx + 1}`,
+          prompt: item.prompt || item.question || `Exercise ${iIdx + 1}`,
+          expectedAnswer: item.expectedAnswer || item.answerKey || item.explanation || 'Detailed answer in teacher key',
+        })),
+      }))
+    : [
+        {
+          id: 'sec-1',
+          title: 'Section A: Conceptual Inquiry',
+          instructions: 'Answer all questions clearly.',
+          marks: 10,
+          items: [{ id: 'i-1', prompt: `Explain the fundamental concept of ${topic || subject}.`, expectedAnswer: 'Accurate definition with supporting explanation.' }],
+        }
+      ];
+
+  const totalMarks = Number(data.totalMarks) || sections.reduce((acc: number, s: any) => acc + (Number(s.marks) || 10), 0);
+  const estimatedDurationMinutes = Number(data.estimatedDurationMinutes || data.estimatedCompletionTimeMinutes || 45);
+
+  return {
+    ...data,
+    id: data.id || `ws-${Date.now()}`,
+    title: data.title || `Interactive Worksheet: ${topic || subject}`,
+    subject: data.subject || subject || 'General Science',
+    topic: data.topic || topic || 'Core Study Unit',
+    gradeLevel: data.gradeLevel || gradeLevel || 'Junior Secondary / Middle School (Grades 6-8)',
+    difficulty: data.difficulty || difficulty || 'Intermediate',
+    totalMarks,
+    estimatedDurationMinutes,
+    estimatedCompletionTimeMinutes: estimatedDurationMinutes,
+    instructions: data.instructions || 'Answer all sections carefully and show your working where applicable.',
+    teacherNotes: data.teacherNotes || data.teacherSolutionsNote || 'Facilitate active peer review and emphasize conceptual rationale.',
+    sections,
+    activities: data.activities || sections,
+  };
+}
+
+function normalizeLessonPlan(data: any, subject: string, topic: string, gradeLevel: string, durationMinutes: number) {
+  let objectives: string[] = [];
+  if (Array.isArray(data.objectives) && data.objectives.length > 0) {
+    objectives = data.objectives.map((o: any) => typeof o === 'string' ? o : o.cognitive || JSON.stringify(o));
+  } else if (Array.isArray(data.learningObjectives) && data.learningObjectives.length > 0) {
+    objectives = data.learningObjectives.map((o: any) => {
+      if (typeof o === 'string') return o;
+      if (o.cognitive) return `${o.cognitive}${o.affectiveOrPractical ? ` (${o.affectiveOrPractical})` : ''}`;
+      return JSON.stringify(o);
+    });
+  } else {
+    objectives = [
+      `Learners will explain foundational principles of ${topic || subject}.`,
+      `Learners will apply contextual problem solving to key scenarios in ${topic || subject}.`,
+    ];
+  }
+
+  const materialsNeeded: string[] = Array.isArray(data.materialsNeeded) && data.materialsNeeded.length > 0
+    ? data.materialsNeeded
+    : Array.isArray(data.requiredResourcesAndMaterials) && data.requiredResourcesAndMaterials.length > 0
+    ? data.requiredResourcesAndMaterials
+    : ['Whiteboard & markers', 'Student worksheet handouts', 'Visual presentation slides'];
+
+  const phases = (Array.isArray(data.phases) ? data.phases : []).map((p: any, idx: number) => ({
+    phase: p.phase || p.phaseName || `Phase ${idx + 1}`,
+    phaseName: p.phaseName || p.phase || `Phase ${idx + 1}`,
+    durationMinutes: Number(p.durationMinutes) || 15,
+    teacherActivity: p.teacherActivity || p.teacherActions || 'Introduce concept and guide inquiry.',
+    teacherActions: p.teacherActions || p.teacherActivity || 'Introduce concept and guide inquiry.',
+    studentActivity: p.studentActivity || p.learnerActions || 'Engage in active problem solving and discussion.',
+    learnerActions: p.learnerActions || p.studentActivity || 'Engage in active problem solving and discussion.',
+    keyQuestionsOrCheckpoints: p.keyQuestionsOrCheckpoints || [],
+    materialsNeeded: p.materialsNeeded || [],
+  }));
+
+  let assessmentStrategy = '';
+  if (typeof data.assessmentStrategy === 'string') {
+    assessmentStrategy = data.assessmentStrategy;
+  } else if (data.assessmentStrategy && typeof data.assessmentStrategy === 'object') {
+    assessmentStrategy = [
+      data.assessmentStrategy.formative ? `Formative: ${data.assessmentStrategy.formative}` : '',
+      data.assessmentStrategy.summativeOrExitTicket ? `Summative: ${data.assessmentStrategy.summativeOrExitTicket}` : '',
+    ].filter(Boolean).join(' • ');
+  } else {
+    assessmentStrategy = 'Formative checks during guided group practice and exit ticket evaluating core objective.';
+  }
+
+  const diffObj = data.differentiation || {};
+  const differentiation = {
+    support: typeof diffObj.support === 'string' ? diffObj.support : diffObj.supportForStrugglingLearners || 'Tiered scaffolding hints and peer pair guidance.',
+    extension: typeof diffObj.extension === 'string' ? diffObj.extension : diffObj.extensionForAdvancedLearners || 'Open-ended research exploration and challenge tasks.',
+    supportForStrugglingLearners: diffObj.supportForStrugglingLearners || diffObj.support || 'Tiered scaffolding hints and peer pair guidance.',
+    extensionForAdvancedLearners: diffObj.extensionForAdvancedLearners || diffObj.extension || 'Open-ended research exploration and challenge tasks.',
+  };
+
+  return {
+    ...data,
+    id: data.id || `lp-${Date.now()}`,
+    title: data.title || `Lesson Plan: ${topic || subject}`,
+    subject: data.subject || subject || 'General Education',
+    topic: data.topic || topic || 'Core Lesson',
+    gradeLevel: data.gradeLevel || gradeLevel || 'Senior Secondary / High School (Grades 9-12)',
+    durationMinutes: Number(data.durationMinutes || durationMinutes) || 60,
+    objectives,
+    learningObjectives: objectives,
+    materialsNeeded,
+    phases,
+    assessmentStrategy,
+    differentiation,
+  };
+}
+
+function normalizeCourse(data: any, subject: string, title: string, gradeLevel: string) {
+  const learningOutcomes = Array.isArray(data.learningOutcomes) && data.learningOutcomes.length > 0
+    ? data.learningOutcomes
+    : Array.isArray(data.courseObjectives) && data.courseObjectives.length > 0
+    ? data.courseObjectives
+    : [
+        `Master foundational principles and frameworks of ${title || subject}.`,
+        `Apply theoretical knowledge to practical case studies and authentic challenges.`,
+        `Synthesize integrated solutions ready for professional or academic deployment.`
+      ];
+
+  const modules = (Array.isArray(data.modules) ? data.modules : []).map((mod: any, mIdx: number) => ({
+    id: mod.id || `mod-${mIdx + 1}`,
+    moduleNumber: mod.moduleNumber || mIdx + 1,
+    title: mod.title || `Module ${mIdx + 1}: Core Concepts`,
+    overview: mod.overview || 'In-depth exploration of core module competencies.',
+    estimatedHours: Number(mod.estimatedHours) || 8,
+    lessons: (Array.isArray(mod.lessons) ? mod.lessons : []).map((l: any, lIdx: number) => ({
+      id: l.id || `l-${mIdx + 1}-${lIdx + 1}`,
+      lessonTitle: l.lessonTitle || l.title || `Lesson ${lIdx + 1}`,
+      title: l.title || l.lessonTitle || `Lesson ${lIdx + 1}`,
+      learningObjective: l.learningObjective || l.summary || (Array.isArray(l.keyLearningOutcomes) ? l.keyLearningOutcomes.join('; ') : 'Understand core mechanisms.'),
+      summary: l.summary || l.learningObjective || 'Lesson overview and focus.',
+      recommendedActivity: l.recommendedActivity || l.deliveryFormat || 'Guided analytical practice.',
+      deliveryFormat: l.deliveryFormat || l.recommendedActivity || 'Interactive lecture & exercise',
+      estimatedMinutes: Number(l.estimatedMinutes) || 60,
+    })),
+  }));
+
+  const durationWeeks = Number(data.durationWeeks) || Math.max(4, Math.ceil((Number(data.totalEstimatedHours) || 36) / 3)) || 12;
+
+  return {
+    ...data,
+    id: data.id || `course-${Date.now()}`,
+    title: data.title || title || `${subject} Master Curriculum`,
+    subject: data.subject || subject || 'Higher Education',
+    gradeLevel: data.gradeLevel || gradeLevel || 'Tertiary / Undergraduate',
+    description: data.description || 'Comprehensive curriculum designed for mastery and practical application.',
+    targetAudience: data.targetAudience || 'Students, educators, and lifelong learners',
+    durationWeeks,
+    totalEstimatedHours: data.totalEstimatedHours || durationWeeks * 3,
+    learningOutcomes,
+    courseObjectives: learningOutcomes,
+    modules,
+  };
+}
+
+function normalizeLearningPath(data: any, subject: string, title: string, targetGoal: string) {
+  let estimatedTotalWeeks = Number(data.estimatedTotalWeeks);
+  if (!estimatedTotalWeeks && typeof data.totalEstimatedDuration === 'string') {
+    const match = data.totalEstimatedDuration.match(/\d+/);
+    if (match) estimatedTotalWeeks = parseInt(match[0], 10);
+  }
+  if (!estimatedTotalWeeks) estimatedTotalWeeks = 24;
+
+  const milestones = Array.isArray(data.milestones) && data.milestones.length > 0
+    ? data.milestones
+    : Array.isArray(data.stages) && data.stages.length > 0
+    ? data.stages.map((st: any, idx: number) => ({
+        id: st.id || `ms-${idx + 1}`,
+        milestoneNumber: st.stageNumber || idx + 1,
+        phaseName: st.title || st.tier || `Stage ${idx + 1}: Foundational Core`,
+        targetWeeks: st.estimatedWeeks ? `${st.estimatedWeeks} Weeks` : '4-6 Weeks',
+        keyObjectives: Array.isArray(st.keyCompetenciesToMaster) ? st.keyCompetenciesToMaster : (Array.isArray(st.recommendedModulesOrTopics) ? st.recommendedModulesOrTopics : [`Master phase competencies for ${title || subject}`]),
+        milestoneProject: st.milestoneProjectOrAssessment || 'Milestone Capstone Deliverable',
+      }))
+    : [
+        {
+          milestoneNumber: 1,
+          phaseName: 'Foundation & Principles',
+          targetWeeks: '6 Weeks',
+          keyObjectives: [`Understand core principles of ${title || subject}`],
+          milestoneProject: 'Foundational portfolio submission',
+        },
+        {
+          milestoneNumber: 2,
+          phaseName: 'Applied Mastery & Systems',
+          targetWeeks: '8 Weeks',
+          keyObjectives: [`Build complex implementations in ${title || subject}`],
+          milestoneProject: 'Applied practical capstone',
+        }
+      ];
+
+  return {
+    ...data,
+    id: data.id || `lp-${Date.now()}`,
+    title: data.title || title || `${subject} Career & Learning Pathway`,
+    subject: data.subject || subject || 'Specialized Education',
+    targetGoal: data.targetGoal || data.targetCareerOrEducationalGoal || targetGoal || 'Comprehensive Professional Competence',
+    targetCareerOrEducationalGoal: data.targetCareerOrEducationalGoal || data.targetGoal || targetGoal || 'Comprehensive Professional Competence',
+    estimatedTotalWeeks,
+    totalEstimatedDuration: `${estimatedTotalWeeks} Weeks`,
+    milestones,
+    stages: data.stages || milestones,
+  };
+}
+
+function normalizePdfQuiz(data: any, sourceDocName: string, gradeLevel: string, difficulty: string) {
+  const sourceName = data.sourceDocumentName || data.sourceDocName || sourceDocName || 'Uploaded Document';
+  const questions = (Array.isArray(data.questions) ? data.questions : []).map((q: any, idx: number) => ({
+    id: q.id || `pq-${idx + 1}`,
+    number: q.number || q.questionNumber || idx + 1,
+    questionNumber: q.questionNumber || q.number || idx + 1,
+    question: q.question || q.prompt || `Question ${idx + 1}`,
+    prompt: q.prompt || q.question || `Question ${idx + 1}`,
+    type: q.type || 'multiple-choice',
+    options: Array.isArray(q.options) ? q.options : ['Option A', 'Option B', 'Option C', 'Option D'],
+    correctAnswer: q.correctAnswer || (q.options ? q.options[0] : 'A'),
+    explanation: q.explanation || 'Refer to source document for full context.',
+    sourceReferenceQuote: q.sourceReferenceQuote || 'Extracted from source material.',
+  }));
+
+  return {
+    ...data,
+    id: data.id || `pdf-quiz-${Date.now()}`,
+    title: data.title || `Quiz: Assessment on ${sourceName.replace(/\.[^/.]+$/, '')}`,
+    sourceDocumentName: sourceName,
+    sourceDocName: sourceName,
+    gradeLevel: data.gradeLevel || gradeLevel || 'Senior Secondary / High School (Grades 9-12)',
+    difficulty: data.difficulty || difficulty || 'Intermediate',
+    totalQuestions: questions.length,
+    questions,
+  };
+}
+
+function normalizePdfStudyPack(data: any, sourceDocName: string, gradeLevel: string) {
+  const sourceName = data.sourceDocumentName || data.sourceDocName || sourceDocName || 'Uploaded Document';
+  const overview = data.overview || data.documentOverview || 'Structured synthesis of source document.';
+  const highYieldTakeaways = Array.isArray(data.highYieldTakeaways) && data.highYieldTakeaways.length > 0
+    ? data.highYieldTakeaways
+    : Array.isArray(data.highYieldRevisionPoints) && data.highYieldRevisionPoints.length > 0
+    ? data.highYieldRevisionPoints
+    : ['Comprehensive conceptual grounding', 'Key theoretical equations and relationships', 'Practical case study applications'];
+
+  return {
+    ...data,
+    id: data.id || `sp-${Date.now()}`,
+    title: data.title || `Study Pack: ${sourceName.replace(/\.[^/.]+$/, '')}`,
+    sourceDocumentName: sourceName,
+    sourceDocName: sourceName,
+    overview,
+    documentOverview: overview,
+    gradeLevel: data.gradeLevel || gradeLevel || 'Senior Secondary / High School (Grades 9-12)',
+    highYieldTakeaways,
+    highYieldRevisionPoints: highYieldTakeaways,
+    essentialGlossary: Array.isArray(data.essentialGlossary) ? data.essentialGlossary : (Array.isArray(data.glossary) ? data.glossary : []),
+    selfCheckQuestions: Array.isArray(data.selfCheckQuestions) ? data.selfCheckQuestions : (Array.isArray(data.practiceQuestions) ? data.practiceQuestions : []),
+  };
+}
+
+function normalizePresentation(data: any, subject: string, topic: string, audienceLevel: string) {
+  const slides = (Array.isArray(data.slides) ? data.slides : []).map((s: any, idx: number) => ({
+    id: s.id || `s-${idx + 1}`,
+    slideNumber: s.slideNumber || idx + 1,
+    slideType: s.slideType || (idx === 0 ? 'title' : 'content'),
+    title: s.title || `Slide ${idx + 1}: ${topic || subject}`,
+    subtitle: s.subtitle || '',
+    bulletPoints: Array.isArray(s.bulletPoints) ? s.bulletPoints : [`Key concept point for ${topic || subject}`],
+    suggestedVisualOrDiagram: s.suggestedVisualOrDiagram || 'Conceptual breakdown diagram',
+    discussionOrEngagementPrompt: s.discussionOrEngagementPrompt || 'What are the main implications of this finding?',
+    speakerNotes: s.speakerNotes || 'Provide concrete examples and invite student perspectives.',
+  }));
+
+  return {
+    ...data,
+    id: data.id || `pres-${Date.now()}`,
+    title: data.title || `Presentation: ${topic || subject}`,
+    subtitle: data.subtitle || 'Educational Presentation Deck',
+    subject: data.subject || subject || 'Academic Subject',
+    topic: data.topic || topic || 'Core Topic',
+    targetAudience: data.targetAudience || audienceLevel || 'Senior Secondary / High School (Grades 9-12)',
+    gradeLevel: data.targetAudience || audienceLevel || 'Senior Secondary / High School (Grades 9-12)',
+    themeOrColorMood: data.themeOrColorMood || data.presentationStyle || 'High Contrast Academic & Dynamic',
+    slidesCount: slides.length,
+    slides,
+  };
+}
+
+function normalizeExam(data: any, subject: string, topic: string, gradeLevel: string, difficulty: string, durationMinutes: number, totalMarks: number, institutionHeader: string) {
+  const sections = (Array.isArray(data.sections) ? data.sections : []).map((sec: any, sIdx: number) => ({
+    id: sec.id || `sec-${sIdx + 1}`,
+    title: sec.title || `Section ${sIdx + 1}`,
+    instructions: sec.instructions || 'Answer all questions in this section.',
+    totalMarks: Number(sec.totalMarks || sec.marks) || 20,
+    marks: Number(sec.marks || sec.totalMarks) || 20,
+    questions: (Array.isArray(sec.questions) ? sec.questions : []).map((q: any, qIdx: number) => ({
+      id: q.id || `q-${sIdx + 1}-${qIdx + 1}`,
+      questionNumber: q.questionNumber || qIdx + 1,
+      type: q.type || 'multiple-choice',
+      prompt: q.prompt || q.question || 'Question prompt text',
+      marks: Number(q.marks) || 2,
+      options: Array.isArray(q.options) ? q.options : (q.type === 'multiple-choice' ? ['A) Option 1', 'B) Option 2', 'C) Option 3', 'D) Option 4'] : undefined),
+      correctAnswer: q.correctAnswer || 'A) Option 1',
+      markingGuidance: q.markingGuidance || 'Award full marks for clear conceptual justification.',
+      rubricCriteria: q.rubricCriteria || [],
+    })),
+  }));
+
+  return {
+    ...data,
+    id: data.id || `exam-${Date.now()}`,
+    title: data.title || `Examination: ${topic || subject}`,
+    institutionHeader: data.institutionHeader || institutionHeader || 'Proudly Afrikan Examination Board',
+    subject: data.subject || subject || 'General Assessment',
+    topic: data.topic || topic || 'Core Curriculum',
+    gradeLevel: data.gradeLevel || gradeLevel || 'Senior Secondary / High School (Grades 9-12)',
+    difficulty: data.difficulty || difficulty || 'Intermediate',
+    durationMinutes: Number(data.durationMinutes || durationMinutes) || 60,
+    totalMarks: Number(data.totalMarks || totalMarks) || 50,
+    generalInstructions: Array.isArray(data.generalInstructions) ? data.generalInstructions : ['Read all questions carefully.', 'Answer all sections.'],
+    sections,
+    overallMarkingNotes: data.overallMarkingNotes || 'Moderation scale: 75%+ Distinction, 60-74% Credit, 50-59% Pass.',
+  };
+}
 // Fallback Generators to ensure instant resilience
 function generateFallbackExam(subject: string, topic: string, gradeLevel: string, difficulty: string, duration: number, marks: number, header: string) {
   return {
@@ -1184,7 +1495,4 @@ function generateFallbackLearningPath(title: string, subject: string, goal: stri
     certificationOrExitMilestone: 'Proudly Afrikan Certified Practitioner Credential and Capstone Portfolio Showcase.',
     createdAt: new Date().toISOString(),
   };
-}
-
-
 }
