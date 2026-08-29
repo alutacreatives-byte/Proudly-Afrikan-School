@@ -13,7 +13,7 @@ import {
   User
 } from 'lucide-react';
 
-export type MainNavTab = 'STUDY' | 'QUIZ' | 'MY SETS' | 'PLANNER';
+export type MainNavTab = 'STUDY' | 'QUIZ' | 'BUILD' | 'MY SETS' | 'PLANNER';
 
 interface MasterHeaderProps {
   activeTab: MainNavTab;
@@ -34,6 +34,7 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
   const navItems: { id: MainNavTab; label: string; icon: React.ComponentType<{ className?: string }>; color: string; badge?: number }[] = [
     { id: 'STUDY', label: 'STUDY', icon: BookOpen, color: '#D92B8A' },
     { id: 'QUIZ', label: 'QUIZ', icon: GraduationCap, color: '#E05A2B' },
+    { id: 'BUILD', label: 'BUILD', icon: Layers, color: '#E6425E' },
     { id: 'MY SETS', label: 'MY SETS', icon: FolderOpen, color: '#7C3AED', badge: savedItemCount > 0 ? savedItemCount : undefined },
     { id: 'PLANNER', label: 'PLANNER', icon: Calendar, color: '#059669' },
   ];
@@ -44,6 +45,8 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
         return 'bg-[#161616] text-white border-[#161616] shadow-[2.5px_2.5px_0px_#D92B8A]';
       case 'QUIZ':
         return 'bg-[#161616] text-white border-[#161616] shadow-[2.5px_2.5px_0px_#E05A2B]';
+      case 'BUILD':
+        return 'bg-[#161616] text-white border-[#161616] shadow-[2.5px_2.5px_0px_#E6425E]';
       case 'MY SETS':
         return 'bg-[#161616] text-white border-[#161616] shadow-[2.5px_2.5px_0px_#7C3AED]';
       case 'PLANNER':
@@ -64,7 +67,7 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
           </span>
           <span className="text-stone-600 hidden md:inline">|</span>
           <span className="text-stone-300 font-medium hidden md:inline">
-            STUDY · QUIZ · MY SETS · PLANNER
+            STUDY · QUIZ · BUILD · MY SETS · PLANNER
           </span>
         </div>
         <div className="flex items-center gap-4 text-[10px] sm:text-[11px] font-mono font-bold text-stone-300">

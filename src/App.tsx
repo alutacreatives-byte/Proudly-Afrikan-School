@@ -2,12 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { MasterHeader, MainNavTab } from './components/MasterHeader';
 import StudyApp from './study/App';
 import QuizApp from './quiz/App';
+import BuildApp from './build/App';
 import { MySetsWorkspace } from './mysets/MySetsWorkspace';
 import { CentralPlannerView } from './planner/CentralPlannerView';
 import { StudySet, AppView as StudyAppView } from './study/types';
 import { Quiz } from './quiz/types';
+import { SavedResource } from './build/types';
 import { StorageService } from './study/services/storageService';
 import { getRecentQuizzes } from './quiz/utils/quizShare';
+import { getSavedResources } from './build/utils/storage';
 import { StudyTutorModal } from './study/components/StudyTutorModal';
 
 export default function App() {
@@ -30,7 +33,8 @@ export default function App() {
     try {
       const sets = StorageService.getAllStudySets().length;
       const quizzes = getRecentQuizzes().length;
-      setTotalSavedCount(sets + quizzes);
+      const builds = getSavedResources().length;
+      setTotalSavedCount(sets + quizzes + builds);
     } catch (e) {
       setTotalSavedCount(0);
     }
@@ -40,7 +44,7 @@ export default function App() {
     calculateSavedCount();
   }, [activeTab]);
 
-  // Check URL parameters for direct shared links (e.g. ?quiz=... or ?tab=quiz)
+  // Check URL parameters for direct shared links (e.g. ?quiz=... or ?tab=quiz or ?tab=build)
   useEffect(() => {
     try {
       const params = new URLSearchParams(window.location.search);
@@ -48,7 +52,7 @@ export default function App() {
         setActiveTab('QUIZ');
       } else if (params.get('tab')) {
         const tab = params.get('tab')?.toUpperCase();
-        if (tab === 'STUDY' || tab === 'QUIZ' || tab === 'MY SETS' || tab === 'PLANNER') {
+        if (tab === 'STUDY' || tab === 'QUIZ' || tab === 'BUILD' || tab === 'MY SETS' || tab === 'PLANNER') {
           setActiveTab(tab as MainNavTab);
         }
       }
@@ -78,9 +82,13 @@ export default function App() {
     setActiveTab('QUIZ');
   };
 
+  const handleOpenBuildResourceFromAnywhere = (_res: SavedResource) => {
+    setActiveTab('BUILD');
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF7F0] text-[#161616]">
-      {/* Universal Top Navigation Header: STUDY · QUIZ · MY SETS · PLANNER */}
+      {/* Universal Top Navigation Header: STUDY · QUIZ · BUILD · MY SETS · PLANNER */}
       <MasterHeader
         activeTab={activeTab}
         onSelectTab={handleSelectTab}
@@ -114,12 +122,18 @@ export default function App() {
           />
         )}
 
+        {activeTab === 'BUILD' && (
+          <BuildApp key="build-main" />
+        )}
+
         {activeTab === 'MY SETS' && (
           <MySetsWorkspace
             onOpenStudySet={handleOpenStudySetFromAnywhere}
             onOpenQuiz={handleOpenQuizFromAnywhere}
+            onOpenBuildResource={handleOpenBuildResourceFromAnywhere}
             onNavigateToStudy={() => setActiveTab('STUDY')}
             onNavigateToQuiz={() => setActiveTab('QUIZ')}
+            onNavigateToBuild={() => setActiveTab('BUILD')}
           />
         )}
 
