@@ -368,7 +368,6 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
       }
     } else if (selectedGoal === 'spaced_review') {
       const reviewQueue = conceptsNeedingReview
-        .map(r => r.concept)
         .filter(c => candidatePool.some(cand => cand.id === c.id));
       
       reviewQueue.forEach(c => chosenConcepts.push({ concept: c, reasonTag: 'Spaced Repetition' }));

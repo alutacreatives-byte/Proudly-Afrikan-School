@@ -186,7 +186,8 @@ export const CentralPlannerView: React.FC<CentralPlannerViewProps> = ({
 
     const set = studySets.find((s) => s.id === block.linkedSetId) || studySets[0];
     if (set) {
-      onStartStudySet(set, block.mode);
+      const studyMode = block.mode === 'quiz' ? 'study' : block.mode;
+      onStartStudySet(set, studyMode);
     }
   };
 

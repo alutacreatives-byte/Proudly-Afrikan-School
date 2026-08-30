@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { Component, useState, useEffect } from 'react';
 import { MasterHeader, MainNavTab } from './components/MasterHeader';
 import StudyApp from './study/App';
 import QuizApp from './quiz/App';
@@ -158,7 +158,7 @@ function AppContent() {
           isOpen={isTutorOpen}
           onClose={() => setIsTutorOpen(false)}
           initialMode={tutorMode}
-          activeSetTitle={selectedStudySet?.title}
+          studySet={selectedStudySet}
         />
       )}
 
@@ -173,10 +173,78 @@ function AppContent() {
   );
 }
 
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+}
+
+class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(): ErrorBoundaryState {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: any, errorInfo: any) {
+    console.error('Application runtime error:', error, errorInfo);
+  }
+
+  handleReset = () => {
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+    } catch (e) {}
+    window.location.reload();
+  };
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-[#FAF7F0] flex flex-col items-center justify-center p-6 text-center">
+          <div className="max-w-md w-full bg-white border-2 border-[#161616] p-8 rounded-2xl shadow-[4px_4px_0px_#161616]">
+            <div className="w-12 h-12 rounded-xl bg-[#D92B8A] text-white flex items-center justify-center font-display font-black text-xl mx-auto mb-4 border-2 border-[#161616] shadow-[2px_2px_0px_#161616]">
+              !
+            </div>
+            <h2 className="font-display font-black text-xl uppercase text-[#161616] mb-2">
+              Something went wrong
+            </h2>
+            <p className="font-sans text-stone-600 text-sm mb-6 leading-relaxed">
+              An unexpected issue occurred while rendering the page. Click below to reload and restore the application.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <button
+                onClick={() => window.location.reload()}
+                className="tactile-btn px-5 py-2.5 bg-[#161616] text-white font-display font-black text-xs uppercase tracking-wider rounded-xl cursor-pointer"
+              >
+                Reload Page
+              </button>
+              <button
+                onClick={this.handleReset}
+                className="tactile-btn px-5 py-2.5 bg-white text-[#161616] font-display font-black text-xs uppercase tracking-wider rounded-xl border-2 border-[#161616] cursor-pointer"
+              >
+                Reset App State
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function App() {
   return (
-    <AuthCreditProvider>
-      <AppContent />
-    </AuthCreditProvider>
+    <ErrorBoundary>
+      <AuthCreditProvider>
+        <AppContent />
+      </AuthCreditProvider>
+    </ErrorBoundary>
   );
 }

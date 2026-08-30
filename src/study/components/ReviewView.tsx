@@ -46,19 +46,22 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
   // Normalize review items to ensure safe access whether passed as StudyConcept[] or wrapper objects
   const normalizedItems: ReviewItemWrapper[] = useMemo(() => {
     const allSets = StorageService.getAllSets();
-    return (reviewItems || []).map(item => {
-      if (!item) return null;
-      // Check if item is already a wrapper with .concept
-      if ('concept' in item && (item as ReviewItemWrapper).concept) {
+    const results: ReviewItemWrapper[] = [];
+    (reviewItems || []).forEach(item => {
+      if (!item) return;
+      if ('concept' in item && (item as any).concept) {
         const wrapper = item as ReviewItemWrapper;
         const set = wrapper.set || allSets.find(s => s.id === wrapper.concept.setId);
-        return { concept: wrapper.concept, performance: wrapper.performance, set };
+        results.push({ concept: wrapper.concept, performance: wrapper.performance, set });
+      } else {
+        const concept = item as StudyConcept;
+        if (concept && concept.id) {
+          const set = allSets.find(s => s.id === concept.setId);
+          results.push({ concept, set });
+        }
       }
-      // Otherwise item is a direct StudyConcept
-      const concept = item as StudyConcept;
-      const set = allSets.find(s => s.id === concept.setId);
-      return { concept, set };
-    }).filter((i): i is ReviewItemWrapper => Boolean(i && i.concept && i.concept.id));
+    });
+    return results;
   }, [reviewItems]);
 
   // Group review items by subject category

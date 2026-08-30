@@ -309,7 +309,7 @@ export default function App({
             onOpenTutor={handleOpenGlobalTutor}
             onStartReview={() => {
               if (reviewItems.length > 0) {
-                handleStartReviewSession(reviewItems.map(r => r.concept));
+                handleStartReviewSession(reviewItems);
               } else {
                 setCurrentView('review');
               }
@@ -328,7 +328,6 @@ export default function App({
             stats={stats}
             onCreateSetClick={() => handleOpenCreateModal('topic', '')}
             onBack={handleGoBack}
-            onGoHome={() => handleNavigate('home')}
           />
         )}
 
@@ -498,7 +497,7 @@ export default function App({
         onReviewNow={() => {
           setSessionSummary(prev => ({ ...prev, isOpen: false }));
           if (reviewItems.length > 0) {
-            handleStartReviewSession(reviewItems.map(r => r.concept));
+            handleStartReviewSession(reviewItems);
           } else {
             setCurrentView('review');
           }
