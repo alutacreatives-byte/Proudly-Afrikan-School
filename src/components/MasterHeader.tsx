@@ -7,12 +7,10 @@ import {
   GraduationCap, 
   Menu, 
   X, 
-  User, 
   Zap, 
   Tag,
   UserPlus,
-  LogIn,
-  ShieldCheck
+  LogIn
 } from 'lucide-react';
 import { useAuthCredit } from '../context/AuthCreditContext';
 import { PlanTier, PLANS } from '../types/authCredit';
@@ -34,10 +32,24 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
   const [logoError, setLogoError] = useState(false);
   const { user, availableCredits, isAuthenticated, subscription, openAuthModal, openAccountModal } = useAuthCredit();
 
-  // Dynamic Plan Label: FREE, LEARNER, STUDENT, or SCHOLAR
+  // Dynamic Plan Tier: FREE, LEARNER, STUDENT, or SCHOLAR
   const currentPlanTier: PlanTier = (isAuthenticated && subscription?.planId && PLANS[subscription.planId]) 
     ? subscription.planId 
     : 'FREE';
+
+  const getPlanDisplayLabel = (tier: PlanTier): string => {
+    switch (tier) {
+      case 'LEARNER':
+        return 'Plan: Learner';
+      case 'STUDENT':
+        return 'Plan: Student';
+      case 'SCHOLAR':
+        return 'Plan: Scholar';
+      case 'FREE':
+      default:
+        return 'Plan: Free';
+    }
+  };
 
   const navItems: { id: MainNavTab; label: string; icon: React.ComponentType<{ className?: string }>; color: string; badge?: number }[] = [
     { id: 'STUDY', label: 'STUDY', icon: BookOpen, color: '#D92B8A' },
@@ -157,17 +169,17 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
           })}
         </nav>
 
-        {/* Right Actions: Dynamic Plan Pill, Credits Badge, Sign In / Sign Up or Account Profile */}
+        {/* Right Actions: Single Dynamic Plan/Account Button, Credits Badge, and Auth if unauthenticated */}
         <div className="flex items-center gap-1 sm:gap-1.5 lg:gap-1.5 xl:gap-2 shrink-0">
-          {/* Dynamic Plan Label Badge (FREE / LEARNER / STUDENT / SCHOLAR) */}
+          {/* Sole Dynamic Plan/Account Button (Plan: Free / Plan: Learner / Plan: Student / Plan: Scholar) */}
           <button
-            onClick={() => onSelectTab('PRICING')}
-            title={`Active Plan: ${currentPlanTier} (Click to manage/upgrade)`}
-            className="tactile-btn bg-white hover:bg-stone-50 text-[#161616] border-2 border-[#161616] px-1.5 sm:px-2 xl:px-2.5 py-1 sm:py-1.5 rounded-xl text-xs font-mono font-bold flex items-center gap-1 cursor-pointer shadow-[2px_2px_0px_#161616] whitespace-nowrap"
+            id="nav-plan-account-btn"
+            onClick={openAccountModal}
+            title={`${getPlanDisplayLabel(currentPlanTier)} - Click to view current plan, credits and account/upgrade options`}
+            className="tactile-btn bg-white hover:bg-stone-50 text-[#161616] border-2 border-[#161616] px-2 sm:px-2.5 xl:px-3 py-1 sm:py-1.5 rounded-xl text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer shadow-[2px_2px_0px_#161616] whitespace-nowrap"
           >
             <span className="w-2 h-2 rounded-full bg-[#D92B8A] shrink-0"></span>
-            <span className="text-[10px] text-stone-500 font-mono hidden xl:inline">PLAN:</span>
-            <span className="font-display font-black text-[10px] sm:text-xs text-[#161616] uppercase">{currentPlanTier}</span>
+            <span className="font-display font-black text-[11px] sm:text-xs text-[#161616]">{getPlanDisplayLabel(currentPlanTier)}</span>
           </button>
 
           {/* Credits Balance Badge */}
@@ -182,7 +194,7 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
           </button>
 
           {/* Unauthenticated Actions (Sign In & Sign Up) */}
-          {!isAuthenticated || !user ? (
+          {(!isAuthenticated || !user) && (
             <div className="flex items-center gap-1 sm:gap-1.5">
               <button
                 onClick={() => openAuthModal('signin')}
@@ -200,16 +212,6 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
                 <span>Sign Up</span>
               </button>
             </div>
-          ) : (
-            /* Authenticated User Account Button with Dynamic Plan Pill */
-            <button
-              onClick={openAccountModal}
-              className="tactile-btn bg-[#161616] hover:bg-stone-800 text-white border-2 border-[#161616] px-1.5 sm:px-2.5 py-1 sm:py-1.5 rounded-xl text-[10px] sm:text-xs font-display font-black flex items-center gap-1 sm:gap-1.5 cursor-pointer uppercase tracking-wider shadow-[2px_2px_0px_#D92B8A] whitespace-nowrap"
-            >
-              <User className="w-3.5 h-3.5 text-[#D92B8A] shrink-0" />
-              <span className="hidden sm:inline truncate max-w-[55px] lg:max-w-[70px] xl:max-w-[90px]">{user.name.split(' ')[0]}</span>
-              <span className="sm:hidden text-[10px]">Me</span>
-            </button>
           )}
 
           {/* Mobile/Tablet menu toggle button */}
@@ -226,23 +228,22 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
       {/* Mobile & Tablet Drawer Menu */}
       {isMobileMenuOpen && (
         <div className="lg:hidden bg-white border-b-2 border-[#161616] p-4 space-y-2 animate-in slide-in-from-top-2">
-          {/* Active Plan in Mobile Drawer */}
-          <div className="p-3 bg-[#FAF7F0] border-2 border-[#161616] rounded-xl flex items-center justify-between mb-2">
+          {/* Active Plan Button in Mobile Drawer */}
+          <button
+            onClick={() => {
+              setIsMobileMenuOpen(false);
+              openAccountModal();
+            }}
+            className="w-full p-3 bg-[#FAF7F0] border-2 border-[#161616] rounded-xl flex items-center justify-between mb-2 cursor-pointer shadow-[2px_2px_0px_#161616] text-left"
+          >
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-[#D92B8A]"></span>
-              <span className="font-mono text-xs font-bold text-stone-600">CURRENT PLAN:</span>
-              <span className="font-display font-black text-xs text-[#161616]">{currentPlanTier}</span>
+              <span className="font-display font-black text-xs text-[#161616]">{getPlanDisplayLabel(currentPlanTier)}</span>
             </div>
-            <button
-              onClick={() => {
-                setIsMobileMenuOpen(false);
-                onSelectTab('PRICING');
-              }}
-              className="text-xs font-display font-black text-[#D92B8A] uppercase hover:underline"
-            >
-              Upgrade →
-            </button>
-          </div>
+            <span className="text-xs font-display font-black text-[#D92B8A] uppercase hover:underline">
+              Manage / Upgrade →
+            </span>
+          </button>
 
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -299,18 +300,7 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
                   <span>Sign Up (400 cr)</span>
                 </button>
               </div>
-            ) : (
-              <button
-                onClick={() => {
-                  setIsMobileMenuOpen(false);
-                  openAccountModal();
-                }}
-                className="w-full py-2.5 px-3 rounded-xl bg-[#161616] text-white border-2 border-[#161616] font-display font-black text-xs uppercase flex items-center justify-center gap-2 shadow-[2px_2px_0px_#D92B8A] cursor-pointer"
-              >
-                <User className="w-3.5 h-3.5 text-[#D92B8A]" />
-                <span>Account Profile ({user.name})</span>
-              </button>
-            )}
+            ) : null}
 
             <button
               onClick={() => {
