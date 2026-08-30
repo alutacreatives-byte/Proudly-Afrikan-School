@@ -5,9 +5,10 @@ import {
   Zap, 
   Mail, 
   ArrowRight, 
-  CheckCircle2,
   Clock,
-  HelpCircle
+  HelpCircle,
+  Flame,
+  ShieldCheck
 } from 'lucide-react';
 import { useAuthCredit } from '../context/AuthCreditContext';
 import { PLANS, PlanTier, AI_CREDIT_COSTS } from '../types/authCredit';
@@ -71,32 +72,58 @@ export const PricingView: React.FC<PricingViewProps> = ({ onNavigateToTab }) => 
 
   return (
     <div className="w-full min-h-screen bg-[#FAF7F0] text-[#161616] pb-24">
-      {/* Top Banner / Hero */}
-      <section className="border-b-2 border-[#161616] bg-white py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-5xl mx-auto text-center space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FDF2F8] border border-[#D92B8A] text-[#D92B8A] font-mono text-xs font-bold uppercase tracking-wider shadow-[1.5px_1.5px_0px_#161616]">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>African-Centred Learning Credits</span>
+      {/* Top Hero Section matching Study page */}
+      <section className="pt-4 pb-12 border-b-2 border-[#161616] bg-white/60">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+          {/* Edition Badge */}
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white border-2 border-[#161616] rounded-full shadow-[2px_2px_0px_#161616] text-xs sm:text-sm font-mono font-bold tracking-wider uppercase text-stone-800">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#D92B8A] inline-block animate-pulse"></span>
+            <span>PROUDLY AFRIKAN EDUCATION • TRANSPARENT PRICING</span>
           </div>
 
-          <h1 className="font-display font-black text-3xl sm:text-5xl lg:text-6xl text-[#161616] tracking-tight uppercase leading-tight">
-            Simple, Transparent <span className="text-[#D92B8A]">Pricing</span>
-          </h1>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end">
+            <div className="lg:col-span-8 space-y-4">
+              <h1 className="font-display font-black text-5xl sm:text-7xl md:text-8xl lg:text-[5.5rem] xl:text-[6.25rem] uppercase tracking-tighter text-[#161616] leading-[0.88] sm:leading-[0.9] lg:leading-[0.92] break-words">
+                CHOOSE<br />
+                HOW YOU<br />
+                <span className="text-[#D92B8A]">LEARN.</span>
+              </h1>
 
-          <p className="font-sans text-base sm:text-lg text-stone-600 max-w-2xl mx-auto leading-relaxed">
-            Every new user gets <strong className="text-[#161616]">400 free credits</strong> to start. 
-            Upgrade to monthly plans as your revision, teaching, and study needs expand.
-          </p>
+              <p className="text-base sm:text-lg lg:text-xl text-stone-700 font-normal leading-[1.65] max-w-2xl">
+                Every new user receives <strong className="font-bold text-[#161616]">400 free once-off credits</strong>. Upgrade to flexible monthly subscriptions anytime to power your curriculum, teaching, and study workflow.
+              </p>
+            </div>
 
-          {/* Current Credit Status Indicator */}
-          <div className="pt-2 flex items-center justify-center gap-3">
-            <button
-              onClick={openAccountModal}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#FAF7F0] border-2 border-[#161616] font-mono text-xs font-bold text-[#161616] shadow-[2.5px_2.5px_0px_#161616] hover:translate-x-[1px] hover:translate-y-[1px] cursor-pointer transition-all"
-            >
-              <Zap className="w-4 h-4 text-[#D92B8A]" />
-              <span>Your Current Balance: <strong>{availableCredits.toLocaleString()} Credits</strong> ({currentPlan} Plan)</span>
-            </button>
+            {/* Current Balance Card */}
+            <div className="lg:col-span-4 flex lg:justify-end">
+              <div className="w-full lg:w-auto bg-[#FAF8F5] border-2 border-[#161616] shadow-[4px_4px_0px_#161616] rounded-3xl p-5 sm:p-6 space-y-3">
+                <div className="flex items-center justify-between border-b-2 border-stone-200 pb-2.5 gap-4">
+                  <div className="flex items-center gap-2 font-display text-xs font-black uppercase tracking-wider text-[#161616]">
+                    <Zap className="w-4 h-4 text-[#D92B8A]" />
+                    <span>YOUR ACCOUNT</span>
+                  </div>
+                  <span className="font-mono text-xs text-[#D92B8A] font-bold uppercase tracking-wider">
+                    {currentPlan} PLAN
+                  </span>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="font-display font-black text-3xl text-[#161616]">
+                    {availableCredits.toLocaleString()} <span className="text-sm font-mono font-normal text-stone-600">Credits</span>
+                  </div>
+                  <p className="font-mono text-xs text-stone-600">
+                    Available balance for AI generation
+                  </p>
+                </div>
+
+                <button
+                  onClick={openAccountModal}
+                  className="tactile-btn w-full py-2.5 px-4 rounded-2xl bg-[#161616] hover:bg-stone-800 text-white font-display text-xs font-black uppercase tracking-wider border-2 border-[#161616] shadow-[2px_2px_0px_#D92B8A] transition-all text-center cursor-pointer"
+                >
+                  Manage Account
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -105,14 +132,14 @@ export const PricingView: React.FC<PricingViewProps> = ({ onNavigateToTab }) => 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 space-y-12">
         {/* Success Alert */}
         {successNotice && (
-          <div className="p-4 rounded-2xl bg-emerald-50 border-2 border-emerald-500 text-emerald-900 font-sans text-sm font-semibold flex items-center gap-3 shadow-[3px_3px_0px_#161616] animate-in fade-in">
-            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+          <div className="p-4 rounded-2xl bg-[#FAF7F0] border-2 border-[#161616] text-[#161616] font-sans text-sm font-bold flex items-center gap-3 shadow-[3px_3px_0px_#D92B8A] animate-in fade-in">
+            <Sparkles className="w-5 h-5 text-[#D92B8A] shrink-0" />
             <span>{successNotice}</span>
           </div>
         )}
 
-        {/* 4 Plans Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
+        {/* 4 Plans Grid - Matching exact neo-brutalist card styling from screenshot */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 sm:gap-7 items-stretch">
           {plansList.map((plan) => {
             const isCurrent = currentPlan === plan.id;
             const isPopular = plan.isPopular;
@@ -120,65 +147,66 @@ export const PricingView: React.FC<PricingViewProps> = ({ onNavigateToTab }) => 
             return (
               <div
                 key={plan.id}
-                className={`relative rounded-3xl bg-white border-2 border-[#161616] p-6 flex flex-col justify-between transition-all duration-200 ${
+                onClick={() => !isCurrent && handlePlanClick(plan.id)}
+                className={`relative rounded-3xl bg-white border-2 border-[#161616] p-6 sm:p-7 flex flex-col justify-between transition-all duration-200 cursor-pointer ${
                   isPopular 
-                    ? 'shadow-[6px_6px_0px_#D92B8A] ring-2 ring-[#D92B8A]/40' 
-                    : 'shadow-[4px_4px_0px_#161616] hover:shadow-[6px_6px_0px_#161616]'
+                    ? 'shadow-[6px_6px_0px_#D92B8A] ring-2 ring-[#D92B8A]/40 hover:-translate-y-1' 
+                    : 'shadow-[4px_4px_0px_#161616] hover:shadow-[6px_6px_0px_#161616] hover:-translate-y-1'
                 }`}
               >
                 {/* Popular Badge */}
                 {isPopular && (
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3.5 py-0.5 rounded-full bg-[#D92B8A] text-white font-display font-black text-[10px] tracking-widest uppercase border border-[#161616] shadow-[1.5px_1.5px_0px_#161616] whitespace-nowrap">
+                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3.5 py-1 rounded-full bg-[#D92B8A] text-white font-display font-black text-[10px] sm:text-[11px] tracking-wider uppercase border-2 border-[#161616] shadow-[2px_2px_0px_#161616] whitespace-nowrap z-10">
                     ★ MOST POPULAR
                   </div>
                 )}
 
-                {/* Plan Header */}
                 <div>
+                  {/* Card Header with Title and Current Pill */}
                   <div className="flex items-center justify-between mb-2">
                     <h3 
-                      className="font-display font-black text-xl tracking-tight uppercase"
+                      className="font-display font-black text-2xl sm:text-3xl tracking-tight uppercase"
                       style={{ color: plan.color }}
                     >
                       {plan.name}
                     </h3>
 
                     {isCurrent && (
-                      <span className="px-2 py-0.5 rounded-md bg-[#161616] text-white font-mono text-[10px] font-bold uppercase tracking-wider">
-                        Current Plan
+                      <span className="px-2.5 py-0.5 rounded-full bg-[#161616] text-white font-mono text-[10px] font-bold uppercase tracking-wider border border-[#161616]">
+                        Current
                       </span>
                     )}
                   </div>
 
-                  <p className="font-mono text-xs text-stone-500 font-semibold mb-4 min-h-[32px]">
+                  <p className="font-mono text-xs text-stone-600 font-medium mb-4 min-h-[36px] leading-relaxed">
                     {plan.tagline}
                   </p>
 
-                  {/* Price Tag */}
-                  <div className="p-4 rounded-2xl bg-[#FAF7F0] border-2 border-[#161616] mb-5">
+                  {/* Inner Box with 2px black border for Price & Credits */}
+                  <div className="p-4 sm:p-5 rounded-2xl bg-white border-2 border-[#161616] mb-5 shadow-[2px_2px_0px_#161616]">
                     <div className="flex items-baseline gap-1">
-                      <span className="font-display font-black text-3xl sm:text-4xl text-[#161616]">
+                      <span className="font-display font-black text-4xl text-[#161616]">
                         R{plan.priceZar}
                       </span>
-                      <span className="font-mono text-xs text-stone-500 font-bold">
+                      <span className="font-mono text-xs text-stone-600 font-bold">
                         {plan.priceZar === 0 ? 'once-off' : '/month'}
                       </span>
                     </div>
 
-                    <div className="mt-2 flex items-center gap-1.5 text-xs font-display font-black uppercase text-[#161616]">
-                      <Zap className="w-4 h-4 text-[#D92B8A]" />
-                      <span>{plan.monthlyCredits.toLocaleString()} Credits {plan.isOnceOff ? 'once-off' : '/ month'}</span>
+                    <div className="mt-2.5 flex items-center gap-1.5 text-xs font-display font-black uppercase text-[#161616] border-t border-stone-100 pt-2">
+                      <Zap className="w-4 h-4 text-[#D92B8A] shrink-0" />
+                      <span>{plan.monthlyCredits.toLocaleString()} CREDITS {plan.isOnceOff ? 'ONCE-OFF' : '/ MONTH'}</span>
                     </div>
                   </div>
 
                   {/* Features List */}
                   <div className="space-y-2.5 mb-6">
-                    <p className="font-mono text-[11px] uppercase font-bold text-stone-400 tracking-wider">
+                    <p className="font-mono text-[11px] uppercase font-bold text-stone-500 tracking-wider">
                       Included in this plan:
                     </p>
                     {plan.features.map((feat, idx) => (
-                      <div key={idx} className="flex items-start gap-2 text-xs font-sans text-stone-700">
-                        <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                      <div key={idx} className="flex items-start gap-2 text-xs font-medium text-stone-800 leading-snug">
+                        <Check className="w-4 h-4 text-[#D92B8A] shrink-0 mt-0.5 stroke-[2.5]" />
                         <span>{feat}</span>
                       </div>
                     ))}
@@ -186,20 +214,25 @@ export const PricingView: React.FC<PricingViewProps> = ({ onNavigateToTab }) => 
                 </div>
 
                 {/* Plan Action Button */}
-                <div className="pt-4 border-t border-stone-200">
+                <div className="pt-4 border-t-2 border-stone-200">
                   <button
-                    onClick={() => handlePlanClick(plan.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!isCurrent) handlePlanClick(plan.id);
+                    }}
                     disabled={isCurrent}
-                    className={`w-full py-3 px-4 rounded-2xl font-display font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 border-2 border-[#161616] transition-all cursor-pointer ${
+                    className={`tactile-btn w-full py-3.5 px-5 rounded-2xl font-display font-black text-xs uppercase tracking-wider flex items-center ${
+                      isCurrent ? 'justify-center' : 'justify-between'
+                    } transition-all cursor-pointer border-2 ${
                       isCurrent
-                        ? 'bg-stone-100 text-stone-400 border-stone-300 cursor-default'
+                        ? 'bg-stone-100 text-stone-400 border-stone-300 shadow-none cursor-default'
                         : isPopular
-                        ? 'bg-[#D92B8A] hover:bg-[#c02377] text-white shadow-[3px_3px_0px_#161616] hover:translate-x-[1px] hover:translate-y-[1px]'
-                        : 'bg-[#161616] hover:bg-stone-800 text-white shadow-[3px_3px_0px_#D92B8A] hover:translate-x-[1px] hover:translate-y-[1px]'
+                        ? 'bg-[#D92B8A] hover:bg-[#c02377] text-white border-[#161616] shadow-[3px_3px_0px_#161616]'
+                        : 'bg-[#161616] hover:bg-stone-800 text-white border-[#161616] shadow-[3px_3px_0px_#161616]'
                     }`}
                   >
-                    <span>{isCurrent ? 'Active Plan' : plan.buttonLabel}</span>
-                    {!isCurrent && <ArrowRight className="w-3.5 h-3.5" />}
+                    <span>{isCurrent ? 'Active Plan' : `Select ${plan.name} Plan`}</span>
+                    {!isCurrent && <ArrowRight className="w-4 h-4 stroke-[2.5]" />}
                   </button>
                 </div>
               </div>
@@ -208,53 +241,53 @@ export const PricingView: React.FC<PricingViewProps> = ({ onNavigateToTab }) => 
         </div>
 
         {/* Free Normal Usage Guarantee Box */}
-        <div className="p-6 sm:p-8 rounded-3xl bg-white border-2 border-[#161616] shadow-[4px_4px_0px_#059669]">
+        <div className="p-6 sm:p-8 rounded-[28px] bg-white border border-stone-200/90 shadow-[0_16px_40px_rgba(0,0,0,0.06)]">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-[#ECFDF5] text-[#059669] font-mono text-xs font-bold uppercase">
-                <CheckCircle2 className="w-4 h-4" />
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FAF7F0] border border-stone-300 text-[#161616] font-mono text-xs font-bold uppercase">
+                <ShieldCheck className="w-4 h-4 text-[#D92B8A]" />
                 <span>Zero-Credit Free Access Guarantee</span>
               </div>
               <h3 className="font-display font-black text-xl sm:text-2xl text-[#161616] uppercase tracking-tight">
                 Normal platform use does NOT consume any credits
               </h3>
-              <p className="font-sans text-stone-600 text-xs sm:text-sm max-w-3xl leading-relaxed">
-                Credits are used only for creation and generation. You can freely study existing sets, take revision quizzes, review saved collections, and manage study timetables without spending a single credit.
+              <p className="font-sans text-stone-700 text-xs sm:text-sm max-w-3xl leading-relaxed">
+                Credits are used only for AI creation and generation. You can freely study existing sets, take revision quizzes, review saved collections, and manage study timetables without spending a single credit.
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 text-xs font-mono font-bold text-stone-800 shrink-0">
-              <div className="p-2.5 rounded-xl bg-[#FAF7F0] border border-stone-300 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-[#059669]"></span>
+            <div className="grid grid-cols-2 gap-2.5 text-xs font-mono font-bold text-stone-800 shrink-0 w-full md:w-auto">
+              <div className="p-2.5 rounded-2xl bg-[#FAF7F0] border border-stone-200 flex items-center gap-2 shadow-xs">
+                <span className="w-2 h-2 rounded-full bg-[#D92B8A]"></span>
                 <span>Studying: 0 cr</span>
               </div>
-              <div className="p-2.5 rounded-xl bg-[#FAF7F0] border border-stone-300 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-[#059669]"></span>
+              <div className="p-2.5 rounded-2xl bg-[#FAF7F0] border border-stone-200 flex items-center gap-2 shadow-xs">
+                <span className="w-2 h-2 rounded-full bg-[#D92B8A]"></span>
                 <span>Taking Quizzes: 0 cr</span>
               </div>
-              <div className="p-2.5 rounded-xl bg-[#FAF7F0] border border-stone-300 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-[#059669]"></span>
+              <div className="p-2.5 rounded-2xl bg-[#FAF7F0] border border-stone-200 flex items-center gap-2 shadow-xs">
+                <span className="w-2 h-2 rounded-full bg-[#D92B8A]"></span>
                 <span>My Sets: 0 cr</span>
               </div>
-              <div className="p-2.5 rounded-xl bg-[#FAF7F0] border border-stone-300 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-[#059669]"></span>
-                <span>Central Planner: 0 cr</span>
+              <div className="p-2.5 rounded-2xl bg-[#FAF7F0] border border-stone-200 flex items-center gap-2 shadow-xs">
+                <span className="w-2 h-2 rounded-full bg-[#D92B8A]"></span>
+                <span>Study Planner: 0 cr</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* AI Credit Cost Breakdown Table */}
-        <div className="p-6 sm:p-8 rounded-3xl bg-white border-2 border-[#161616] shadow-[4px_4px_0px_#161616] space-y-6">
+        <div className="p-6 sm:p-8 rounded-[28px] bg-white border border-stone-200/90 shadow-[0_16px_40px_rgba(0,0,0,0.06)] space-y-6">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <Sparkles className="w-5 h-5 text-[#D92B8A]" />
               <h3 className="font-display font-black text-xl sm:text-2xl text-[#161616] uppercase tracking-tight">
-                Credit Costs
+                Credit Cost Schedule
               </h3>
             </div>
             <p className="font-sans text-xs sm:text-sm text-stone-600">
-              Creation and generation credit cost schedule:
+              Clear breakdown of AI credits required per generation tool:
             </p>
           </div>
 
@@ -262,7 +295,7 @@ export const PricingView: React.FC<PricingViewProps> = ({ onNavigateToTab }) => 
             {creditCostItems.map((item, idx) => (
               <div
                 key={idx}
-                className="p-3.5 rounded-2xl bg-[#FAF7F0] border-2 border-[#161616] shadow-[2px_2px_0px_#161616] flex items-center justify-between gap-3"
+                className="p-3.5 rounded-2xl bg-[#FAF7F0] border border-stone-200 flex items-center justify-between gap-3 shadow-xs"
               >
                 <div>
                   <span className="text-[10px] font-mono font-bold uppercase text-stone-500">
@@ -273,7 +306,7 @@ export const PricingView: React.FC<PricingViewProps> = ({ onNavigateToTab }) => 
                   </h4>
                 </div>
 
-                <div className="px-3 py-1.5 rounded-xl bg-[#161616] text-white font-mono font-bold text-xs flex items-center gap-1 shrink-0">
+                <div className="px-3 py-1.5 rounded-xl bg-[#161616] text-white font-mono font-bold text-xs flex items-center gap-1 shrink-0 shadow-sm">
                   <Zap className="w-3 h-3 text-[#D92B8A]" />
                   <span>{item.cost} cr</span>
                 </div>
@@ -283,26 +316,26 @@ export const PricingView: React.FC<PricingViewProps> = ({ onNavigateToTab }) => 
         </div>
 
         {/* Direct Customer Support & Institutional Inquiries Card */}
-        <div className="p-6 sm:p-8 rounded-3xl bg-white border-2 border-[#161616] shadow-[4px_4px_0px_#161616] flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div className="p-6 sm:p-8 rounded-[28px] bg-white border border-stone-200/90 shadow-[0_16px_40px_rgba(0,0,0,0.06)] flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="space-y-2 max-w-2xl">
             <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#D92B8A] uppercase">
               <Mail className="w-4 h-4" />
-              <span>Direct Customer & Institutional Support</span>
+              <span>Direct Customer & School Support</span>
             </div>
             <h3 className="font-display font-black text-2xl text-[#161616] uppercase tracking-tight">
               support@proudlyafrikan.org
             </h3>
-            <p className="font-sans text-xs sm:text-sm text-stone-600 leading-relaxed">
-              For any questions regarding billing, custom institutional quotas, school purchase orders, or account access, our support team is ready to assist you.
+            <p className="font-sans text-xs sm:text-sm text-stone-700 leading-relaxed">
+              For any questions regarding monthly subscriptions, custom school and educator bulk licenses, or account access, our team is ready to assist you.
             </p>
           </div>
 
           <a
             href="mailto:support@proudlyafrikan.org"
-            className="px-5 py-3 rounded-2xl bg-[#161616] hover:bg-stone-800 text-white font-display font-black text-xs uppercase tracking-wider border-2 border-[#161616] shadow-[3px_3px_0px_#D92B8A] inline-flex items-center gap-2 cursor-pointer transition-all shrink-0 hover:translate-x-[1px] hover:translate-y-[1px]"
+            className="px-7 py-4 rounded-full bg-[#18181B] hover:bg-stone-900 text-white font-display font-black text-xs sm:text-sm uppercase tracking-wider shadow-md inline-flex items-center gap-2.5 cursor-pointer transition-all shrink-0"
           >
             <span>Contact Support</span>
-            <ArrowRight className="w-4 h-4" />
+            <ArrowRight className="w-4 h-4 text-[#D92B8A]" />
           </a>
         </div>
       </div>
@@ -311,10 +344,10 @@ export const PricingView: React.FC<PricingViewProps> = ({ onNavigateToTab }) => 
       {selectedPlanForCheckout && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
           <div 
-            className="w-full max-w-lg bg-[#FAF7F0] border-2 border-[#161616] rounded-3xl shadow-[6px_6px_0px_#161616] p-6 sm:p-8 space-y-6"
+            className="w-full max-w-lg bg-[#FAF8F5] border-2 border-[#161616] rounded-3xl shadow-[6px_6px_0px_#161616] p-6 sm:p-8 space-y-6"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-4 border-b-2 border-[#161616]">
+            <div className="flex items-center justify-between pb-4 border-b-2 border-stone-200">
               <div>
                 <span className="text-[10px] font-mono uppercase font-bold text-stone-500">
                   Plan Subscription Setup
@@ -325,21 +358,21 @@ export const PricingView: React.FC<PricingViewProps> = ({ onNavigateToTab }) => 
               </div>
               <button
                 onClick={() => setSelectedPlanForCheckout(null)}
-                className="p-1.5 rounded-xl border-2 border-[#161616] bg-white text-[#161616] hover:bg-stone-100 cursor-pointer"
+                className="w-8 h-8 rounded-xl border-2 border-[#161616] bg-white text-[#161616] hover:bg-stone-100 flex items-center justify-center font-black cursor-pointer shadow-[1.5px_1.5px_0px_#161616]"
               >
                 ✕
               </button>
             </div>
 
-            <div className="p-4 rounded-2xl bg-white border-2 border-[#161616] space-y-2">
+            <div className="p-4 rounded-2xl bg-white border-2 border-[#161616] shadow-[2px_2px_0px_#161616] space-y-2">
               <div className="flex justify-between items-baseline">
-                <span className="font-mono text-xs font-bold text-stone-500 uppercase">Monthly Price</span>
+                <span className="font-mono text-xs font-bold text-stone-600 uppercase">Monthly Price</span>
                 <span className="font-display font-black text-2xl text-[#161616]">
                   R{PLANS[selectedPlanForCheckout].priceZar} {PLANS[selectedPlanForCheckout].priceZar === 0 ? 'once-off' : '/ month'}
                 </span>
               </div>
               <div className="flex justify-between items-baseline pt-2 border-t border-stone-200">
-                <span className="font-mono text-xs font-bold text-stone-500 uppercase">Credit Allocation</span>
+                <span className="font-mono text-xs font-bold text-stone-600 uppercase">Credit Allocation</span>
                 <span className="font-mono font-bold text-sm text-[#D92B8A]">
                   +{PLANS[selectedPlanForCheckout].monthlyCredits.toLocaleString()} AI Credits
                 </span>
@@ -349,21 +382,21 @@ export const PricingView: React.FC<PricingViewProps> = ({ onNavigateToTab }) => 
             <div className="flex gap-3">
               <button
                 onClick={() => setSelectedPlanForCheckout(null)}
-                className="flex-1 py-3 px-4 rounded-2xl bg-white hover:bg-stone-100 border-2 border-[#161616] text-[#161616] font-display font-black text-xs uppercase cursor-pointer transition-all"
+                className="tactile-btn flex-1 py-3.5 px-4 rounded-2xl bg-white hover:bg-stone-50 border-2 border-[#161616] text-[#161616] font-display font-black text-xs uppercase cursor-pointer transition-all shadow-[2px_2px_0px_#161616]"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmPlanSubscription}
                 disabled={isProcessing}
-                className="flex-1 py-3 px-4 rounded-2xl bg-[#161616] hover:bg-stone-800 text-white font-display font-black text-xs uppercase tracking-wider border-2 border-[#161616] shadow-[3px_3px_0px_#D92B8A] cursor-pointer transition-all disabled:opacity-50"
+                className="tactile-btn flex-1 py-3.5 px-4 rounded-2xl bg-[#D92B8A] hover:bg-[#c02377] text-white font-display font-black text-xs uppercase tracking-wider border-2 border-[#161616] shadow-[3px_3px_0px_#161616] cursor-pointer transition-all disabled:opacity-50"
               >
                 {isProcessing ? 'Processing...' : `Confirm & Activate`}
               </button>
             </div>
 
-            <div className="text-center text-[10px] font-mono text-stone-400">
-              Need assistance? Email <a href="mailto:support@proudlyafrikan.org" className="underline hover:text-stone-600">support@proudlyafrikan.org</a>
+            <div className="text-center text-[10px] font-mono text-stone-500">
+              Need assistance? Email <a href="mailto:support@proudlyafrikan.org" className="underline hover:text-[#161616] font-bold">support@proudlyafrikan.org</a>
             </div>
           </div>
         </div>
@@ -371,3 +404,4 @@ export const PricingView: React.FC<PricingViewProps> = ({ onNavigateToTab }) => 
     </div>
   );
 };
+

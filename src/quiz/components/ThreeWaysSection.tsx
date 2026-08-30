@@ -53,19 +53,19 @@ export const ThreeWaysSection: React.FC<ThreeWaysSectionProps> = ({
   };
 
   return (
-    <section className="py-14 md:py-20 border-b border-[#292929]/10 bg-[#F5F0E6]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+    <section className="py-8 sm:py-12 border-b border-stone-200/80">
+      <div>
         {/* Section Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 pb-6 border-b border-[#292929]/10 gap-4">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 pb-6 border-b border-stone-200/80 gap-4">
           <div>
-            <span className="font-mono-code text-xs font-bold uppercase tracking-widest text-[#E05A2B] block mb-2">
+            <span className="font-mono text-xs font-bold uppercase tracking-widest text-[#E05A2B] block mb-2">
               FLEXIBLE INPUT MODES
             </span>
-            <h2 className="font-display font-black text-3xl sm:text-5xl md:text-6xl uppercase tracking-tight text-[#292929] leading-none">
+            <h2 className="font-display font-black text-3xl sm:text-5xl md:text-6xl uppercase tracking-tight text-[#161616] leading-none">
               THREE WAYS TO CREATE.
             </h2>
           </div>
-          <p className="font-mono-code text-xs sm:text-sm text-[#5E5950] max-w-md leading-relaxed">
+          <p className="font-mono text-xs sm:text-sm text-stone-600 max-w-md leading-relaxed">
             Select an input method below to immediately jump into the quiz generator workbench.
           </p>
         </div>
@@ -83,45 +83,45 @@ export const ThreeWaysSection: React.FC<ThreeWaysSectionProps> = ({
                 className={`bg-white rounded-[2rem] border transition-all p-7 sm:p-8 flex flex-col justify-between cursor-pointer group ${
                   isSelected
                     ? 'border-[#E05A2B] shadow-[0_16px_40px_-10px_rgba(224,90,43,0.15)] ring-2 ring-[#E05A2B]/20'
-                    : 'border-[#E6E0D5] shadow-[0_10px_30px_-10px_rgba(41,41,41,0.05)] hover:shadow-lg hover:-translate-y-1 hover:border-[#292929]/30'
+                    : 'border-stone-200 shadow-sm hover:shadow-md hover:-translate-y-1 hover:border-[#161616]/30'
                 }`}
               >
                 <div>
                   {/* Top card bar with number and pill */}
                   <div className="flex items-center justify-between mb-5">
-                    <span className="font-display font-black text-2xl sm:text-3xl text-[#A39E93]">
+                    <span className="font-display font-black text-2xl sm:text-3xl text-stone-400">
                       {card.num}
                     </span>
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-mono-code font-bold uppercase tracking-wider ${card.badgeClass}`}>
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider ${card.badgeClass}`}>
                       {card.badgeText}
                     </span>
                   </div>
 
                   {/* Dark Circular Icon Badge */}
-                  <div className="w-12 h-12 rounded-full bg-[#1A1A1A] text-[#E05A2B] flex items-center justify-center mb-5 group-hover:scale-110 group-hover:bg-[#E05A2B] group-hover:text-white transition-all shadow-xs">
+                  <div className="w-12 h-12 rounded-full bg-[#161616] text-[#E05A2B] flex items-center justify-center mb-5 group-hover:scale-110 group-hover:bg-[#E05A2B] group-hover:text-white transition-all shadow-xs">
                     <Icon className="w-5 h-5" />
                   </div>
 
                   {/* Title & Subtitle */}
-                  <h3 className="font-display font-black text-2xl sm:text-3xl text-[#292929] uppercase tracking-tight leading-tight">
+                  <h3 className="font-display font-black text-2xl sm:text-3xl text-[#161616] uppercase tracking-tight leading-tight">
                     {card.title}
                   </h3>
-                  <div className="font-mono-code text-[11px] font-bold text-[#E05A2B] uppercase tracking-wider mt-1 mb-3">
+                  <div className="font-mono text-[11px] font-bold text-[#E05A2B] uppercase tracking-wider mt-1 mb-3">
                     {card.subtitle}
                   </div>
 
                   {/* Subtext Description */}
-                  <p className="text-sm sm:text-base text-[#4D4D4D] leading-relaxed font-normal">
+                  <p className="text-sm sm:text-base text-stone-600 leading-relaxed font-normal">
                     {card.desc}
                   </p>
                 </div>
 
                 {/* Bottom Card Action */}
-                <div className="pt-6 mt-6 border-t border-[#292929]/10 flex items-center justify-between">
-                  <span className="font-mono-code text-xs font-bold uppercase tracking-wider text-[#292929] group-hover:text-[#E05A2B] transition-colors">
+                <div className="pt-6 mt-6 border-t border-stone-200 flex items-center justify-between">
+                  <span className="font-mono text-xs font-bold uppercase tracking-wider text-[#161616] group-hover:text-[#E05A2B] transition-colors">
                     LAUNCH BUILDER
                   </span>
-                  <div className="w-8 h-8 rounded-full bg-[#292929] text-white flex items-center justify-center group-hover:bg-[#E05A2B] group-hover:translate-y-0.5 transition-all">
+                  <div className="w-8 h-8 rounded-full bg-[#161616] text-white flex items-center justify-center group-hover:bg-[#E05A2B] group-hover:translate-y-0.5 transition-all">
                     <ArrowDown className="w-4 h-4" />
                   </div>
                 </div>

@@ -1,5 +1,6 @@
 import React, { Component, useState, useEffect } from 'react';
 import { MasterHeader, MainNavTab } from './components/MasterHeader';
+import { MasterFooter } from './components/MasterFooter';
 import StudyApp from './study/App';
 import QuizApp from './quiz/App';
 import BuildApp from './build/App';
@@ -91,7 +92,7 @@ function AppContent() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#FAF7F0] text-[#161616]">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden flex flex-col bg-[#FAF7F0] text-[#161616]">
       {/* Universal Top Navigation Header: STUDY · QUIZ · BUILD · MY SETS · PLANNER · PRICING */}
       <MasterHeader
         activeTab={activeTab}
@@ -151,6 +152,9 @@ function AppContent() {
           />
         )}
       </main>
+
+      {/* Unified Platform Footer */}
+      <MasterFooter onSelectTab={handleSelectTab} />
 
       {/* Global AI Tutor Modal */}
       {isTutorOpen && (

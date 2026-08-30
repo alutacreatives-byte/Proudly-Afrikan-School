@@ -119,43 +119,43 @@ export const EducationalContent: React.FC = () => {
   ];
 
   return (
-    <div className="bg-[#F5F0E6]">
+    <div className="space-y-10 sm:space-y-14">
       {/* SECTION: WHAT IS PROUDLY AFRIKAN QUIZ */}
-      <section className="py-16 md:py-24 max-w-7xl mx-auto px-4 sm:px-6 border-b border-[#292929]/10">
+      <section className="py-8 sm:py-12 border-b border-stone-200/80">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           <div className="lg:col-span-5 space-y-3">
-            <span className="font-mono-code text-xs font-bold uppercase tracking-widest text-[#E05A2B] block">
+            <span className="font-mono text-xs font-bold uppercase tracking-widest text-[#E05A2B] block">
               PLATFORM OVERVIEW
             </span>
-            <h2 className="font-display font-black text-3xl sm:text-4xl md:text-5xl uppercase tracking-tight text-[#292929] leading-none">
+            <h2 className="font-display font-black text-3xl sm:text-4xl md:text-5xl uppercase tracking-tight text-[#161616] leading-none">
               WHAT IS PROUDLY AFRIKAN QUIZ?
             </h2>
           </div>
 
-          <div className="lg:col-span-7 space-y-5 text-[#4D4D4D] text-base sm:text-lg md:text-xl leading-relaxed font-normal">
+          <div className="lg:col-span-7 space-y-5 text-stone-600 text-base sm:text-lg md:text-xl leading-relaxed font-normal">
             <p>
-              <strong className="text-[#292929] font-bold">Proudly Afrikan Quiz</strong> is a high-speed, editorial-grade AI assessment engine engineered to turn any subject, textbook excerpt, or course document into an active learning experience.
+              <strong className="text-[#161616] font-bold">Proudly Afrikan Quiz</strong> is a high-speed, editorial-grade AI assessment engine engineered to turn any subject, textbook excerpt, or course document into an active learning experience.
             </p>
             <p>
-              It represents the vanguard of the future <strong className="text-[#292929] font-bold">Proudly Afrikan Education</strong> platform — creating tools that celebrate intellectual rigor, modern African culture, and universal knowledge accessibility.
+              It represents the vanguard of the future <strong className="text-[#161616] font-bold">Proudly Afrikan Education</strong> platform — creating tools that celebrate intellectual rigor, modern African culture, and universal knowledge accessibility.
             </p>
           </div>
         </div>
       </section>
 
       {/* SECTION: HOW IT WORKS */}
-      <section id="how-it-works" className="py-16 md:py-24 max-w-7xl mx-auto px-4 sm:px-6 border-b border-[#292929]/10">
-        <div className="mb-12 pb-6 border-b border-[#292929]/10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+      <section id="how-it-works" className="py-8 sm:py-12 border-b border-stone-200/80">
+        <div className="mb-10 pb-6 border-b border-stone-200/80 flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
-            <span className="font-mono-code text-xs sm:text-sm font-bold uppercase tracking-widest text-[#E05A2B] block mb-2">
+            <span className="font-mono text-xs sm:text-sm font-bold uppercase tracking-widest text-[#E05A2B] block mb-2">
               THE WORKFLOW
             </span>
-            <h2 className="font-display font-black text-4xl sm:text-6xl md:text-7xl uppercase tracking-tighter text-[#292929] leading-[0.9]">
+            <h2 className="font-display font-black text-4xl sm:text-6xl md:text-7xl uppercase tracking-tighter text-[#161616] leading-[0.9]">
               HOW IT<br />
               <span className="text-[#E05A2B]">WORKS</span>
             </h2>
           </div>
-          <p className="font-mono-code text-xs sm:text-sm text-[#5E5950] max-w-md leading-relaxed">
+          <p className="font-mono text-xs sm:text-sm text-stone-600 max-w-md leading-relaxed">
             5 frictionless steps from raw curiosity to tested mastery.
           </p>
         </div>
@@ -168,39 +168,39 @@ export const EducationalContent: React.FC = () => {
             return (
               <div
                 key={item.step}
-                className="bg-white rounded-[1.75rem] border border-[#E5E0D8] p-6 sm:p-7 flex flex-col justify-between shadow-[0_10px_30px_-10px_rgba(41,41,41,0.05)] hover:shadow-lg hover:-translate-y-1 transition-all box-border min-h-[300px] group"
+                className="bg-white rounded-[1.75rem] border border-stone-200 p-6 sm:p-7 flex flex-col justify-between shadow-sm hover:shadow-md hover:-translate-y-1 transition-all box-border min-h-[300px] group"
               >
                 <div>
                   {/* Top Step + Badge */}
                   <div className="flex items-center justify-between mb-4">
-                    <span className="font-display font-black text-xl sm:text-2xl text-[#A39E93]">
+                    <span className="font-display font-black text-xl sm:text-2xl text-stone-400">
                       {item.step}
                     </span>
-                    <span className="px-2.5 py-1 bg-[#FAF0EB] text-[#E05A2B] border border-[#F0D5C9] rounded-full text-[9px] font-mono-code font-bold uppercase tracking-wider">
+                    <span className="px-2.5 py-1 bg-[#FAF0EB] text-[#E05A2B] border border-[#F0D5C9] rounded-full text-[9px] font-mono font-bold uppercase tracking-wider">
                       {item.badge}
                     </span>
                   </div>
 
-                  {/* Dark Circular Icon */}
-                  <div className="w-11 h-11 rounded-full bg-[#1A1A1A] text-[#E05A2B] flex items-center justify-center mb-4 group-hover:bg-[#E05A2B] group-hover:text-white transition-all shadow-xs">
+                  {/* Icon */}
+                  <div className="w-11 h-11 rounded-full bg-[#161616] text-[#E05A2B] flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-[#E05A2B] group-hover:text-white transition-all">
                     <Icon className="w-5 h-5" />
                   </div>
 
                   {/* Step Title */}
-                  <h3 className="font-display font-black text-lg sm:text-xl text-[#292929] uppercase tracking-tight leading-snug">
+                  <h3 className="font-display font-black text-lg sm:text-xl text-[#161616] uppercase tracking-tight leading-snug">
                     {item.title}
                   </h3>
 
                   {/* Step Description */}
-                  <p className="text-sm text-[#4D4D4D] leading-relaxed font-normal mt-2.5">
+                  <p className="text-sm text-stone-600 leading-relaxed font-normal mt-2.5">
                     {item.desc}
                   </p>
                 </div>
 
                 {/* Bottom Action Footer */}
-                <div className="pt-4 mt-5 border-t border-[#292929]/10 flex items-center justify-between text-xs font-mono-code font-bold text-[#292929]">
+                <div className="pt-4 mt-5 border-t border-stone-200 flex items-center justify-between text-xs font-mono font-bold text-[#161616]">
                   <span className="group-hover:text-[#E05A2B] transition-colors">STEP {item.step}</span>
-                  <ArrowRight className="w-3.5 h-3.5 text-[#A39E93] group-hover:text-[#E05A2B] group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight className="w-3.5 h-3.5 text-stone-400 group-hover:text-[#E05A2B] group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
             );
@@ -209,17 +209,17 @@ export const EducationalContent: React.FC = () => {
       </section>
 
       {/* SECTION: WHO IS IT FOR? */}
-      <section className="py-16 md:py-24 max-w-7xl mx-auto px-4 sm:px-6 border-b border-[#292929]/10">
-        <div className="mb-12 pb-6 border-b border-[#292929]/10 flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <section className="py-8 sm:py-12 border-b border-stone-200/80">
+        <div className="mb-10 pb-6 border-b border-stone-200/80 flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
-            <span className="font-mono-code text-xs font-bold uppercase tracking-widest text-[#E05A2B] block mb-1">
+            <span className="font-mono text-xs font-bold uppercase tracking-widest text-[#E05A2B] block mb-1">
               TARGET AUDIENCE
             </span>
-            <h2 className="font-display font-black text-3xl sm:text-5xl md:text-6xl uppercase tracking-tight text-[#292929] leading-none">
+            <h2 className="font-display font-black text-3xl sm:text-5xl md:text-6xl uppercase tracking-tight text-[#161616] leading-none">
               WHO IS IT FOR?
             </h2>
           </div>
-          <p className="font-mono-code text-xs sm:text-sm text-[#5E5950] max-w-sm">
+          <p className="font-mono text-xs sm:text-sm text-stone-600 max-w-sm">
             Built for learners, educators, and institutions across the continent and the world.
           </p>
         </div>
@@ -230,19 +230,19 @@ export const EducationalContent: React.FC = () => {
             return (
               <div
                 key={item.title}
-                className="bg-white rounded-[1.75rem] border border-[#E5E0D8] p-6 sm:p-7 flex flex-col justify-between shadow-[0_10px_30px_-10px_rgba(41,41,41,0.05)] hover:shadow-lg hover:-translate-y-1 transition-all group"
+                className="bg-white rounded-[1.75rem] border border-stone-200 p-6 sm:p-7 flex flex-col justify-between shadow-sm hover:shadow-md hover:-translate-y-1 transition-all group"
               >
                 <div>
-                  <div className="w-12 h-12 rounded-full bg-[#1A1A1A] text-[#E05A2B] flex items-center justify-center mb-5 group-hover:bg-[#E05A2B] group-hover:text-white transition-all shadow-xs">
+                  <div className="w-12 h-12 rounded-full bg-[#161616] text-[#E05A2B] flex items-center justify-center mb-5 group-hover:bg-[#E05A2B] group-hover:text-white transition-all shadow-xs">
                     <Icon className="w-6 h-6" />
                   </div>
-                  <h3 className="font-display font-black text-lg sm:text-xl text-[#292929] uppercase mb-1 leading-tight">
+                  <h3 className="font-display font-black text-lg sm:text-xl text-[#161616] uppercase mb-1 leading-tight">
                     {item.title}
                   </h3>
-                  <span className="font-mono-code text-xs font-bold text-[#E05A2B] block mb-3">
+                  <span className="font-mono text-xs font-bold text-[#E05A2B] block mb-3">
                     {item.role}
                   </span>
-                  <p className="text-sm text-[#4D4D4D] leading-relaxed font-normal">
+                  <p className="text-sm text-stone-600 leading-relaxed font-normal">
                     {item.desc}
                   </p>
                 </div>
@@ -253,12 +253,12 @@ export const EducationalContent: React.FC = () => {
       </section>
 
       {/* SECTION: FAQ */}
-      <section id="faq" className="py-16 md:py-24 max-w-4xl mx-auto px-4 sm:px-6">
-        <div className="text-center mb-12">
-          <span className="font-mono-code text-xs sm:text-sm font-bold uppercase tracking-widest text-[#E05A2B] block mb-2">
+      <section id="faq" className="py-8 sm:py-12 max-w-4xl mx-auto">
+        <div className="text-center mb-10">
+          <span className="font-mono text-xs sm:text-sm font-bold uppercase tracking-widest text-[#E05A2B] block mb-2">
             FREQUENTLY ASKED QUESTIONS
           </span>
-          <h2 className="font-display font-black text-3xl sm:text-5xl md:text-6xl uppercase tracking-tight text-[#292929] leading-none">
+          <h2 className="font-display font-black text-3xl sm:text-5xl md:text-6xl uppercase tracking-tight text-[#161616] leading-none">
             EVERYTHING YOU NEED TO KNOW
           </h2>
         </div>
@@ -269,17 +269,17 @@ export const EducationalContent: React.FC = () => {
             return (
               <div
                 key={faq.question}
-                className="bg-white rounded-2xl border border-[#E5E0D8] shadow-xs overflow-hidden transition-all"
+                className="bg-white rounded-2xl border border-stone-200 shadow-xs overflow-hidden transition-all"
               >
                 <button
                   onClick={() => toggleFaq(index)}
-                  className="w-full p-5 sm:p-6 text-left flex items-center justify-between gap-4 font-display font-bold text-base sm:text-lg md:text-xl text-[#292929] cursor-pointer hover:text-[#E05A2B] transition-colors"
+                  className="w-full p-5 sm:p-6 text-left flex items-center justify-between gap-4 font-display font-bold text-base sm:text-lg md:text-xl text-[#161616] cursor-pointer hover:text-[#E05A2B] transition-colors"
                   aria-expanded={isOpen}
                 >
                   <span className="leading-snug">{faq.question}</span>
                   <div
-                    className={`w-8 h-8 rounded-full border border-[#E0D8C5] flex items-center justify-center shrink-0 transition-transform ${
-                      isOpen ? 'bg-[#E05A2B] text-white rotate-180 border-[#E05A2B]' : 'bg-[#FAF7F2] text-[#292929]'
+                    className={`w-8 h-8 rounded-full border border-stone-300 flex items-center justify-center shrink-0 transition-transform ${
+                      isOpen ? 'bg-[#E05A2B] text-white rotate-180 border-[#E05A2B]' : 'bg-[#FAF7F0] text-[#161616]'
                     }`}
                   >
                     <ChevronDown className="w-4 h-4" />
@@ -287,8 +287,8 @@ export const EducationalContent: React.FC = () => {
                 </button>
 
                 {isOpen && (
-                  <div className="px-5 pb-6 sm:px-6 pt-0 border-t border-[#292929]/10">
-                    <p className="text-sm sm:text-base md:text-lg text-[#4D4D4D] leading-relaxed mt-4 font-normal">
+                  <div className="px-5 pb-6 sm:px-6 pt-0 border-t border-stone-200">
+                    <p className="text-sm sm:text-base md:text-lg text-stone-600 leading-relaxed mt-4 font-normal">
                       {faq.answer}
                     </p>
                   </div>

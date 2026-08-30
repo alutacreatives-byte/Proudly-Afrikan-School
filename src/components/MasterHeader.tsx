@@ -11,9 +11,11 @@ import {
   Zap, 
   Tag,
   UserPlus,
-  LogIn
+  LogIn,
+  ShieldCheck
 } from 'lucide-react';
 import { useAuthCredit } from '../context/AuthCreditContext';
+import { PlanTier, PLANS } from '../types/authCredit';
 
 export type MainNavTab = 'STUDY' | 'QUIZ' | 'BUILD' | 'MY SETS' | 'PLANNER' | 'PRICING';
 
@@ -30,15 +32,20 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [logoError, setLogoError] = useState(false);
-  const { user, availableCredits, isAuthenticated, openAuthModal, openAccountModal } = useAuthCredit();
+  const { user, availableCredits, isAuthenticated, subscription, openAuthModal, openAccountModal } = useAuthCredit();
+
+  // Dynamic Plan Label: FREE, LEARNER, STUDENT, or SCHOLAR
+  const currentPlanTier: PlanTier = (isAuthenticated && subscription?.planId && PLANS[subscription.planId]) 
+    ? subscription.planId 
+    : 'FREE';
 
   const navItems: { id: MainNavTab; label: string; icon: React.ComponentType<{ className?: string }>; color: string; badge?: number }[] = [
     { id: 'STUDY', label: 'STUDY', icon: BookOpen, color: '#D92B8A' },
     { id: 'QUIZ', label: 'QUIZ', icon: GraduationCap, color: '#E05A2B' },
     { id: 'BUILD', label: 'BUILD', icon: Layers, color: '#E6425E' },
-    { id: 'MY SETS', label: 'MY SETS', icon: FolderOpen, color: '#7C3AED', badge: savedItemCount > 0 ? savedItemCount : undefined },
-    { id: 'PLANNER', label: 'PLANNER', icon: Calendar, color: '#059669' },
-    { id: 'PRICING', label: 'PRICING', icon: Tag, color: '#2563EB' },
+    { id: 'MY SETS', label: 'MY SETS', icon: FolderOpen, color: '#161616', badge: savedItemCount > 0 ? savedItemCount : undefined },
+    { id: 'PLANNER', label: 'PLANNER', icon: Calendar, color: '#161616' },
+    { id: 'PRICING', label: 'PRICING', icon: Tag, color: '#D92B8A' },
   ];
 
   const getTabActiveStyle = (tabId: MainNavTab) => {
@@ -50,11 +57,11 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
       case 'BUILD':
         return 'bg-[#161616] text-white border-[#161616] shadow-[2.5px_2.5px_0px_#E6425E]';
       case 'MY SETS':
-        return 'bg-[#161616] text-white border-[#161616] shadow-[2.5px_2.5px_0px_#7C3AED]';
+        return 'bg-[#161616] text-white border-[#161616] shadow-[2.5px_2.5px_0px_#D92B8A]';
       case 'PLANNER':
-        return 'bg-[#161616] text-white border-[#161616] shadow-[2.5px_2.5px_0px_#059669]';
+        return 'bg-[#161616] text-white border-[#161616] shadow-[2.5px_2.5px_0px_#E05A2B]';
       case 'PRICING':
-        return 'bg-[#161616] text-white border-[#161616] shadow-[2.5px_2.5px_0px_#2563EB]';
+        return 'bg-[#161616] text-white border-[#161616] shadow-[2.5px_2.5px_0px_#D92B8A]';
       default:
         return 'bg-[#161616] text-white border-[#161616] shadow-[2.5px_2.5px_0px_#D92B8A]';
     }
@@ -83,14 +90,14 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
       </div>
 
       {/* Main Navigation Bar */}
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 sm:py-3.5 flex items-center justify-between gap-2 sm:gap-4">
+      <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 lg:px-4 xl:px-6 py-2 sm:py-2.5 flex items-center justify-between gap-1 sm:gap-2 lg:gap-2 xl:gap-3">
         {/* Brand Crest & Title */}
         <div
           onClick={() => onSelectTab('STUDY')}
-          className="flex items-center gap-2 sm:gap-3 cursor-pointer group shrink-0"
+          className="flex items-center gap-1.5 sm:gap-2 xl:gap-2.5 cursor-pointer group shrink-0"
         >
           {/* Logo Emblem Box */}
-          <div className="w-9 h-9 sm:w-10 sm:h-10 bg-[#161616] rounded-xl border-2 border-[#161616] p-1 shadow-[2px_2px_0px_#D92B8A] group-hover:shadow-[3px_3px_0px_#D92B8A] transition-all flex items-center justify-center shrink-0 overflow-hidden">
+          <div className="w-7 h-7 sm:w-8 sm:h-8 xl:w-9 xl:h-9 bg-[#161616] rounded-xl border-2 border-[#161616] p-1 shadow-[2px_2px_0px_#D92B8A] group-hover:shadow-[3px_3px_0px_#D92B8A] transition-all flex items-center justify-center shrink-0 overflow-hidden">
             {!logoError ? (
               <img
                 src="https://sifisos.com/wp-content/uploads/2026/04/Proudly-Afrikan-Logo.png"
@@ -107,22 +114,22 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
           </div>
 
           <div className="flex flex-col">
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              <span className="font-display font-black text-sm sm:text-lg tracking-tight text-[#161616] uppercase leading-none">
+            <div className="flex items-center gap-1 sm:gap-1.5">
+              <span className="font-display font-black text-xs sm:text-sm lg:text-sm xl:text-base tracking-tight text-[#161616] uppercase leading-none">
                 PROUDLY AFRIKAN
               </span>
-              <span className="font-display font-black text-[9px] sm:text-[11px] px-1.5 py-0.5 rounded bg-[#D92B8A] text-white border border-[#161616] shadow-[1px_1px_0px_#161616] uppercase">
+              <span className="font-display font-black text-[7px] sm:text-[8px] xl:text-[9px] px-1 py-0.5 rounded bg-[#D92B8A] text-white border border-[#161616] shadow-[1px_1px_0px_#161616] uppercase leading-none">
                 SCHOOL
               </span>
             </div>
-            <span className="font-mono text-[9px] sm:text-[10px] font-semibold text-stone-500 tracking-tight mt-0.5 hidden sm:inline">
+            <span className="font-mono text-[8px] xl:text-[9px] font-semibold text-stone-500 tracking-tight mt-0.5 hidden 2xl:inline">
               Learn · Test · Create · Plan · Pricing
             </span>
           </div>
         </div>
 
         {/* Desktop Main Menu (6 items: STUDY · QUIZ · BUILD · MY SETS · PLANNER · PRICING) */}
-        <nav className="hidden lg:flex items-center gap-1 xl:gap-1.5 p-1 bg-white/90 border-2 border-[#161616] rounded-2xl shadow-[2.5px_2.5px_0px_#161616] shrink-0">
+        <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1 p-0.5 xl:p-1 bg-white/95 border-2 border-[#161616] rounded-2xl shadow-[2px_2px_0px_#161616] shrink-0">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -130,16 +137,16 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
               <button
                 key={item.id}
                 onClick={() => onSelectTab(item.id)}
-                className={`px-2.5 xl:px-3 py-1.5 rounded-xl font-display font-black text-[11px] xl:text-xs tracking-wider uppercase flex items-center gap-1 xl:gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
+                className={`px-1.5 lg:px-2 xl:px-2.5 py-1 xl:py-1.5 rounded-xl font-display font-black text-[10px] xl:text-xs tracking-wider uppercase flex items-center gap-1 xl:gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
                   isActive
                     ? getTabActiveStyle(item.id)
                     : 'text-stone-800 hover:bg-[#FAF7F0] hover:text-[#161616]'
                 }`}
               >
-                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-white' : 'text-stone-700'}`} />
+                <Icon className={`w-3 h-3 xl:w-3.5 xl:h-3.5 ${isActive ? 'text-white' : 'text-stone-700'}`} />
                 <span>{item.label}</span>
                 {item.badge !== undefined && (
-                  <span className={`text-[10px] px-1.5 py-0.2 rounded-md font-mono ${
+                  <span className={`text-[8px] xl:text-[9px] px-1 py-0.2 rounded-md font-mono ${
                     isActive ? 'bg-[#D92B8A] text-white' : 'bg-stone-200 text-stone-800'
                   }`}>
                     {item.badge}
@@ -150,64 +157,93 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
           })}
         </nav>
 
-        {/* Right Actions: Credits Badge, Sign In / Sign Up or Account Profile */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          {/* Credits Badge */}
+        {/* Right Actions: Dynamic Plan Pill, Credits Badge, Sign In / Sign Up or Account Profile */}
+        <div className="flex items-center gap-1 sm:gap-1.5 lg:gap-1.5 xl:gap-2 shrink-0">
+          {/* Dynamic Plan Label Badge (FREE / LEARNER / STUDENT / SCHOLAR) */}
+          <button
+            onClick={() => onSelectTab('PRICING')}
+            title={`Active Plan: ${currentPlanTier} (Click to manage/upgrade)`}
+            className="tactile-btn bg-white hover:bg-stone-50 text-[#161616] border-2 border-[#161616] px-1.5 sm:px-2 xl:px-2.5 py-1 sm:py-1.5 rounded-xl text-xs font-mono font-bold flex items-center gap-1 cursor-pointer shadow-[2px_2px_0px_#161616] whitespace-nowrap"
+          >
+            <span className="w-2 h-2 rounded-full bg-[#D92B8A] shrink-0"></span>
+            <span className="text-[10px] text-stone-500 font-mono hidden xl:inline">PLAN:</span>
+            <span className="font-display font-black text-[10px] sm:text-xs text-[#161616] uppercase">{currentPlanTier}</span>
+          </button>
+
+          {/* Credits Balance Badge */}
           <button
             onClick={openAccountModal}
             title="View Credits & Balance"
-            className="tactile-btn bg-white hover:bg-stone-50 text-[#161616] border-2 border-[#161616] px-2 sm:px-2.5 py-1.5 rounded-xl text-xs font-mono font-bold flex items-center gap-1 cursor-pointer shadow-[2px_2px_0px_#161616] whitespace-nowrap"
+            className="tactile-btn bg-white hover:bg-stone-50 text-[#161616] border-2 border-[#161616] px-1.5 sm:px-2 xl:px-2.5 py-1 sm:py-1.5 rounded-xl text-xs font-mono font-bold flex items-center gap-1 cursor-pointer shadow-[2px_2px_0px_#161616] whitespace-nowrap"
           >
-            <Zap className="w-3.5 h-3.5 text-[#D92B8A]" />
-            <span>{availableCredits.toLocaleString()}</span>
-            <span className="text-[10px] text-stone-500 font-mono">cr</span>
+            <Zap className="w-3.5 h-3.5 text-[#D92B8A] shrink-0" />
+            <span className="text-[10px] sm:text-xs font-bold">{availableCredits.toLocaleString()}</span>
+            <span className="text-[9px] sm:text-[10px] text-stone-500 font-mono">cr</span>
           </button>
 
           {/* Unauthenticated Actions (Sign In & Sign Up) */}
           {!isAuthenticated || !user ? (
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1 sm:gap-1.5">
               <button
                 onClick={() => openAuthModal('signin')}
-                className="tactile-btn bg-white hover:bg-stone-50 text-[#161616] border-2 border-[#161616] px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-display font-black flex items-center gap-1 cursor-pointer uppercase tracking-wider shadow-[2px_2px_0px_#161616] whitespace-nowrap"
+                className="tactile-btn bg-white hover:bg-stone-50 text-[#161616] border-2 border-[#161616] px-1.5 sm:px-2 xl:px-2.5 py-1 sm:py-1.5 rounded-xl text-[10px] sm:text-xs font-display font-black flex items-center gap-1 cursor-pointer uppercase tracking-wider shadow-[2px_2px_0px_#161616] whitespace-nowrap"
               >
-                <LogIn className="w-3.5 h-3.5 text-[#D92B8A]" />
+                <LogIn className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#D92B8A] shrink-0" />
                 <span>Sign In</span>
               </button>
 
               <button
                 onClick={() => openAuthModal('signup')}
-                className="tactile-btn bg-[#161616] hover:bg-stone-800 text-white border-2 border-[#161616] px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-display font-black hidden sm:flex items-center gap-1 cursor-pointer uppercase tracking-wider shadow-[2px_2px_0px_#D92B8A] whitespace-nowrap"
+                className="tactile-btn bg-[#161616] hover:bg-stone-800 text-white border-2 border-[#161616] px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-xl text-[10px] sm:text-xs font-display font-black hidden xl:flex items-center gap-1 cursor-pointer uppercase tracking-wider shadow-[2px_2px_0px_#D92B8A] whitespace-nowrap"
               >
-                <UserPlus className="w-3.5 h-3.5 text-[#D92B8A]" />
+                <UserPlus className="w-3.5 h-3.5 text-[#D92B8A] shrink-0" />
                 <span>Sign Up</span>
               </button>
             </div>
           ) : (
-            /* Authenticated User Account Button */
+            /* Authenticated User Account Button with Dynamic Plan Pill */
             <button
               onClick={openAccountModal}
-              className="tactile-btn bg-[#161616] hover:bg-stone-800 text-white border-2 border-[#161616] px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-display font-black flex items-center gap-1.5 cursor-pointer uppercase tracking-wider shadow-[2px_2px_0px_#D92B8A] whitespace-nowrap"
+              className="tactile-btn bg-[#161616] hover:bg-stone-800 text-white border-2 border-[#161616] px-1.5 sm:px-2.5 py-1 sm:py-1.5 rounded-xl text-[10px] sm:text-xs font-display font-black flex items-center gap-1 sm:gap-1.5 cursor-pointer uppercase tracking-wider shadow-[2px_2px_0px_#D92B8A] whitespace-nowrap"
             >
-              <User className="w-3.5 h-3.5 text-[#D92B8A]" />
-              <span className="hidden md:inline truncate max-w-[90px]">{user.name.split(' ')[0]}</span>
-              <span className="md:hidden">Account</span>
+              <User className="w-3.5 h-3.5 text-[#D92B8A] shrink-0" />
+              <span className="hidden sm:inline truncate max-w-[55px] lg:max-w-[70px] xl:max-w-[90px]">{user.name.split(' ')[0]}</span>
+              <span className="sm:hidden text-[10px]">Me</span>
             </button>
           )}
 
-          {/* Mobile menu toggle button */}
+          {/* Mobile/Tablet menu toggle button */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="lg:hidden p-1.5 sm:p-2 rounded-xl border-2 border-[#161616] bg-white text-[#161616] shadow-[2px_2px_0px_#161616] cursor-pointer"
+            className="lg:hidden p-1.5 rounded-xl border-2 border-[#161616] bg-white text-[#161616] shadow-[2px_2px_0px_#161616] cursor-pointer shrink-0"
             aria-label="Toggle navigation menu"
           >
-            {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            {isMobileMenuOpen ? <X className="w-4 h-4 sm:w-5 sm:h-5" /> : <Menu className="w-4 h-4 sm:w-5 sm:h-5" />}
           </button>
         </div>
       </div>
 
-      {/* Mobile Drawer Menu */}
+      {/* Mobile & Tablet Drawer Menu */}
       {isMobileMenuOpen && (
         <div className="lg:hidden bg-white border-b-2 border-[#161616] p-4 space-y-2 animate-in slide-in-from-top-2">
+          {/* Active Plan in Mobile Drawer */}
+          <div className="p-3 bg-[#FAF7F0] border-2 border-[#161616] rounded-xl flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#D92B8A]"></span>
+              <span className="font-mono text-xs font-bold text-stone-600">CURRENT PLAN:</span>
+              <span className="font-display font-black text-xs text-[#161616]">{currentPlanTier}</span>
+            </div>
+            <button
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                onSelectTab('PRICING');
+              }}
+              className="text-xs font-display font-black text-[#D92B8A] uppercase hover:underline"
+            >
+              Upgrade →
+            </button>
+          </div>
+
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;

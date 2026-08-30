@@ -7,7 +7,6 @@ import { ProgressBar } from './components/ProgressBar';
 import { ResultsScreen } from './components/ResultsScreen';
 import { AnswerReview } from './components/AnswerReview';
 import { EducationalContent } from './components/EducationalContent';
-import { Footer } from './components/Footer';
 import {
   CreationMethod,
   Quiz,
@@ -264,7 +263,7 @@ export default function App({
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F0E6] text-[#292929] flex flex-col justify-between selection:bg-[#E05A2B] selection:text-white">
+    <div className="min-h-screen bg-[#FAF7F0] text-[#161616] flex flex-col justify-between selection:bg-[#E05A2B] selection:text-white">
       {/* Global Error Banner if API failed */}
       {globalError && (
         <div className="bg-[#FFEBE6] border-b-2 border-[#E05A2B] py-3 px-4 text-center font-mono-code text-xs sm:text-sm text-[#292929] flex items-center justify-center gap-2">
@@ -281,7 +280,7 @@ export default function App({
 
       {/* VIEW STATE: BUILDER & LANDING PAGE */}
       {viewState === 'builder' && (
-        <main className="flex-1">
+        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 space-y-14 sm:space-y-16 pb-20">
           {/* Section 1: Hero */}
           <Hero
             onStartClick={() => scrollToSection('quiz-builder')}
@@ -310,7 +309,7 @@ export default function App({
           />
 
           {/* Zero-Latency Instant Sample Preview Card */}
-          <section className="py-10 max-w-7xl mx-auto px-4 sm:px-6">
+          <section className="py-4">
             <div className="bg-white rounded-[2rem] border border-[#E6E0D5] p-7 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-[0_10px_30px_-10px_rgba(41,41,41,0.05)]">
               <div className="space-y-1.5 text-center md:text-left">
                 <span className="font-mono-code text-xs font-bold uppercase tracking-widest text-[#E05A2B]">
@@ -415,12 +414,6 @@ export default function App({
           />
         </main>
       )}
-
-      {/* Universal Editorial Footer */}
-      <Footer
-        onScrollToTop={scrollToTop}
-        onScrollToSection={scrollToSection}
-      />
     </div>
   );
 }

@@ -189,16 +189,16 @@ export const QuizBuilder: React.FC<QuizBuilderProps> = ({
   ];
 
   return (
-    <section id="quiz-builder" className="py-14 md:py-20 max-w-7xl mx-auto px-4 sm:px-6">
+    <section id="quiz-builder" className="py-8 sm:py-12 border-b border-stone-200/80">
       {/* Section Title */}
-      <div className="text-center md:text-left mb-10 pb-6 border-b border-[#292929]/10">
-        <span className="font-mono-code text-xs font-bold uppercase tracking-widest text-[#E05A2B] block mb-2">
+      <div className="text-center md:text-left mb-8 pb-6 border-b border-stone-200/80">
+        <span className="font-mono text-xs font-bold uppercase tracking-widest text-[#E05A2B] block mb-2">
           SECTION 03 • INTERACTIVE ENGINE
         </span>
-        <h2 className="font-display font-black text-3xl sm:text-5xl md:text-6xl uppercase tracking-tight text-[#292929] leading-none break-words">
+        <h2 className="font-display font-black text-3xl sm:text-5xl md:text-6xl uppercase tracking-tight text-[#161616] leading-none break-words">
           WHAT ARE WE QUIZZING?
         </h2>
-        <p className="text-base sm:text-lg text-[#4D4D4D] mt-2 max-w-3xl font-normal">
+        <p className="text-base sm:text-lg text-stone-600 mt-2 max-w-3xl font-normal">
           Select your knowledge source and configure your preferences below.
         </p>
       </div>

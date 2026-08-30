@@ -139,47 +139,12 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#F9F4EC] via-[#F4EDE3] to-[#EFE7DC] text-[#181716] flex flex-col font-sans selection:bg-[#D63651] selection:text-white antialiased relative">
-      {/* Subtle warm ambient lighting effect at top */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-gradient-to-b from-white/60 to-transparent pointer-events-none -z-0"></div>
-
+    <div className="min-h-screen bg-[#FAF7F0] text-[#181716] flex flex-col font-sans selection:bg-[#D63651] selection:text-white antialiased relative">
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 relative z-10">
-        {/* Studio / Saved Builds Sub-bar (Only shown when not actively inside a generator) */}
-        {activeTool === null && (
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-1.5 p-1 bg-white border-2 border-[#161616] rounded-2xl shadow-[2.5px_2.5px_0px_#161616]">
-              <button
-                type="button"
-                onClick={() => setActiveTab('studio')}
-                className={`px-4 py-2 rounded-xl font-display font-black text-xs uppercase tracking-wider transition-all cursor-pointer ${
-                  activeTab === 'studio'
-                    ? 'bg-[#161616] text-white shadow-[2px_2px_0px_#E6425E]'
-                    : 'text-stone-700 hover:bg-[#FAF7F0]'
-                }`}
-              >
-                Generator Studio
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('resources')}
-                className={`px-4 py-2 rounded-xl font-display font-black text-xs uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer ${
-                  activeTab === 'resources'
-                    ? 'bg-[#161616] text-white shadow-[2px_2px_0px_#E6425E]'
-                    : 'text-stone-700 hover:bg-[#FAF7F0]'
-                }`}
-              >
-                <span>My Builds</span>
-                <span className="px-1.5 py-0.2 rounded-md bg-[#E6425E] text-white text-[10px] font-mono">
-                  {savedResources.length}
-                </span>
-              </button>
-            </div>
-          </div>
-        )}
         {/* Toast Alert */}
         {toastMessage && (
-          <div className="fixed bottom-6 right-6 z-50 bg-[#181716] text-[#FAF7F0] border border-black rounded-xl px-4 py-3 shadow-xl flex items-center gap-2.5 animate-in slide-in-from-bottom-5 font-mono-code text-xs font-bold">
+          <div className="fixed bottom-6 right-6 z-50 bg-[#181716] text-[#FAF7F0] border border-black rounded-xl px-4 py-3 shadow-xl flex items-center gap-2.5 animate-in slide-in-from-bottom-5 font-mono text-xs font-bold">
             <span className="w-2 h-2 rounded-full bg-[#D63651] animate-pulse"></span>
             <span>{toastMessage}</span>
           </div>
@@ -274,18 +239,6 @@ export default function App() {
           />
         )}
       </main>
-
-      {/* Editorial Footer */}
-      <footer className="border-t border-stone-300/70 bg-white/50 backdrop-blur-md py-6 text-center font-mono-code text-xs text-stone-600 print:hidden mt-auto relative z-10">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#D63651]"></span>
-            <span className="font-bold text-[#181716] uppercase tracking-wider">PROUDLY AFRIKAN BUILD</span>
-            <span className="text-stone-400">|</span>
-            <span className="text-stone-600">An African learning platform where you can study anything.</span>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

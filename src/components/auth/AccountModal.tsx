@@ -97,8 +97,8 @@ export const AccountModal: React.FC<AccountModalProps> = ({ onNavigateToPricing 
 
         {/* Feedback message */}
         {feedbackMsg && (
-          <div className="mb-3 p-2.5 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-mono font-semibold flex items-center gap-2 animate-in fade-in">
-            <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+          <div className="mb-3 p-2.5 rounded-xl bg-[#FAF7F0] border-2 border-[#161616] text-[#161616] text-xs font-mono font-bold flex items-center gap-2 shadow-[2px_2px_0px_#D92B8A] animate-in fade-in">
+            <Sparkles className="w-4 h-4 text-[#D92B8A] shrink-0" />
             <span>{feedbackMsg}</span>
           </div>
         )}
@@ -170,7 +170,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({ onNavigateToPricing 
 
                 <div className="w-full h-2.5 rounded-full bg-stone-100 border border-stone-300 overflow-hidden mb-4">
                   <div 
-                    className="h-full rounded-full bg-linear-to-r from-[#D92B8A] to-[#7C3AED] transition-all duration-500"
+                    className="h-full rounded-full bg-[#D92B8A] transition-all duration-500"
                     style={{ 
                       width: `${Math.min(100, Math.max(8, (availableCredits / (currentPlanDetails.monthlyCredits || 400)) * 100))}%` 
                     }}
@@ -202,10 +202,10 @@ export const AccountModal: React.FC<AccountModalProps> = ({ onNavigateToPricing 
               </div>
 
               {/* Free vs Credit Rules notice */}
-              <div className="p-4 rounded-2xl bg-[#ECFDF5] border-2 border-[#059669] space-y-1.5">
+              <div className="p-4 rounded-2xl bg-white border-2 border-[#161616] shadow-[2px_2px_0px_#161616] space-y-1.5">
                 <div className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-[#059669]" />
-                  <h4 className="font-display font-black text-xs uppercase text-[#059669] tracking-wider">
+                  <ShieldCheck className="w-4 h-4 text-[#D92B8A]" />
+                  <h4 className="font-display font-black text-xs uppercase text-[#161616] tracking-wider">
                     Normal Platform Use Is 100% Free
                   </h4>
                 </div>
@@ -239,9 +239,9 @@ export const AccountModal: React.FC<AccountModalProps> = ({ onNavigateToPricing 
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
                           <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
-                            isPositive ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
+                            isPositive ? 'bg-[#FAF7F0] text-[#161616] border border-[#161616]' : 'bg-rose-50 text-rose-700 border border-rose-200'
                           }`}>
-                            {isPositive ? <Sparkles className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
+                            {isPositive ? <Sparkles className="w-3.5 h-3.5 text-[#D92B8A]" /> : <TrendingDown className="w-3.5 h-3.5" />}
                           </div>
                           <div className="min-w-0">
                             <p className="font-sans font-bold text-xs text-[#161616] truncate">
@@ -255,7 +255,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({ onNavigateToPricing 
 
                         <div className="text-right shrink-0">
                           <span className={`font-mono font-bold text-xs ${
-                            isPositive ? 'text-emerald-700' : 'text-rose-700'
+                            isPositive ? 'text-[#161616]' : 'text-rose-700'
                           }`}>
                             {isPositive ? `+${tx.amount}` : tx.amount} cr
                           </span>
