@@ -9,9 +9,10 @@ import {
   Trash2, 
   Copy, 
   Download, 
-  Clock, 
   ArrowRight,
-  GraduationCap
+  GraduationCap,
+  Zap,
+  ChevronDown
 } from 'lucide-react';
 import { StorageService } from '../study/services/storageService';
 import { getRecentQuizzes, saveRecentQuiz } from '../quiz/utils/quizShare';
@@ -108,7 +109,7 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
       items.push({
         id: `study-${set.id}`,
         kind: 'study-set',
-        kindLabel: 'Study Set',
+        kindLabel: 'STUDY SET',
         title: set.title,
         description: set.description || 'Interactive concept breakdown with active recall flashcards.',
         categoryOrSubject: set.category || 'General Curriculum',
@@ -125,7 +126,7 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
       items.push({
         id: `quiz-${quiz.id}`,
         kind: 'quiz',
-        kindLabel: 'Quiz Assessment',
+        kindLabel: 'QUIZ ASSESSMENT',
         title: quiz.title,
         description: quiz.description || `Assessment on ${quiz.topicOrSource || 'custom topic'}.`,
         categoryOrSubject: quiz.settings?.subject || 'General Knowledge',
@@ -139,16 +140,16 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
 
     // Build Resources (Exams, Worksheets, Lesson Plans, Courses, etc.)
     buildResources.forEach((res) => {
-      let kindLabel = 'Build Resource';
-      let itemCountLabel = 'Complete Document';
-      if (res.toolType === 'exam') kindLabel = 'Exam Paper';
-      else if (res.toolType === 'worksheet') kindLabel = 'Worksheet';
-      else if (res.toolType === 'lesson-plan') kindLabel = 'Lesson Plan';
-      else if (res.toolType === 'pdf-quiz') kindLabel = 'PDF Quiz';
-      else if (res.toolType === 'pdf-studypack') kindLabel = 'Study Pack';
-      else if (res.toolType === 'presentation') kindLabel = 'Slide Deck';
-      else if (res.toolType === 'course-builder') kindLabel = 'Curriculum Course';
-      else if (res.toolType === 'learning-path') kindLabel = 'Learning Path';
+      let kindLabel = 'BUILD RESOURCE';
+      let itemCountLabel = '1 Document';
+      if (res.toolType === 'exam') kindLabel = 'EXAM PAPER';
+      else if (res.toolType === 'worksheet') kindLabel = 'WORKSHEET';
+      else if (res.toolType === 'lesson-plan') kindLabel = 'LESSON PLAN';
+      else if (res.toolType === 'pdf-quiz') kindLabel = 'PDF QUIZ';
+      else if (res.toolType === 'pdf-studypack') kindLabel = 'STUDY PACK';
+      else if (res.toolType === 'presentation') kindLabel = 'SLIDE DECK';
+      else if (res.toolType === 'course-builder') kindLabel = 'CURRICULUM COURSE';
+      else if (res.toolType === 'learning-path') kindLabel = 'LEARNING PATH';
 
       items.push({
         id: `build-${res.id}`,
@@ -301,9 +302,9 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
   const getBadgeStyle = (kind: ContentKind) => {
     switch (kind) {
       case 'study-set':
-        return 'bg-[#FDEAF4] text-[#D92B8A] border-[#F7B5D8]';
+        return 'bg-[#FCE8F3] text-[#D92B8A] border-[#F5C2DC]';
       case 'quiz':
-        return 'bg-[#FFF3EC] text-[#E05A2B] border-[#FFD0B8]';
+        return 'bg-[#FFF0E6] text-[#E05A2B] border-[#FFD5C0]';
       case 'build':
         return 'bg-[#FFF0F2] text-[#E6425E] border-[#FFCCD4]';
       default:
@@ -314,13 +315,13 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
   const getPlatformIcon = (kind: ContentKind) => {
     switch (kind) {
       case 'study-set':
-        return <BookOpen className="w-4 h-4 text-[#D92B8A]" />;
+        return <BookOpen className="w-3.5 h-3.5 text-[#D92B8A]" />;
       case 'quiz':
-        return <GraduationCap className="w-4 h-4 text-[#E05A2B]" />;
+        return <GraduationCap className="w-3.5 h-3.5 text-[#E05A2B]" />;
       case 'build':
-        return <Layers className="w-4 h-4 text-[#E6425E]" />;
+        return <Layers className="w-3.5 h-3.5 text-[#E6425E]" />;
       default:
-        return <Layers className="w-4 h-4 text-[#C92A45]" />;
+        return <Layers className="w-3.5 h-3.5 text-[#C92A45]" />;
     }
   };
 
@@ -330,121 +331,124 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
 
         {/* Toast */}
         {notification && (
-          <div className="fixed top-20 right-6 z-50 bg-[#161616] text-white px-4 py-2.5 rounded-xl shadow-xl font-mono text-xs flex items-center gap-2 border border-stone-700 animate-in fade-in slide-in-from-top-2">
+          <div className="fixed top-20 right-6 z-50 bg-[#161616] text-white px-4 py-2.5 rounded-full shadow-xl font-mono text-xs flex items-center gap-2 border border-stone-700 animate-in fade-in slide-in-from-top-2">
             <Sparkles className="w-4 h-4 text-[#D92B8A]" />
             <span>{notification}</span>
           </div>
         )}
 
-        {/* Header Banner */}
-        <div className="bg-white border-2 border-[#1A1A1A] rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-[4px_4px_0px_#1A1A1A] flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-wider text-[#D92B8A]">
-              <FolderOpen className="w-4 h-4" />
+        {/* Header Banner matching My Sets and Saved Resources.jpeg */}
+        <div className="bg-[#FDFBF7] border border-[#EAE3D6] rounded-[32px] p-6 sm:p-8 shadow-[0_8px_30px_rgba(0,0,0,0.03)] flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-1.5 text-xs font-mono font-bold uppercase tracking-wider text-[#D92B8A]">
+              <Zap className="w-3.5 h-3.5 fill-[#D92B8A]/20" />
               <span>UNIFIED KNOWLEDGE REPOSITORY</span>
             </div>
             <h1 className="text-2xl sm:text-4xl font-display font-black tracking-tight text-[#161616] uppercase">
               MY SETS & SAVED RESOURCES
             </h1>
-            <p className="text-stone-600 text-sm sm:text-base max-w-2xl font-body">
+            <p className="text-stone-700 text-xs sm:text-[13px] max-w-2xl font-normal leading-relaxed">
               Your central workspace containing all created study sets, active recall flashcards, interactive quizzes, and generated educational materials across Proudly Afrikan School.
             </p>
           </div>
 
-          {/* Quick Create Buttons */}
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
+          {/* Quick Create Buttons matching reference capsules */}
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             <button
               onClick={onNavigateToStudy}
-              className="tactile-btn bg-[#FAF7F0] hover:bg-[#FDEAF4] text-[#161616] font-display font-black text-xs px-4 py-2.5 rounded-xl flex items-center gap-1.5 cursor-pointer uppercase tracking-wider"
+              className="bg-[#2C3844] hover:bg-[#374554] active:scale-95 text-[#9CB3C9] hover:text-white rounded-full px-5 py-2.5 font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all cursor-pointer flex items-center gap-1"
             >
-              <Plus className="w-3.5 h-3.5 text-[#D92B8A]" />
               <span>+ STUDY SET</span>
             </button>
             <button
               onClick={onNavigateToQuiz}
-              className="tactile-btn bg-[#161616] text-white hover:bg-stone-800 font-display font-black text-xs px-4 py-2.5 rounded-xl flex items-center gap-1.5 cursor-pointer uppercase tracking-wider"
+              className="bg-[#1A0B14] hover:bg-[#2A1020] active:scale-95 text-[#F48FB1] hover:text-white border border-[#D92B8A]/50 rounded-full px-5 py-2.5 font-mono font-bold text-xs uppercase tracking-wider shadow-[0_4px_18px_rgba(217,43,138,0.4)] transition-all cursor-pointer flex items-center gap-1"
             >
-              <Plus className="w-3.5 h-3.5 text-[#E05A2B]" />
               <span>+ QUIZ</span>
             </button>
             {onNavigateToBuild && (
               <button
                 onClick={onNavigateToBuild}
-                className="tactile-btn bg-[#FAF7F0] hover:bg-[#FFF0F2] text-[#161616] font-display font-black text-xs px-4 py-2.5 rounded-xl flex items-center gap-1.5 cursor-pointer uppercase tracking-wider"
+                className="bg-[#F2ECE1] hover:bg-[#EAE2D4] active:scale-95 text-[#161616] border border-[#E3D9C9] rounded-full px-5 py-2.5 font-mono font-bold text-xs uppercase tracking-wider shadow-xs transition-all cursor-pointer flex items-center gap-1"
               >
-                <Plus className="w-3.5 h-3.5 text-[#E6425E]" />
                 <span>+ BUILD RESOURCE</span>
               </button>
             )}
           </div>
         </div>
 
-        {/* Stats Strip */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-          <div className="bg-white border-2 border-[#1A1A1A] p-4 rounded-2xl shadow-[2.5px_2.5px_0px_#1A1A1A]">
-            <div className="text-[11px] font-mono font-bold text-stone-500 uppercase">Total Resources</div>
-            <div className="text-2xl sm:text-3xl font-display font-black text-[#161616] mt-1">{unifiedItems.length}</div>
+        {/* Stats Strip matching reference */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="bg-white border border-[#EAE3D6] p-5 rounded-[24px] shadow-[0_4px_16px_rgba(0,0,0,0.02)]">
+            <div className="text-[11px] font-mono font-bold text-stone-500 uppercase tracking-wider">TOTAL RESOURCES</div>
+            <div className="text-3xl font-display font-black text-[#161616] mt-1">{unifiedItems.length}</div>
           </div>
-          <div className="bg-[#FAF7F0] border-2 border-[#1A1A1A] p-4 rounded-2xl shadow-[2.5px_2.5px_0px_#1A1A1A]">
-            <div className="text-[11px] font-mono font-bold text-[#D92B8A] uppercase">Study Sets</div>
-            <div className="text-2xl sm:text-3xl font-display font-black text-[#161616] mt-1">{studySets.length}</div>
+          <div className="bg-white border border-[#EAE3D6] p-5 rounded-[24px] shadow-[0_4px_16px_rgba(0,0,0,0.02)]">
+            <div className="text-[11px] font-mono font-bold text-stone-500 uppercase tracking-wider">STUDY SETS</div>
+            <div className="text-3xl font-display font-black text-[#161616] mt-1">{studySets.length}</div>
           </div>
-          <div className="bg-[#FAF7F0] border-2 border-[#1A1A1A] p-4 rounded-2xl shadow-[2.5px_2.5px_0px_#1A1A1A]">
-            <div className="text-[11px] font-mono font-bold text-[#E05A2B] uppercase">Quizzes</div>
-            <div className="text-2xl sm:text-3xl font-display font-black text-[#161616] mt-1">{quizzes.length}</div>
+          <div className="bg-white border border-[#EAE3D6] p-5 rounded-[24px] shadow-[0_4px_16px_rgba(0,0,0,0.02)]">
+            <div className="text-[11px] font-mono font-bold text-stone-500 uppercase tracking-wider">QUIZZES</div>
+            <div className="text-3xl font-display font-black text-[#161616] mt-1">{quizzes.length}</div>
           </div>
-          <div className="bg-[#FAF7F0] border-2 border-[#1A1A1A] p-4 rounded-2xl shadow-[2.5px_2.5px_0px_#1A1A1A]">
-            <div className="text-[11px] font-mono font-bold text-[#E6425E] uppercase">Builds</div>
-            <div className="text-2xl sm:text-3xl font-display font-black text-[#161616] mt-1">{buildResources.length}</div>
+          <div className="bg-white border border-[#EAE3D6] p-5 rounded-[24px] shadow-[0_4px_16px_rgba(0,0,0,0.02)]">
+            <div className="text-[11px] font-mono font-bold text-stone-500 uppercase tracking-wider">BUILDS</div>
+            <div className="text-3xl font-display font-black text-[#161616] mt-1">{buildResources.length}</div>
           </div>
         </div>
 
-        {/* Filter & Search Bar */}
-        <div className="bg-white border-2 border-[#1A1A1A] rounded-2xl p-4 sm:p-5 shadow-[3px_3px_0px_#1A1A1A] space-y-4">
-          {/* Search and Sort controls */}
+        {/* Filter & Search Bar matching reference */}
+        <div className="bg-white border border-[#EAE3D6] rounded-[28px] sm:rounded-[32px] p-5 sm:p-6 shadow-[0_8px_30px_rgba(0,0,0,0.02)] space-y-4">
+          {/* Top Row: Search Input on Left, Dropdowns on Right */}
           <div className="flex flex-col sm:flex-row items-center gap-3 justify-between">
             <div className="relative w-full sm:max-w-md">
-              <Search className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-stone-400 absolute left-4 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 placeholder="Search all sets, quizzes, exams, or topics..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-[#FAF7F0] border-2 border-[#1A1A1A] rounded-xl pl-9 pr-4 py-2 text-xs sm:text-sm font-mono font-semibold text-[#161616] focus:outline-none focus:bg-white transition-all placeholder:text-stone-400"
+                className="w-full bg-[#F2ECE1] border border-[#E3D9C9] rounded-2xl pl-10 pr-4 py-2.5 text-xs sm:text-[13px] font-mono font-medium text-[#161616] focus:outline-none focus:bg-white focus:border-[#D92B8A] transition-all placeholder:text-stone-400"
               />
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
-              {/* Subject Selector */}
-              <select
-                value={selectedSubject}
-                onChange={(e) => setSelectedSubject(e.target.value)}
-                className="bg-[#FAF7F0] border-2 border-[#1A1A1A] rounded-xl px-3 py-2 text-xs font-mono font-bold text-[#161616] focus:outline-none cursor-pointer"
-              >
-                {subjectsList.map((sub) => (
-                  <option key={sub} value={sub}>
-                    {sub === 'ALL' ? 'ALL SUBJECTS' : sub}
-                  </option>
-                ))}
-              </select>
+            <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-end">
+              {/* Subject Selector Pill */}
+              <div className="relative">
+                <select
+                  value={selectedSubject}
+                  onChange={(e) => setSelectedSubject(e.target.value)}
+                  className="appearance-none bg-[#F2ECE1] border border-[#E3D9C9] rounded-full pl-4 pr-9 py-2 text-xs font-mono font-bold text-stone-800 focus:outline-none cursor-pointer"
+                >
+                  {subjectsList.map((sub) => (
+                    <option key={sub} value={sub}>
+                      {sub === 'ALL' ? 'ALL SUBJECTS' : sub.toUpperCase()}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="w-3.5 h-3.5 text-stone-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
 
-              {/* Sort Selector */}
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
-                className="bg-[#FAF7F0] border-2 border-[#1A1A1A] rounded-xl px-3 py-2 text-xs font-mono font-bold text-[#161616] focus:outline-none cursor-pointer"
-              >
-                <option value="newest">NEWEST FIRST</option>
-                <option value="oldest">OLDEST FIRST</option>
-                <option value="title">TITLE (A-Z)</option>
-              </select>
+              {/* Sort Selector Pill */}
+              <div className="relative">
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as any)}
+                  className="appearance-none bg-[#F2ECE1] border border-[#E3D9C9] rounded-full pl-4 pr-9 py-2 text-xs font-mono font-bold text-stone-800 focus:outline-none cursor-pointer"
+                >
+                  <option value="newest">NEWEST FIRST</option>
+                  <option value="oldest">OLDEST FIRST</option>
+                  <option value="title">TITLE (A-Z)</option>
+                </select>
+                <ChevronDown className="w-3.5 h-3.5 text-stone-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
             </div>
           </div>
 
-          {/* Kind Filter Pills */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs font-mono font-bold no-scrollbar">
+          {/* Kind Filter Pills with glowing magenta active capsule */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs font-mono font-bold no-scrollbar pt-1">
             {[
-              { id: 'all', label: 'All Content' },
+              { id: 'all', label: 'All Content', hasZap: true },
               { id: 'study-set', label: 'Study Sets' },
               { id: 'quiz', label: 'Quizzes' },
               { id: 'build', label: 'Build Resources' },
@@ -452,22 +456,25 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
               const count = tab.id === 'all' 
                 ? unifiedItems.length 
                 : unifiedItems.filter(i => i.kind === tab.id).length;
+              const isActive = selectedKind === tab.id;
+
               return (
                 <button
                   key={tab.id}
                   onClick={() => setSelectedKind(tab.id as ContentKind)}
-                  className={`px-3.5 py-1.5 rounded-xl border-2 transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
-                    selectedKind === tab.id
-                      ? 'bg-[#161616] text-white border-[#161616] shadow-[2px_2px_0px_#D92B8A]'
-                      : 'bg-[#FAF7F0] text-stone-700 border-[#1A1A1A] hover:bg-stone-100'
+                  className={`px-4 py-1.5 rounded-full transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 text-xs font-mono font-bold uppercase ${
+                    isActive
+                      ? 'bg-[#3E0E27] text-white border-2 border-[#D92B8A] shadow-[0_0_16px_rgba(217,43,138,0.65)]'
+                      : 'bg-[#EFEBE4] text-stone-700 hover:bg-[#E5DFD6]'
                   }`}
                 >
                   <span>{tab.label}</span>
-                  <span className={`text-[10px] px-1.5 py-0.2 rounded-md ${
-                    selectedKind === tab.id ? 'bg-[#D92B8A] text-white' : 'bg-stone-200 text-stone-800'
-                  }`}>
-                    {count}
-                  </span>
+                  {tab.hasZap && isActive && <Zap className="w-3 h-3 text-[#D92B8A] fill-[#D92B8A]" />}
+                  {!tab.hasZap && (
+                    <span className="text-[11px] text-stone-500 ml-0.5">
+                      {count}
+                    </span>
+                  )}
                 </button>
               );
             })}
@@ -476,7 +483,7 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
 
         {/* Content Grid */}
         {filteredItems.length === 0 ? (
-          <div className="bg-white border-2 border-[#1A1A1A] rounded-2xl p-12 text-center shadow-[3px_3px_0px_#1A1A1A] space-y-4">
+          <div className="bg-white border border-[#EAE3D6] rounded-[32px] p-12 text-center shadow-[0_8px_30px_rgba(0,0,0,0.02)] space-y-4">
             <FolderOpen className="w-12 h-12 text-stone-300 mx-auto" />
             <h3 className="text-lg font-display font-black uppercase text-[#161616]">No Content Found</h3>
             <p className="text-xs sm:text-sm font-mono text-stone-500 max-w-md mx-auto">
@@ -485,24 +492,16 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
             <div className="flex flex-wrap justify-center gap-3 pt-2">
               <button
                 onClick={onNavigateToStudy}
-                className="tactile-btn bg-[#D92B8A] text-white px-4 py-2 rounded-xl text-xs font-display font-black uppercase cursor-pointer"
+                className="bg-[#D92B8A] text-white px-5 py-2.5 rounded-full text-xs font-mono font-bold uppercase shadow-md cursor-pointer hover:bg-[#C92255] transition-colors"
               >
                 Open Study Builder
               </button>
               <button
                 onClick={onNavigateToQuiz}
-                className="tactile-btn bg-[#E05A2B] text-white px-4 py-2 rounded-xl text-xs font-display font-black uppercase cursor-pointer"
+                className="bg-[#161616] text-white px-5 py-2.5 rounded-full text-xs font-mono font-bold uppercase shadow-md cursor-pointer hover:bg-stone-800 transition-colors"
               >
                 Open Quiz Builder
               </button>
-              {onNavigateToBuild && (
-                <button
-                  onClick={onNavigateToBuild}
-                  className="tactile-btn bg-[#E6425E] text-white px-4 py-2 rounded-xl text-xs font-display font-black uppercase cursor-pointer"
-                >
-                  Open Resource Builder
-                </button>
-              )}
             </div>
           </div>
         ) : (
@@ -512,36 +511,36 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
                 <div
                   key={item.id}
                   onClick={() => handleOpenItem(item)}
-                  className="bg-white border-2 border-[#1A1A1A] rounded-2xl p-5 shadow-[3.5px_3.5px_0px_#1A1A1A] hover:shadow-[5.5px_5.5px_0px_#1A1A1A] hover:-translate-y-0.5 transition-all flex flex-col justify-between cursor-pointer group"
+                  className="bg-[#FDFBF7] border border-[#EAE3D6] rounded-[28px] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:shadow-[0_12px_30px_rgba(0,0,0,0.06)] hover:-translate-y-0.5 transition-all flex flex-col justify-between cursor-pointer group"
                 >
                   <div className="space-y-3">
-                    {/* Top Row: Badge & Type */}
+                    {/* Top Row: Category Pill & Counter */}
                     <div className="flex items-center justify-between gap-2">
-                      <span className={`text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg border ${getBadgeStyle(item.kind)} flex items-center gap-1.5`}>
+                      <span className={`text-[10px] font-mono font-bold uppercase tracking-wider px-3 py-1 rounded-full border ${getBadgeStyle(item.kind)} flex items-center gap-1.5`}>
                         {getPlatformIcon(item.kind)}
                         <span>{item.kindLabel}</span>
                       </span>
 
-                      <span className="text-[11px] font-mono font-bold text-stone-500">
+                      <span className="text-xs font-mono font-bold text-stone-500">
                         {item.itemCountLabel}
                       </span>
                     </div>
 
-                    {/* Title */}
-                    <h3 className="font-display font-black text-lg text-[#161616] group-hover:text-[#D92B8A] transition-colors line-clamp-2 leading-tight">
+                    {/* Title in Space Grotesk matching app typography */}
+                    <h3 className="font-grotesk font-bold text-lg sm:text-xl text-[#161616] group-hover:text-[#D92B8A] transition-colors line-clamp-2 leading-snug tracking-tight">
                       {item.title}
                     </h3>
 
                     {/* Description */}
-                    <p className="font-body text-xs text-stone-600 line-clamp-3 leading-relaxed">
+                    <p className="font-grotesk text-xs sm:text-[13px] text-stone-600 line-clamp-3 leading-relaxed font-normal">
                       {item.description}
                     </p>
                   </div>
 
                   {/* Footer Info & Actions */}
-                  <div className="mt-5 pt-4 border-t border-stone-100 flex flex-col gap-3">
+                  <div className="mt-5 pt-4 border-t border-[#EAE3D6] flex flex-col gap-3">
                     <div className="flex items-center justify-between text-[11px] font-mono text-stone-500">
-                      <span className="truncate max-w-[160px] font-bold text-stone-700">
+                      <span className="truncate max-w-[160px] font-bold text-stone-700 uppercase">
                         {item.categoryOrSubject}
                       </span>
                       <span>
@@ -555,7 +554,7 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
                         <button
                           type="button"
                           onClick={(e) => handleDuplicateItem(item, e)}
-                          className="p-1.5 rounded-lg border border-stone-200 hover:bg-stone-100 text-stone-600 hover:text-stone-900 transition-colors"
+                          className="p-1.5 rounded-full bg-white border border-[#EAE3D6] hover:bg-stone-100 text-stone-600 hover:text-stone-900 transition-colors shadow-xs"
                           title="Duplicate Item"
                         >
                           <Copy className="w-3.5 h-3.5" />
@@ -563,7 +562,7 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
                         <button
                           type="button"
                           onClick={(e) => handleExportJson(item, e)}
-                          className="p-1.5 rounded-lg border border-stone-200 hover:bg-stone-100 text-stone-600 hover:text-stone-900 transition-colors"
+                          className="p-1.5 rounded-full bg-white border border-[#EAE3D6] hover:bg-stone-100 text-stone-600 hover:text-stone-900 transition-colors shadow-xs"
                           title="Export as JSON"
                         >
                           <Download className="w-3.5 h-3.5" />
@@ -571,7 +570,7 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
                         <button
                           type="button"
                           onClick={(e) => handleDeleteItem(item, e)}
-                          className="p-1.5 rounded-lg border border-stone-200 hover:bg-red-50 text-stone-400 hover:text-red-600 transition-colors"
+                          className="p-1.5 rounded-full bg-white border border-[#EAE3D6] hover:bg-red-50 text-stone-400 hover:text-red-600 transition-colors shadow-xs"
                           title="Delete Item"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -579,7 +578,7 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
                       </div>
 
                       {/* Primary Open Trigger */}
-                      <span className="text-xs font-display font-black text-[#161616] group-hover:text-[#D92B8A] flex items-center gap-1 uppercase tracking-wider">
+                      <span className="text-xs font-mono font-bold text-[#161616] group-hover:text-[#D92B8A] flex items-center gap-1 uppercase tracking-wider">
                         <span>OPEN</span>
                         <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                       </span>
