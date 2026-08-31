@@ -17,7 +17,8 @@ import {
   Bell,
   Check,
   Pause,
-  AlertCircle
+  AlertCircle,
+  Zap
 } from 'lucide-react';
 import { StorageService } from '../study/services/storageService';
 import { StudySet, StudyConcept } from '../study/types';
@@ -219,17 +220,17 @@ export const CentralPlannerView: React.FC<CentralPlannerViewProps> = ({
     <div className="min-h-screen bg-[#FAF7F0] py-6 sm:py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-6">
 
-        {/* Header Hero */}
-        <div className="bg-white border-2 border-[#1A1A1A] rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-[4px_4px_0px_#1A1A1A] flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-wider text-[#D92B8A]">
-              <Calendar className="w-4 h-4" />
+        {/* Header Hero matching Study and Revision Planner.jpeg */}
+        <div className="bg-[#FDFBF7] border border-[#EAE3D6] rounded-[32px] p-6 sm:p-8 shadow-[0_8px_30px_rgba(0,0,0,0.03)] flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-1.5 text-xs font-mono font-bold uppercase tracking-wider text-[#D92B8A]">
+              <Zap className="w-3.5 h-3.5 fill-[#D92B8A]/20" />
               <span>CENTRALISED LEARNING PLANNER</span>
             </div>
             <h1 className="text-2xl sm:text-4xl font-display font-black tracking-tight text-[#161616] uppercase">
               STUDY & REVISION PLANNER
             </h1>
-            <p className="text-stone-600 text-sm sm:text-base max-w-2xl font-body">
+            <p className="text-stone-700 text-xs sm:text-[13px] max-w-2xl font-normal leading-relaxed">
               Time-box your study sessions, schedule active recall reviews, and keep your curriculum progress on track with integrated Pomodoro and deep-focus timers.
             </p>
           </div>
@@ -237,23 +238,22 @@ export const CentralPlannerView: React.FC<CentralPlannerViewProps> = ({
           <div className="flex items-center gap-3 shrink-0">
             <button
               onClick={() => setIsAddModalOpen(true)}
-              className="tactile-btn bg-[#161616] text-white hover:bg-stone-800 font-display font-black text-xs px-5 py-3 rounded-xl flex items-center gap-2 cursor-pointer uppercase tracking-wider"
+              className="bg-[#1A0B14] hover:bg-[#2A1020] active:scale-95 text-[#F48FB1] hover:text-white border border-[#D92B8A]/50 rounded-full px-6 py-3 font-mono font-bold text-xs uppercase tracking-wider shadow-[0_4px_18px_rgba(217,43,138,0.4)] flex items-center gap-1.5 transition-all cursor-pointer"
             >
-              <Plus className="w-4 h-4 text-[#D92B8A]" />
-              <span>+ SCHEDULE SESSION</span>
+              <span>+ + SCHEDULE SESSION</span>
             </button>
           </div>
         </div>
 
-        {/* Active Focus Time-Box Bar */}
-        <div className="bg-gradient-to-r from-[#18181B] to-[#27272A] border-2 border-[#161616] rounded-2xl p-6 text-white shadow-[4px_4px_0px_#D92B8A]">
+        {/* Active Focus Time-Box Bar matching reference */}
+        <div className="bg-[#0D0D0E] border border-stone-800/80 rounded-[28px] sm:rounded-[32px] p-6 sm:p-7 text-white shadow-[0_12px_36px_rgba(0,0,0,0.18)]">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="space-y-1">
-              <div className="flex items-center gap-2 text-[11px] font-mono font-bold uppercase text-[#D92B8A] tracking-wider">
-                <Clock className="w-4 h-4 animate-pulse" />
+              <div className="flex items-center gap-1.5 text-[11px] font-mono font-bold uppercase text-[#D92B8A] tracking-wider">
+                <Clock className="w-3.5 h-3.5" />
                 <span>TIME-BOXED FOCUS ENGINE</span>
               </div>
-              <h2 className="text-xl sm:text-2xl font-display font-black tracking-tight">
+              <h2 className="text-lg sm:text-xl font-display font-black tracking-tight text-white">
                 {activeSessionBlock ? activeSessionBlock.title : 'Ready for a Focused Study Block'}
               </h2>
               <p className="text-stone-400 text-xs font-mono">
@@ -264,41 +264,39 @@ export const CentralPlannerView: React.FC<CentralPlannerViewProps> = ({
             </div>
 
             {/* Timer & Controls */}
-            <div className="flex items-center gap-4">
-              <div className="bg-black/50 border border-stone-700 px-5 py-2.5 rounded-2xl">
-                <div className="text-[10px] font-mono uppercase text-stone-400 font-bold">Focus Timer</div>
-                <div className="text-3xl font-mono font-black tracking-widest text-[#D92B8A]">
-                  {formatTimer(timerSecondsLeft)}
+            <div className="flex items-center gap-3">
+              <div className="bg-[#202022] border border-stone-700/70 px-5 py-2 rounded-2xl flex flex-col items-center justify-center min-w-[120px]">
+                <div className="text-[10px] font-mono uppercase text-[#D92B8A] font-bold">Focus Timer</div>
+                <div className="text-2xl sm:text-3xl font-mono font-bold tracking-widest text-white">
+                  {formatTimer(timerSecondsLeft).replace(':', ' : ')}
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setIsTimerRunning(!isTimerRunning)}
-                  className={`p-3.5 rounded-2xl border-2 border-white/20 transition-all cursor-pointer font-bold ${
-                    isTimerRunning ? 'bg-amber-500 hover:bg-amber-600 text-black' : 'bg-[#D92B8A] hover:bg-[#BF1E75] text-white'
-                  }`}
+                  className="w-11 h-11 rounded-full bg-gradient-to-r from-[#E02D68] via-[#D92B8A] to-[#C92255] text-white flex items-center justify-center shadow-[0_0_22px_rgba(217,43,138,0.7)] hover:scale-105 active:scale-95 transition-all cursor-pointer shrink-0"
                   title={isTimerRunning ? 'Pause' : 'Start Focus'}
                 >
-                  {isTimerRunning ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 fill-current" />}
+                  {isTimerRunning ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 fill-current ml-0.5" />}
                 </button>
                 <button
                   onClick={() => {
                     setIsTimerRunning(false);
                     setTimerSecondsLeft(selectedDuration * 60);
                   }}
-                  className="p-3.5 rounded-2xl border-2 border-white/20 bg-stone-800 hover:bg-stone-700 text-stone-300 transition-all cursor-pointer"
+                  className="w-11 h-11 rounded-full bg-[#202022] hover:bg-stone-700 text-stone-300 border border-stone-700/80 flex items-center justify-center transition-all cursor-pointer shrink-0"
                   title="Reset"
                 >
-                  <RotateCcw className="w-5 h-5" />
+                  <RotateCcw className="w-4 h-4" />
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Quick Presets */}
-          <div className="mt-6 pt-5 border-t border-stone-800 flex flex-wrap items-center gap-2.5">
-            <span className="text-xs font-mono text-stone-400 uppercase font-bold mr-2">Quick Presets:</span>
+          {/* Quick Presets with glowing magenta active pill */}
+          <div className="mt-5 pt-4 border-t border-stone-800/80 flex flex-wrap items-center gap-2.5">
+            <span className="text-xs font-mono text-stone-400 uppercase font-bold mr-2">QUICK PRESETS:</span>
             {[
               { label: '15 MIN SPRINT', mins: 15 },
               { label: '25 MIN POMODORO', mins: 25 },
@@ -312,10 +310,10 @@ export const CentralPlannerView: React.FC<CentralPlannerViewProps> = ({
                   setTimerSecondsLeft(preset.mins * 60);
                   setIsTimerRunning(false);
                 }}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer border ${
+                className={`px-4 py-1.5 rounded-full text-xs font-mono font-bold uppercase transition-all cursor-pointer ${
                   selectedDuration === preset.mins
-                    ? 'bg-[#D92B8A] text-white border-[#D92B8A]'
-                    : 'bg-stone-800/80 text-stone-300 border-stone-700 hover:bg-stone-700'
+                    ? 'bg-[#3E0E27] text-white border-2 border-[#D92B8A] shadow-[0_0_16px_rgba(217,43,138,0.65)]'
+                    : 'bg-[#202022] text-stone-300 border border-stone-700/80 hover:bg-stone-700'
                 }`}
               >
                 {preset.label}
@@ -324,36 +322,36 @@ export const CentralPlannerView: React.FC<CentralPlannerViewProps> = ({
           </div>
         </div>
 
-        {/* Stats Strip */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-          <div className="bg-white border-2 border-[#1A1A1A] p-4 rounded-2xl shadow-[2.5px_2.5px_0px_#1A1A1A]">
-            <div className="text-[11px] font-mono font-bold text-stone-500 uppercase">Sessions Planned</div>
-            <div className="text-2xl sm:text-3xl font-display font-black text-[#161616] mt-1">{schedule.length}</div>
+        {/* Stats Strip matching reference */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="bg-white border border-[#EAE3D6] p-5 rounded-[24px] shadow-[0_4px_16px_rgba(0,0,0,0.02)]">
+            <div className="text-[11px] font-mono font-bold text-stone-500 uppercase tracking-wider">SESSIONS PLANNED</div>
+            <div className="text-3xl font-display font-black text-[#161616] mt-1">{schedule.length}</div>
           </div>
-          <div className="bg-[#FAF7F0] border-2 border-[#1A1A1A] p-4 rounded-2xl shadow-[2.5px_2.5px_0px_#1A1A1A]">
-            <div className="text-[11px] font-mono font-bold text-[#D92B8A] uppercase">Completed Today</div>
-            <div className="text-2xl sm:text-3xl font-display font-black text-[#161616] mt-1">{completedCount}</div>
+          <div className="bg-white border border-[#EAE3D6] p-5 rounded-[24px] shadow-[0_4px_16px_rgba(0,0,0,0.02)]">
+            <div className="text-[11px] font-mono font-bold text-stone-500 uppercase tracking-wider">COMPLETED TODAY</div>
+            <div className="text-3xl font-display font-black text-[#161616] mt-1">{completedCount}</div>
           </div>
-          <div className="bg-[#FAF7F0] border-2 border-[#1A1A1A] p-4 rounded-2xl shadow-[2.5px_2.5px_0px_#1A1A1A]">
-            <div className="text-[11px] font-mono font-bold text-amber-600 uppercase">Planned Time</div>
-            <div className="text-2xl sm:text-3xl font-display font-black text-[#161616] mt-1">{totalMinutesPlanned}m</div>
+          <div className="bg-white border border-[#EAE3D6] p-5 rounded-[24px] shadow-[0_4px_16px_rgba(0,0,0,0.02)]">
+            <div className="text-[11px] font-mono font-bold text-stone-500 uppercase tracking-wider">PLANNED TIME</div>
+            <div className="text-3xl font-display font-black text-[#161616] mt-1">{totalMinutesPlanned}m</div>
           </div>
-          <div className="bg-[#FAF7F0] border-2 border-[#1A1A1A] p-4 rounded-2xl shadow-[2.5px_2.5px_0px_#1A1A1A]">
-            <div className="text-[11px] font-mono font-bold text-emerald-600 uppercase">Study Streak</div>
-            <div className="text-2xl sm:text-3xl font-display font-black text-[#161616] mt-1 flex items-center gap-1">
+          <div className="bg-white border border-[#EAE3D6] p-5 rounded-[24px] shadow-[0_4px_16px_rgba(0,0,0,0.02)]">
+            <div className="text-[11px] font-mono font-bold text-stone-500 uppercase tracking-wider">STUDY STREAK</div>
+            <div className="text-3xl font-display font-black text-[#161616] mt-1 flex items-center gap-1.5">
               <span>7 Days</span>
-              <Flame className="w-5 h-5 text-orange-500 fill-orange-500" />
+              <Flame className="w-6 h-6 text-orange-500 fill-orange-500" />
             </div>
           </div>
         </div>
 
-        {/* Schedule List */}
-        <div className="bg-white border-2 border-[#1A1A1A] rounded-2xl p-6 shadow-[3px_3px_0px_#1A1A1A] space-y-4">
+        {/* Schedule List matching reference */}
+        <div className="bg-white border border-[#EAE3D6] rounded-[32px] p-6 sm:p-7 shadow-[0_8px_30px_rgba(0,0,0,0.03)] space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="font-display font-black text-lg text-[#161616] uppercase tracking-tight">
+            <h3 className="font-display font-black text-base sm:text-lg text-[#161616] uppercase tracking-tight">
               YOUR STUDY TIMETABLE & TASKS
             </h3>
-            <span className="text-xs font-mono font-bold text-stone-500">
+            <span className="text-xs font-mono font-bold text-stone-500 uppercase">
               {completedCount} OF {schedule.length} COMPLETED
             </span>
           </div>
@@ -362,10 +360,10 @@ export const CentralPlannerView: React.FC<CentralPlannerViewProps> = ({
             {schedule.map((block) => (
               <div
                 key={block.id}
-                className={`border-2 rounded-2xl p-4 sm:p-5 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+                className={`rounded-[24px] p-4 sm:p-5 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 border ${
                   block.isCompleted
                     ? 'bg-stone-50 border-stone-200 opacity-60'
-                    : 'bg-white border-[#1A1A1A] shadow-[2px_2px_0px_#1A1A1A] hover:shadow-[4px_4px_0px_#1A1A1A]'
+                    : 'bg-[#FDFBF7] border-[#EAE3D6] shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-md'
                 }`}
               >
                 <div className="flex items-start gap-3.5">
@@ -375,7 +373,7 @@ export const CentralPlannerView: React.FC<CentralPlannerViewProps> = ({
                     className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all cursor-pointer shrink-0 ${
                       block.isCompleted
                         ? 'bg-emerald-500 border-emerald-600 text-white'
-                        : 'border-[#1A1A1A] bg-white hover:bg-stone-100'
+                        : 'border-stone-400 bg-white hover:border-stone-600'
                     }`}
                   >
                     {block.isCompleted && <Check className="w-4 h-4 stroke-[3]" />}
@@ -383,10 +381,10 @@ export const CentralPlannerView: React.FC<CentralPlannerViewProps> = ({
 
                   <div className="space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-stone-100 border border-stone-300 text-stone-700">
+                      <span className="text-[10px] font-mono font-bold uppercase px-2.5 py-0.5 rounded-full bg-[#EFEBE4] text-stone-700">
                         {block.dayOfWeek} • {block.scheduledTime}
                       </span>
-                      <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-[#FDEAF4] text-[#D92B8A] border border-[#F7B5D8]">
+                      <span className="text-[10px] font-mono font-bold uppercase px-2.5 py-0.5 rounded-full bg-[#FCE8F3] text-[#D92B8A]">
                         {block.subject}
                       </span>
                       <span className="text-[10px] font-mono font-bold uppercase text-stone-500">
@@ -394,20 +392,20 @@ export const CentralPlannerView: React.FC<CentralPlannerViewProps> = ({
                       </span>
                     </div>
 
-                    <h4 className={`font-display font-black text-base ${block.isCompleted ? 'line-through text-stone-400' : 'text-[#161616]'}`}>
+                    <h4 className={`font-display font-black text-base sm:text-lg uppercase tracking-tight ${block.isCompleted ? 'line-through text-stone-400' : 'text-[#161616]'}`}>
                       {block.title}
                     </h4>
                   </div>
                 </div>
 
-                {/* Right Action Button */}
+                {/* Right Glowing Magenta Action Button */}
                 <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
                   <button
                     onClick={() => handleLaunchBlock(block)}
-                    className="tactile-btn bg-[#FAF7F0] hover:bg-[#FDEAF4] text-[#161616] text-xs font-display font-black px-4 py-2 rounded-xl flex items-center gap-1.5 uppercase cursor-pointer"
+                    className="px-5 py-2.5 rounded-full bg-gradient-to-r from-[#E02D68] via-[#D92B8A] to-[#C92255] text-white font-mono font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-[0_4px_18px_rgba(217,43,138,0.5)] hover:shadow-[0_4px_24px_rgba(217,43,138,0.65)] hover:scale-[1.02] active:scale-95 transition-all cursor-pointer"
                   >
-                    <Play className="w-3 h-3 text-[#D92B8A] fill-current" />
-                    <span>START ({block.mode})</span>
+                    <Play className="w-3.5 h-3.5 fill-current" />
+                    <span>START ({block.mode.toUpperCase()})</span>
                   </button>
                 </div>
               </div>
@@ -420,14 +418,14 @@ export const CentralPlannerView: React.FC<CentralPlannerViewProps> = ({
       {/* Add Plan Modal */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border-2 border-[#1A1A1A] rounded-2xl sm:rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-[6px_6px_0px_#1A1A1A] space-y-5 animate-in fade-in zoom-in-95">
+          <div className="bg-[#FAF7F0] border border-[#EAE3D6] rounded-[32px] p-6 sm:p-8 max-w-lg w-full shadow-[0_20px_50px_rgba(0,0,0,0.2)] space-y-5 animate-in fade-in zoom-in-95">
             <div className="flex items-center justify-between border-b border-stone-200 pb-3">
               <h3 className="font-display font-black text-lg uppercase text-[#161616]">
                 Schedule New Study Block
               </h3>
               <button
                 onClick={() => setIsAddModalOpen(false)}
-                className="text-stone-400 hover:text-stone-800 font-mono font-bold text-sm cursor-pointer"
+                className="w-8 h-8 rounded-full bg-white hover:bg-stone-200 text-stone-600 flex items-center justify-center font-mono font-bold text-sm cursor-pointer"
               >
                 ✕
               </button>

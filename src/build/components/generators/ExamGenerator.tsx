@@ -1,66 +1,83 @@
 import React, { useState } from 'react';
-import {
-  FileCheck2,
-  ChevronLeft,
-  Copy,
-  Save,
-  Check,
-  AlertCircle,
+import { 
+  FileText, 
+  Sparkles, 
+  Printer, 
+  Copy, 
+  Bookmark, 
+  Check, 
+  Eye, 
+  EyeOff, 
+  ArrowLeft,
+  GraduationCap,
   Clock,
-  Printer,
-  Sparkles,
-  Download,
+  Award,
+  Layers,
+  HelpCircle,
+  CheckCircle2,
+  BookOpen
 } from 'lucide-react';
-import { ExamResource } from '../../types';
-import { SUBJECT_CATEGORIES } from '../../data/subjects';
+import { ExamPaper, ExamQuestion, ExamSection } from '../../types';
+import { SUBJECT_CATEGORIES, GRADE_LEVELS, DIFFICULTY_LEVELS, EXAM_PAGE_OPTIONS } from '../../data/subjects';
 import { SourceMaterialUpload } from '../SourceMaterialUpload';
+import { saveResourceToStorage } from '../../utils/storage';
+import { useAuthCredit } from '../../../context/AuthCreditContext';
 
 interface ExamGeneratorProps {
-  initialTopic?: string;
   onBack: () => void;
-  onSave: (exam: ExamResource) => void;
-  existingResource?: ExamResource;
+  onSaved?: () => void;
+  existingResource?: ExamPaper;
 }
 
 export const ExamGenerator: React.FC<ExamGeneratorProps> = ({
-  initialTopic = '',
   onBack,
-  onSave,
+  onSaved,
   existingResource,
 }) => {
-  const [subject, setSubject] = useState(existingResource?.subject || 'Mathematics & Science');
-  const [topic, setTopic] = useState(existingResource?.topic || initialTopic);
-  const [gradeLevel, setGradeLevel] = useState(
-    existingResource?.gradeLevel || 'Senior Secondary / High School (Grades 9-12)'
-  );
-  const [difficulty, setDifficulty] = useState(existingResource?.difficulty || 'Intermediate');
-  const [questionCount, setQuestionCount] = useState(
-    existingResource ? existingResource.sections.reduce((acc, s) => acc + s.questions.length, 0) : 10
-  );
-  const [durationMinutes, setDurationMinutes] = useState(existingResource?.durationMinutes || 60);
-  const [totalMarks, setTotalMarks] = useState(existingResource?.totalMarks || 50);
-  const [institutionHeader, setInstitutionHeader] = useState(
-    existingResource?.institutionHeader || 'Proudly Afrikan Examination Board'
-  );
-  const [instructions, setInstructions] = useState('');
-  const [sourceMaterial, setSourceMaterial] = useState('');
-  const [isProcessingDoc, setIsProcessingDoc] = useState(false);
+  const { consumeCredits, openAuthModal, user } = useAuthCredit();
 
-  const [validationError, setValidationError] = useState<string | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedExam, setGeneratedExam] = useState<ExamResource | null>(existingResource || null);
-  const [showAnswerKey, setShowAnswerKey] = useState(false);
-  const [copiedNotification, setCopiedNotification] = useState(false);
+  // Form State
+  const [subject, setSubject] = useState<string>(existingResource?.subject || 'History & Geography');
+  const [topic, setTopic] = useState<string>(existingResource?.topic || 'The Kingdom of Mali & Mansa Musa');
+  const [gradeLevel, setGradeLevel] = useState<string>(existingResource?.gradeLevel || 'Senior Secondary / High School (Grades 9-12)');
+  const [difficulty, setDifficulty] = useState<string>(existingResource?.difficulty || 'Intermediate');
+  const [pagesCount, setPagesCount] = useState<number>(existingResource?.pagesCount || 2);
+  const [durationMinutes, setDurationMinutes] = useState<number>(existingResource?.durationMinutes || 60);
+  const [totalMarks, setTotalMarks] = useState<number>(existingResource?.totalMarks || 50);
+  const [questionCount, setQuestionCount] = useState<number>(existingResource?.sections?.reduce((acc, s) => acc + s.questions.length, 0) || 8);
+  const [institutionHeader, setInstitutionHeader] = useState<string>(existingResource?.institutionHeader || 'Proudly Afrikan Examination Board');
+  const [specialInstructions, setSpecialInstructions] = useState<string>(existingResource?.specialInstructions || '');
+  const [sourceMaterial, setSourceMaterial] = useState<string>(existingResource?.sourceMaterial || '');
+  const [sourceFileName, setSourceFileName] = useState<string>(existingResource?.sourceDocName || '');
+
+  // UI & Action States
+  const [isGenerating, setIsGenerating] = useState<boolean>(false);
+  const [exam, setExam] = useState<ExamPaper | null>(existingResource || null);
+  const [showMarkingKey, setShowMarkingKey] = useState<boolean>(true);
+  const [copied, setCopied] = useState<boolean>(false);
+  const [saved, setSaved] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const selectedCategoryObj = SUBJECT_CATEGORIES.find(c => c.name === subject) || SUBJECT_CATEGORIES[0];
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!subject.trim() || !topic.trim()) {
-      setValidationError('Please specify both a Subject and Exam Topic before generating.');
+    if (!topic.trim()) {
+      setError('Please provide an exam topic or concept.');
       return;
     }
 
-    setValidationError(null);
+    const creditCheck = await consumeCredits('EXAM', `Generated Exam: ${topic.slice(0, 30)}`);
+    if (!creditCheck.success) {
+      if (!user) {
+        openAuthModal();
+      } else {
+        setError(creditCheck.error || 'Insufficient credits. Please upgrade or refill credits.');
+      }
+      return;
+    }
+
+    setError(null);
     setIsGenerating(true);
 
     try {
@@ -72,413 +89,538 @@ export const ExamGenerator: React.FC<ExamGeneratorProps> = ({
           topic,
           gradeLevel,
           difficulty,
-          questionCount,
+          pagesCount,
           durationMinutes,
           totalMarks,
+          questionCount,
           institutionHeader,
-          instructions,
+          instructions: specialInstructions,
           sourceMaterial,
+          sourceDocName: sourceFileName,
         }),
       });
 
-      if (!response.ok) throw new Error('Generation failed');
-      const resData = await response.json();
-      if (resData.data) {
-        setGeneratedExam(resData.data);
+      const json = await response.json();
+      if (json.success && json.data) {
+        const generatedExam: ExamPaper = {
+          ...json.data,
+          toolType: 'exam',
+          pagesCount: pagesCount || 2,
+          institutionHeader: institutionHeader || 'Proudly Afrikan Examination Board',
+          sourceDocName: sourceFileName,
+        };
+        setExam(generatedExam);
+        saveResourceToStorage(generatedExam);
+        setSaved(true);
+        setTimeout(() => setSaved(false), 3000);
       } else {
-        throw new Error('Invalid response structure');
+        throw new Error(json.error || 'Failed to generate examination paper.');
       }
-    } catch (err) {
-      console.error('Error generating exam, using robust fallback:', err);
-      const fallback: ExamResource = {
-        id: `exam-${Date.now()}`,
-        toolType: 'exam',
-        title: `Examination: ${topic}`,
-        institutionHeader,
-        subject,
-        topic,
-        gradeLevel,
-        difficulty,
-        durationMinutes,
-        totalMarks,
-        generalInstructions: [
-          'Read all questions carefully before answering.',
-          'Write all answers clearly in the spaces provided or on answer sheets.',
-          'Show all working for computational questions to receive partial marks.',
-          'Time allowed: ' + durationMinutes + ' minutes.',
-        ],
-        sections: [
-          {
-            id: 'sec-1',
-            title: 'Section A: Core Comprehension & Multiple Choice',
-            instructions: 'Answer all questions in this section.',
-            totalMarks: 20,
-            questions: [
-              {
-                id: 'q1',
-                questionNumber: 1,
-                type: 'multiple-choice',
-                prompt: `Which of the following best defines the primary principle of ${topic}?`,
-                marks: 5,
-                options: [
-                  'A) The fundamental governing mechanism of the system',
-                  'B) An auxiliary external variable with temporary effects',
-                  'C) An obsolete theoretical historical construct',
-                  'D) A random non-deterministic fluctuation',
-                ],
-                correctAnswer: 'A) The fundamental governing mechanism of the system',
-                markingGuidance: 'Award full marks for option A; no partial credit for incorrect multiple choice options.',
-              },
-              {
-                id: 'q2',
-                questionNumber: 2,
-                type: 'short-answer',
-                prompt: `Explain the key difference between theoretical and applied concepts within ${topic}.`,
-                marks: 15,
-                correctAnswer: 'Theoretical models construct the foundational laws whereas applied implementations adapt them to real-world operational constraints.',
-                markingGuidance: 'Award up to 8 marks for conceptual distinction and 7 marks for illustrative examples.',
-                rubricCriteria: ['Accurate definition (5m)', 'Comparison clarity (5m)', 'Practical contextual example (5m)'],
-              },
-            ],
-          },
-          {
-            id: 'sec-2',
-            title: 'Section B: Analytical Application & Problem Solving',
-            instructions: 'Answer all questions showing comprehensive working.',
-            totalMarks: 30,
-            questions: [
-              {
-                id: 'q3',
-                questionNumber: 3,
-                type: 'essay',
-                prompt: `Evaluate the societal and economic implications of ${topic} within modern African development.`,
-                marks: 30,
-                correctAnswer: 'A rigorous evaluation examining industrial growth, capacity building, resource optimization, and regional sustainability.',
-                markingGuidance: 'Grade based on structural clarity, evidence, and critical synthesis.',
-                rubricCriteria: ['Thesis and structure (10m)', 'Evidence and domain knowledge (10m)', 'Synthesis and conclusion (10m)'],
-              },
-            ],
-          },
-        ],
-        overallMarkingNotes: 'Total 50 marks. Grade thresholds: A (80%+), B (70-79%), C (60-69%), Pass (50-59%).',
-        createdAt: new Date().toISOString(),
-      };
-      setGeneratedExam(fallback);
+    } catch (err: any) {
+      console.error('Exam Generation Error:', err);
+      setError(err.message || 'An error occurred while building the exam.');
     } finally {
       setIsGenerating(false);
     }
   };
 
-  const handleCopy = () => {
-    if (!generatedExam) return;
-    let text = `${generatedExam.institutionHeader || 'EXAMINATION'}\n`;
-    text += `${generatedExam.title.toUpperCase()}\n`;
-    text += `SUBJECT: ${generatedExam.subject} | DURATION: ${generatedExam.durationMinutes} MIN | TOTAL: ${generatedExam.totalMarks} MARKS\n\n`;
-    text += `GENERAL INSTRUCTIONS:\n`;
-    generatedExam.generalInstructions.forEach((gi, i) => (text += `${i + 1}. ${gi}\n`));
-    text += `\n`;
+  const handleSave = () => {
+    if (!exam) return;
+    saveResourceToStorage(exam);
+    setSaved(true);
+    if (onSaved) onSaved();
+    setTimeout(() => setSaved(false), 2500);
+  };
 
-    generatedExam.sections.forEach((sec) => {
-      text += `=== ${sec.title} (${sec.totalMarks} Marks) ===\n`;
-      if (sec.instructions) text += `${sec.instructions}\n`;
-      text += `\n`;
+  const handleCopy = () => {
+    if (!exam) return;
+    let fullText = `${exam.institutionHeader.toUpperCase()}\n`;
+    fullText += `${exam.title.toUpperCase()}\n`;
+    fullText += `Subject: ${exam.subject} | Grade: ${exam.gradeLevel} | Time: ${exam.durationMinutes} Mins | Total Marks: ${exam.totalMarks} | Pages: ${exam.pagesCount}\n\n`;
+    fullText += `GENERAL INSTRUCTIONS:\n${exam.generalInstructions.map((inst, i) => `${i + 1}. ${inst}`).join('\n')}\n\n`;
+
+    exam.sections.forEach((sec) => {
+      fullText += `----------------------------------------\n`;
+      fullText += `${sec.title.toUpperCase()} [${sec.marks || sec.totalMarks} MARKS]\n`;
+      fullText += `${sec.instructions}\n\n`;
+
       sec.questions.forEach((q) => {
-        text += `Question ${q.questionNumber} [${q.marks} Marks]:\n${q.prompt}\n`;
-        if (q.options) {
-          q.options.forEach((opt) => (text += `   ${opt}\n`));
+        fullText += `Question ${q.questionNumber} [${q.marks} Mark${q.marks > 1 ? 's' : ''}]:\n`;
+        fullText += `${q.prompt}\n`;
+        if (q.options && q.options.length > 0) {
+          q.options.forEach(opt => fullText += `   ${opt}\n`);
         }
-        if (showAnswerKey && q.correctAnswer) {
-          text += `   --> Key: ${q.correctAnswer}\n`;
-          if (q.markingGuidance) text += `   --> Guidance: ${q.markingGuidance}\n`;
-        }
-        text += `\n`;
+        fullText += `\n`;
       });
     });
 
-    navigator.clipboard.writeText(text);
-    setCopiedNotification(true);
-    setTimeout(() => setCopiedNotification(false), 2000);
+    if (showMarkingKey) {
+      fullText += `========================================\n`;
+      fullText += `OFFICIAL MARKING SCHEME & ANSWERS\n`;
+      fullText += `========================================\n\n`;
+      exam.sections.forEach((sec) => {
+        fullText += `[${sec.title}]\n`;
+        sec.questions.forEach((q) => {
+          fullText += `Q${q.questionNumber}: Correct Answer / Model Solution: ${q.correctAnswer || 'See guidance'}\n`;
+          if (q.markingGuidance) fullText += `   Marking Guidance: ${q.markingGuidance}\n`;
+          fullText += `\n`;
+        });
+      });
+      if (exam.overallMarkingNotes) {
+        fullText += `Marking Notes: ${exam.overallMarkingNotes}\n`;
+      }
+    }
+
+    navigator.clipboard.writeText(fullText);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handlePrint = () => {
+    window.print();
   };
 
   return (
-    <div className="space-y-6">
-      {/* Top Header */}
-      <div className="flex items-center justify-between pb-4 border-b border-stone-300">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      {/* Top Breadcrumb Bar */}
+      <div className="flex items-center justify-between">
         <button
           onClick={onBack}
-          className="clay-pill-3d px-4 py-2 flex items-center gap-2 font-mono text-xs sm:text-sm font-bold text-stone-900 transition cursor-pointer"
+          className="px-4 py-2 bg-white hover:bg-stone-50 border border-[#E5E0D8] rounded-full text-xs font-mono font-bold uppercase tracking-wider text-[#161616] flex items-center gap-2 shadow-xs transition-all cursor-pointer"
         >
-          <ChevronLeft className="w-4 h-4 text-[#D63651]" />
-          <span>BACK TO BUILD</span>
+          <ArrowLeft className="w-3.5 h-3.5" />
+          Back to Build
         </button>
 
-        <span className="clay-btn-dark px-4 py-1.5 font-mono text-xs sm:text-sm font-bold uppercase tracking-wider">
-          TOOL 01: EXAM GENERATOR
-        </span>
+        <div className="px-4 py-1.5 bg-[#161616] text-white rounded-full text-[11px] font-mono font-bold uppercase tracking-widest shadow-xs">
+          Tool 01: Exam Generator
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Form Column */}
-        <div className={`lg:col-span-4 space-y-4 print:hidden ${generatedExam ? 'hidden lg:block' : ''}`}>
-          <div className="clay-card-3d p-6 sm:p-7 bg-white border border-stone-200 rounded-3xl shadow-sm">
-            <div className="flex items-center gap-3.5 mb-6">
-              <div className="w-12 h-12 clay-btn-dark rounded-2xl flex items-center justify-center font-bold">
-                <FileCheck2 className="w-6 h-6 text-[#E6425E]" />
-              </div>
-              <div>
-                <h2 className="font-display font-black text-[#181716] text-xl uppercase leading-tight">Exam Builder</h2>
-                <p className="font-mono text-xs text-stone-600 mt-0.5">Rigorous assessment papers with rubrics</p>
+      {/* Main Grid: Form Left (38%) + Paper Right (62%) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        
+        {/* Left Column: Form Configuration */}
+        <div className="lg:col-span-5 bg-white border border-[#E5E0D8] rounded-3xl p-6 sm:p-7 shadow-sm space-y-5">
+          {/* Card Title & Icon */}
+          <div className="flex items-center gap-3.5 pb-2">
+            <div className="w-11 h-11 rounded-2xl bg-[#161616] text-[#D92B8A] flex items-center justify-center shadow-xs shrink-0">
+              <FileText className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="font-display font-black text-xl tracking-tight text-[#161616] uppercase">
+                Build An Exam
+              </h2>
+              <p className="font-mono text-xs text-stone-600">
+                Structured examination with answers
+              </p>
+            </div>
+          </div>
+
+          <form onSubmit={handleGenerate} className="space-y-4">
+            {/* Subject Category */}
+            <div>
+              <label className="block text-xs font-mono font-bold tracking-wider text-[#161616] uppercase mb-1.5">
+                Subject Category *
+              </label>
+              <select
+                value={subject}
+                onChange={(e) => {
+                  setSubject(e.target.value);
+                  const found = SUBJECT_CATEGORIES.find(c => c.name === e.target.value);
+                  if (found && found.subtopics[0]) {
+                    setTopic(found.subtopics[0]);
+                  }
+                }}
+                className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-sm font-sans text-[#161616] focus:outline-none focus:ring-2 focus:ring-[#D92B8A] focus:bg-white"
+              >
+                {SUBJECT_CATEGORIES.map((cat) => (
+                  <option key={cat.id} value={cat.name}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Exam Topic */}
+            <div>
+              <label className="block text-xs font-mono font-bold tracking-wider text-[#161616] uppercase mb-1.5">
+                Exam Topic or Specific Concept *
+              </label>
+              <input
+                type="text"
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+                placeholder="e.g. Imhotep Story - A Legacy of Kemet"
+                className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-sm font-sans text-[#161616] focus:outline-none focus:ring-2 focus:ring-[#D92B8A] focus:bg-white"
+                required
+              />
+              {/* Quick Topic Chips */}
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {selectedCategoryObj.subtopics.slice(0, 3).map((st) => (
+                  <button
+                    key={st}
+                    type="button"
+                    onClick={() => setTopic(st)}
+                    className={`text-[10px] font-mono px-2 py-0.5 rounded-full border transition-all ${
+                      topic === st
+                        ? 'bg-[#161616] text-white border-[#161616]'
+                        : 'bg-stone-100 text-stone-700 hover:bg-stone-200 border-stone-200'
+                    }`}
+                  >
+                    {st.length > 25 ? `${st.slice(0, 25)}...` : st}
+                  </button>
+                ))}
               </div>
             </div>
 
-            <form onSubmit={handleGenerate} className="space-y-4 font-mono text-xs sm:text-sm">
-              {validationError && (
-                <div className="p-3 rounded-xl bg-red-50 border border-[#D63651] text-[#D63651] flex items-center gap-2 font-bold">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  <span>{validationError}</span>
-                </div>
-              )}
-
+            {/* Grade Level & Difficulty */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block font-bold text-stone-900 uppercase mb-1">Discipline Category *</label>
+                <label className="block text-xs font-mono font-bold tracking-wider text-[#161616] uppercase mb-1.5">
+                  Grade Level
+                </label>
                 <select
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  className="w-full clay-input px-3.5 py-2.5 text-stone-900 font-bold"
+                  value={gradeLevel}
+                  onChange={(e) => setGradeLevel(e.target.value)}
+                  className="w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded-xl text-xs font-sans text-[#161616] focus:outline-none focus:ring-2 focus:ring-[#D92B8A]"
                 >
-                  {SUBJECT_CATEGORIES.map((cat) => (
-                    <option key={cat.id} value={cat.name}>
-                      {cat.name}
-                    </option>
+                  {GRADE_LEVELS.map((g) => (
+                    <option key={g} value={g}>{g}</option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="block font-bold text-stone-900 uppercase mb-1">Exam Topic / Scope *</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Thermodynamics, African Union Treaties, Quantum Mechanics..."
-                  value={topic}
-                  onChange={(e) => setTopic(e.target.value)}
-                  className="w-full clay-input px-3.5 py-2.5 text-stone-900 font-bold"
-                />
+                <label className="block text-xs font-mono font-bold tracking-wider text-[#161616] uppercase mb-1.5">
+                  Difficulty
+                </label>
+                <select
+                  value={difficulty}
+                  onChange={(e) => setDifficulty(e.target.value)}
+                  className="w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded-xl text-xs font-sans text-[#161616] focus:outline-none focus:ring-2 focus:ring-[#D92B8A]"
+                >
+                  {DIFFICULTY_LEVELS.map((d) => (
+                    <option key={d} value={d}>{d}</option>
+                  ))}
+                </select>
               </div>
+            </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-stone-900 uppercase mb-1">Grade Level</label>
-                  <select
-                    value={gradeLevel}
-                    onChange={(e) => setGradeLevel(e.target.value)}
-                    className="w-full clay-input px-3 py-2 text-stone-900 font-bold text-xs"
-                  >
-                    <option value="Junior Secondary / Middle School (Grades 6-8)">Junior Secondary (6-8)</option>
-                    <option value="Senior Secondary / High School (Grades 9-12)">Senior Secondary (9-12)</option>
-                    <option value="Tertiary / Undergraduate">Tertiary / University</option>
-                    <option value="Professional Examination">Professional Board</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block font-bold text-stone-900 uppercase mb-1">Difficulty</label>
-                  <select
-                    value={difficulty}
-                    onChange={(e) => setDifficulty(e.target.value)}
-                    className="w-full clay-input px-3 py-2 text-stone-900 font-bold text-xs"
-                  >
-                    <option value="Standard Foundation">Foundation</option>
-                    <option value="Intermediate">Intermediate</option>
-                    <option value="Advanced / Rigorous">Advanced / Rigorous</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2">
-                <div>
-                  <label className="block font-bold text-stone-900 uppercase mb-1 text-[11px]">Questions</label>
-                  <input
-                    type="number"
-                    min={4}
-                    max={25}
-                    value={questionCount}
-                    onChange={(e) => setQuestionCount(Number(e.target.value))}
-                    className="w-full clay-input px-2 py-2 text-stone-900 font-bold text-xs"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-stone-900 uppercase mb-1 text-[11px]">Time (min)</label>
-                  <input
-                    type="number"
-                    min={15}
-                    max={240}
-                    value={durationMinutes}
-                    onChange={(e) => setDurationMinutes(Number(e.target.value))}
-                    className="w-full clay-input px-2 py-2 text-stone-900 font-bold text-xs"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-stone-900 uppercase mb-1 text-[11px]">Marks</label>
-                  <input
-                    type="number"
-                    min={20}
-                    max={200}
-                    value={totalMarks}
-                    onChange={(e) => setTotalMarks(Number(e.target.value))}
-                    className="w-full clay-input px-2 py-2 text-stone-900 font-bold text-xs"
-                  />
-                </div>
+            {/* 4 Metric Inputs: Pages (1-10), Mins, Marks, Questions */}
+            <div className="grid grid-cols-4 gap-2 pt-1">
+              <div>
+                <label className="block text-[11px] font-mono font-bold tracking-wider text-[#161616] uppercase mb-1 text-center">
+                  Pages *
+                </label>
+                <select
+                  value={pagesCount}
+                  onChange={(e) => setPagesCount(Number(e.target.value))}
+                  className="w-full py-2 px-1 text-center bg-stone-50 border border-stone-300 rounded-xl text-xs font-mono font-bold text-[#161616] focus:outline-none focus:ring-2 focus:ring-[#D92B8A]"
+                >
+                  {EXAM_PAGE_OPTIONS.map((p) => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </select>
               </div>
 
               <div>
-                <label className="block font-bold text-stone-900 uppercase mb-1">Institution Header</label>
+                <label className="block text-[11px] font-mono font-bold tracking-wider text-[#161616] uppercase mb-1 text-center">
+                  Mins *
+                </label>
                 <input
-                  type="text"
-                  value={institutionHeader}
-                  onChange={(e) => setInstitutionHeader(e.target.value)}
-                  className="w-full clay-input px-3 py-2 text-stone-900 font-bold text-xs"
+                  type="number"
+                  min={15}
+                  max={240}
+                  step={5}
+                  value={durationMinutes}
+                  onChange={(e) => setDurationMinutes(Number(e.target.value))}
+                  className="w-full py-2 px-1 text-center bg-stone-50 border border-stone-300 rounded-xl text-xs font-mono font-bold text-[#161616] focus:outline-none focus:ring-2 focus:ring-[#D92B8A]"
                 />
               </div>
 
-              <SourceMaterialUpload
-                toolName="exam"
-                onProcessingChange={(p) => setIsProcessingDoc(p)}
-                onDocumentExtracted={(txt) => setSourceMaterial(txt)}
-                onDocumentRemoved={() => setSourceMaterial('')}
-              />
+              <div>
+                <label className="block text-[11px] font-mono font-bold tracking-wider text-[#161616] uppercase mb-1 text-center">
+                  Marks *
+                </label>
+                <input
+                  type="number"
+                  min={10}
+                  max={200}
+                  value={totalMarks}
+                  onChange={(e) => setTotalMarks(Number(e.target.value))}
+                  className="w-full py-2 px-1 text-center bg-stone-50 border border-stone-300 rounded-xl text-xs font-mono font-bold text-[#161616] focus:outline-none focus:ring-2 focus:ring-[#D92B8A]"
+                />
+              </div>
 
-              <button
-                type="submit"
-                disabled={isGenerating || isProcessingDoc}
-                className="w-full clay-btn-crimson py-3.5 px-5 font-mono font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer mt-2 disabled:opacity-50"
-              >
-                <Sparkles className="w-4 h-4" />
-                <span>{isGenerating ? 'GENERATING EXAM...' : 'BUILD COMPLETE EXAM'}</span>
-              </button>
-            </form>
-          </div>
+              <div>
+                <label className="block text-[11px] font-mono font-bold tracking-wider text-[#161616] uppercase mb-1 text-center">
+                  Questions *
+                </label>
+                <input
+                  type="number"
+                  min={2}
+                  max={50}
+                  value={questionCount}
+                  onChange={(e) => setQuestionCount(Number(e.target.value))}
+                  className="w-full py-2 px-1 text-center bg-stone-50 border border-stone-300 rounded-xl text-xs font-mono font-bold text-[#161616] focus:outline-none focus:ring-2 focus:ring-[#D92B8A]"
+                />
+              </div>
+            </div>
+
+            {/* Examination Header / Board */}
+            <div>
+              <label className="block text-xs font-mono font-bold tracking-wider text-[#161616] uppercase mb-1.5">
+                Examination Header / Board
+              </label>
+              <input
+                type="text"
+                value={institutionHeader}
+                onChange={(e) => setInstitutionHeader(e.target.value)}
+                placeholder="e.g. Proudly Afrikan Examination Board"
+                className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-xs font-sans text-[#161616] focus:outline-none focus:ring-2 focus:ring-[#D92B8A]"
+              />
+            </div>
+
+            {/* Special Instructions */}
+            <div>
+              <label className="block text-xs font-mono font-bold tracking-wider text-[#161616] uppercase mb-1.5">
+                Special Instructions (Optional)
+              </label>
+              <textarea
+                rows={2}
+                value={specialInstructions}
+                onChange={(e) => setSpecialInstructions(e.target.value)}
+                placeholder="e.g. Include 1 scenario question, formula sheet required..."
+                className="w-full px-3.5 py-2 bg-stone-50 border border-stone-300 rounded-xl text-xs font-sans text-[#161616] focus:outline-none focus:ring-2 focus:ring-[#D92B8A] resize-none"
+              />
+            </div>
+
+            {/* Source Material Upload */}
+            <SourceMaterialUpload
+              label="Add Source Material"
+              optionalTag="OPTIONAL"
+              currentFileName={sourceFileName}
+              onTextExtracted={(text, name) => {
+                setSourceMaterial(text);
+                setSourceFileName(name);
+              }}
+              onClear={() => {
+                setSourceMaterial('');
+                setSourceFileName('');
+              }}
+            />
+
+            {error && (
+              <p className="text-xs text-red-600 font-sans p-2 rounded-xl bg-red-50 border border-red-200">
+                {error}
+              </p>
+            )}
+
+            {/* Generate Button */}
+            <button
+              type="submit"
+              disabled={isGenerating}
+              className="w-full py-3.5 px-6 rounded-full bg-gradient-to-r from-[#D92B8A] to-[#E05A2B] hover:from-[#c22079] hover:to-[#cb4e22] text-white font-display font-black text-sm uppercase tracking-wider shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            >
+              {isGenerating ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Synthesizing Exam Paper...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4" />
+                  <span>Build Examination ↗</span>
+                </>
+              )}
+            </button>
+          </form>
         </div>
 
-        {/* Output Column */}
-        <div className={`lg:col-span-8 ${!generatedExam ? 'hidden lg:block' : ''}`}>
-          {generatedExam ? (
-            <div className="bg-white border border-stone-200 rounded-3xl p-6 sm:p-10 shadow-md space-y-6">
-              {/* Output Actions Bar */}
-              <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-stone-200 print:hidden">
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setShowAnswerKey(!showAnswerKey)}
-                    className={`px-3 py-1.5 rounded-xl font-mono text-xs font-bold transition cursor-pointer border ${
-                      showAnswerKey
-                        ? 'bg-emerald-50 border-emerald-300 text-emerald-700'
-                        : 'bg-stone-100 border-stone-200 text-stone-700 hover:bg-stone-200'
-                    }`}
-                  >
-                    {showAnswerKey ? '✓ Teacher Key & Rubric ON' : 'Show Teacher Key'}
-                  </button>
-                </div>
+        {/* Right Column: Generated Examination Paper */}
+        <div className="lg:col-span-7 space-y-4">
+          {exam ? (
+            <div className="space-y-4">
+              {/* Action Toolbar */}
+              <div className="flex flex-wrap items-center justify-between gap-2.5 pb-1 print:hidden">
+                <button
+                  type="button"
+                  onClick={() => setShowMarkingKey(!showMarkingKey)}
+                  className="px-4 py-2 rounded-full bg-[#161616] hover:bg-stone-800 text-white font-mono font-bold text-xs uppercase tracking-wider flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
+                >
+                  {showMarkingKey ? (
+                    <>
+                      <EyeOff className="w-3.5 h-3.5 text-[#D92B8A]" />
+                      Hide Marking Key
+                    </>
+                  ) : (
+                    <>
+                      <Eye className="w-3.5 h-3.5 text-[#D92B8A]" />
+                      Show Marking Key
+                    </>
+                  )}
+                </button>
 
                 <div className="flex items-center gap-2">
                   <button
+                    type="button"
                     onClick={handleCopy}
-                    className="p-2 rounded-xl bg-stone-100 border border-stone-200 text-stone-700 hover:bg-stone-200 transition cursor-pointer flex items-center gap-1 font-mono text-xs font-bold"
-                    title="Copy Exam Text"
+                    className="px-3.5 py-2 rounded-full bg-white hover:bg-stone-50 border border-stone-300 text-[#161616] font-mono font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
                   >
-                    {copiedNotification ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
-                    <span>{copiedNotification ? 'Copied' : 'Copy'}</span>
+                    {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copied ? 'Copied' : 'Copy'}
                   </button>
+
                   <button
-                    onClick={() => window.print()}
-                    className="p-2 rounded-xl bg-stone-100 border border-stone-200 text-stone-700 hover:bg-stone-200 transition cursor-pointer"
-                    title="Print Exam"
+                    type="button"
+                    onClick={handlePrint}
+                    className="px-3.5 py-2 rounded-full bg-white hover:bg-stone-50 border border-stone-300 text-[#161616] font-mono font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
                   >
-                    <Printer className="w-4 h-4" />
+                    <Printer className="w-3.5 h-3.5" />
+                    Print
                   </button>
+
                   <button
-                    onClick={() => onSave(generatedExam)}
-                    className="clay-btn-crimson px-4 py-2 rounded-xl font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer"
+                    type="button"
+                    onClick={handleSave}
+                    className="px-4 py-2 rounded-full bg-gradient-to-r from-[#D92B8A] to-[#E05A2B] hover:from-[#c22079] hover:to-[#cb4e22] text-white font-mono font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
                   >
-                    <Save className="w-4 h-4" />
-                    <span>SAVE TO VAULT</span>
+                    {saved ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Bookmark className="w-3.5 h-3.5" />}
+                    {saved ? 'Saved to Builds' : 'Save to My Builds ↗'}
                   </button>
                 </div>
               </div>
 
-              {/* Exam Printable Sheet */}
-              <div className="space-y-6">
-                <div className="text-center pb-4 border-b-2 border-stone-900 space-y-1">
-                  <p className="font-mono text-xs uppercase tracking-widest text-stone-600 font-bold">
-                    {generatedExam.institutionHeader}
+              {/* Printable Official Exam Paper Card */}
+              <div 
+                id="printable-exam-paper"
+                className="bg-white border border-[#E5E0D8] rounded-3xl p-7 sm:p-10 shadow-sm space-y-7 print:border-none print:shadow-none print:p-0"
+              >
+                {/* Header Board & Title */}
+                <div className="text-center space-y-2.5 pb-2">
+                  <p className="text-xs font-mono font-black uppercase tracking-[0.2em] text-[#D92B8A]">
+                    {exam.institutionHeader || 'PROUDLY AFRIKAN EXAMINATION BOARD'}
                   </p>
-                  <h1 className="font-display font-black text-2xl sm:text-3xl text-stone-900 uppercase">
-                    {generatedExam.title}
+                  <h1 className="font-display font-black text-2xl sm:text-3xl uppercase tracking-tight text-[#161616] leading-tight">
+                    {exam.title.replace(/^Comprehensive Examination:\s*/i, 'COMPREHENSIVE EXAMINATION: ')}
                   </h1>
-                  <div className="flex flex-wrap items-center justify-center gap-4 text-xs font-mono text-stone-600 pt-1 font-bold">
-                    <span>SUBJECT: {generatedExam.subject}</span>
-                    <span>•</span>
-                    <span>DURATION: {generatedExam.durationMinutes} MIN</span>
-                    <span>•</span>
-                    <span>TOTAL MARKS: {generatedExam.totalMarks}</span>
+
+                  {/* Metadata Badges */}
+                  <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+                    <span className="px-3 py-1 bg-stone-100 border border-stone-200 rounded-full text-xs font-sans font-bold text-stone-800 shadow-2xs">
+                      Subject: {exam.subject}
+                    </span>
+                    <span className="px-3 py-1 bg-stone-100 border border-stone-200 rounded-full text-xs font-sans font-bold text-stone-800 shadow-2xs">
+                      Grade: {exam.gradeLevel}
+                    </span>
+                    <span className="px-3 py-1 bg-stone-100 border border-stone-200 rounded-full text-xs font-sans font-bold text-stone-800 shadow-2xs">
+                      Time: {exam.durationMinutes} Mins
+                    </span>
+                    <span className="px-3 py-1 bg-pink-50 border border-pink-200 text-[#D92B8A] rounded-full text-xs font-mono font-bold shadow-2xs">
+                      Total Marks: {exam.totalMarks}
+                    </span>
+                    <span className="px-3 py-1 bg-stone-100 border border-stone-200 rounded-full text-xs font-mono font-bold text-stone-800 shadow-2xs">
+                      Pages: {exam.pagesCount || pagesCount}
+                    </span>
                   </div>
                 </div>
 
-                {/* General Instructions */}
-                {generatedExam.generalInstructions && (
-                  <div className="bg-stone-50 border border-stone-200 rounded-2xl p-4 space-y-1 font-mono text-xs">
-                    <span className="font-bold text-stone-900 uppercase">General Instructions:</span>
-                    <ul className="list-disc list-inside space-y-0.5 text-stone-700">
-                      {generatedExam.generalInstructions.map((gi, i) => (
-                        <li key={i}>{gi}</li>
-                      ))}
-                    </ul>
+                {/* Candidate Info Box */}
+                <div className="bg-[#FAF7F0] border border-[#E5E0D8] rounded-2xl p-4 sm:p-5 space-y-3 text-xs font-mono">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-stone-800 font-bold">
+                    <div>
+                      CANDIDATE NAME: <span className="font-normal text-stone-400">_________________________________</span>
+                    </div>
+                    <div>
+                      STUDENT ID / INDEX NO: <span className="font-normal text-stone-400">_____________________</span>
+                    </div>
                   </div>
-                )}
+                  <div className="pt-2 border-t border-stone-200 text-stone-700">
+                    <strong className="text-[#161616]">GENERAL INSTRUCTIONS:</strong> Answer all questions in the spaces provided. Write clearly and show all intermediate steps where applicable.
+                    {exam.generalInstructions && exam.generalInstructions.length > 0 && (
+                      <ul className="list-disc list-inside mt-1.5 space-y-0.5 text-stone-600 font-normal">
+                        {exam.generalInstructions.map((inst, i) => (
+                          <li key={i}>{inst}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </div>
 
-                {/* Sections & Questions */}
+                {/* Examination Sections */}
                 <div className="space-y-8">
-                  {generatedExam.sections.map((section, sIdx) => (
+                  {exam.sections.map((section, sIdx) => (
                     <div key={section.id || sIdx} className="space-y-4">
-                      <div className="pb-2 border-b border-stone-200 flex items-center justify-between">
-                        <h3 className="font-display font-black text-lg text-stone-900 uppercase">
-                          {section.title}
-                        </h3>
-                        <span className="font-mono text-xs font-bold bg-stone-100 px-2 py-0.5 rounded border border-stone-200">
-                          {section.totalMarks} Marks
+                      {/* Section Header Card */}
+                      <div className="bg-[#FAF7F0] border border-[#E5E0D8] rounded-2xl p-4 flex items-center justify-between gap-4">
+                        <div>
+                          <h3 className="font-display font-black text-sm uppercase tracking-wide text-[#161616]">
+                            {section.title}
+                          </h3>
+                          <p className="font-sans text-xs text-stone-600 mt-0.5">
+                            {section.instructions}
+                          </p>
+                        </div>
+                        <span className="px-3 py-1 bg-white border border-stone-300 rounded-xl text-xs font-mono font-bold text-[#161616] shrink-0 shadow-2xs">
+                          [{section.marks || section.totalMarks || 20} Marks]
                         </span>
                       </div>
 
-                      {section.instructions && (
-                        <p className="font-mono text-xs text-stone-600 italic">{section.instructions}</p>
-                      )}
-
-                      <div className="space-y-6">
-                        {section.questions.map((q) => (
-                          <div key={q.id} className="p-4 bg-stone-50/70 border border-stone-200 rounded-2xl space-y-3">
-                            <div className="flex items-start justify-between gap-3">
-                              <p className="font-display font-bold text-stone-900 text-sm sm:text-base">
-                                <span className="text-[#D63651] font-mono mr-2">Q{q.questionNumber}.</span>
-                                {q.prompt}
-                              </p>
-                              <span className="font-mono text-xs font-bold text-stone-500 shrink-0">
-                                [{q.marks}m]
-                              </span>
+                      {/* Questions List */}
+                      <div className="space-y-4 pl-0 sm:pl-1">
+                        {section.questions.map((q, qIdx) => (
+                          <div 
+                            key={q.id || qIdx}
+                            className="bg-[#FAF7F0]/60 border border-[#E8E2D8] rounded-3xl p-5 sm:p-6 space-y-4 shadow-2xs"
+                          >
+                            {/* Question Header: Dark Number Badge + Prompt */}
+                            <div className="flex items-start gap-3.5">
+                              <div className="w-8 h-8 rounded-full bg-[#161616] text-white font-mono font-bold text-xs flex items-center justify-center shrink-0 shadow-md">
+                                {q.questionNumber || qIdx + 1}
+                              </div>
+                              <div className="flex-1 space-y-1">
+                                <p className="font-sans font-semibold text-sm sm:text-base text-[#161616] leading-relaxed">
+                                  {q.prompt}
+                                </p>
+                                <span className="inline-block text-[11px] font-mono text-stone-500 font-bold">
+                                  [{q.marks} Mark{q.marks > 1 ? 's' : ''}]
+                                </span>
+                              </div>
                             </div>
 
+                            {/* Multiple Choice Options (Formatted as in Format.jpg) */}
                             {q.options && q.options.length > 0 && (
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 font-mono text-xs text-stone-800">
-                                {q.options.map((opt, oIdx) => (
-                                  <div key={oIdx} className="p-2 bg-white rounded-lg border border-stone-200">
-                                    {opt}
-                                  </div>
-                                ))}
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                                {q.options.map((optionStr, oIdx) => {
+                                  const letter = String.fromCharCode(65 + oIdx);
+                                  const cleanText = optionStr.replace(/^[A-D]\)\s*/i, '');
+                                  return (
+                                    <div
+                                      key={oIdx}
+                                      className="bg-white border border-[#E5E0D8] rounded-2xl py-3 px-4 shadow-xs text-xs font-mono text-stone-900 flex items-start gap-2 hover:border-stone-400 transition-colors"
+                                    >
+                                      <span className="font-bold text-[#161616] shrink-0">
+                                        {letter})
+                                      </span>
+                                      <span className="leading-snug">
+                                        {cleanText}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
                               </div>
                             )}
 
-                            {showAnswerKey && (
-                              <div className="mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl space-y-1 font-mono text-xs text-emerald-900">
-                                <p className="font-bold">Model Answer: {q.correctAnswer}</p>
-                                {q.markingGuidance && (
-                                  <p className="text-emerald-700 text-[11px]">Guidance: {q.markingGuidance}</p>
-                                )}
+                            {/* Structured / Problem Solving Line Workspace for Exam */}
+                            {(!q.options || q.options.length === 0) && (
+                              <div className="pt-2">
+                                <div className="border-b border-dashed border-stone-300 py-3 text-stone-300 text-xs font-mono select-none">
+                                  Answer line: ____________________________________________________________________________________
+                                </div>
+                                <div className="border-b border-dashed border-stone-300 py-3 text-stone-300 text-xs font-mono select-none">
+                                  _________________________________________________________________________________________________
+                                </div>
                               </div>
                             )}
                           </div>
@@ -487,17 +629,86 @@ export const ExamGenerator: React.FC<ExamGeneratorProps> = ({
                     </div>
                   ))}
                 </div>
+
+                {/* Official Marking Key / Answers Section PLACED AT THE END OF THE EXAM */}
+                {showMarkingKey && (
+                  <div className="mt-10 pt-8 border-t-2 border-dashed border-stone-300 space-y-6">
+                    <div className="bg-[#161616] text-white rounded-2xl p-4 sm:p-5 flex items-center justify-between gap-4 shadow-sm">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-xl bg-[#D92B8A] text-white flex items-center justify-center shrink-0">
+                          <CheckCircle2 className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <h3 className="font-display font-black text-sm uppercase tracking-wider">
+                            Official Marking Scheme & Model Solutions
+                          </h3>
+                          <p className="font-mono text-xs text-stone-300">
+                            Examiner reference & student self-assessment key
+                          </p>
+                        </div>
+                      </div>
+                      <span className="px-3 py-1 bg-white/10 rounded-full text-xs font-mono text-pink-300">
+                        CONFIDENTIAL KEY
+                      </span>
+                    </div>
+
+                    <div className="space-y-4">
+                      {exam.sections.map((section, sIdx) => (
+                        <div key={sIdx} className="bg-stone-50 border border-stone-200 rounded-2xl p-5 space-y-3">
+                          <h4 className="font-mono font-bold text-xs text-[#D92B8A] uppercase tracking-wider">
+                            {section.title} — Answers
+                          </h4>
+                          <div className="space-y-3 divide-y divide-stone-200">
+                            {section.questions.map((q, qIdx) => (
+                              <div key={qIdx} className="pt-2.5 first:pt-0 space-y-1">
+                                <div className="flex items-start justify-between gap-2">
+                                  <p className="text-xs font-bold text-[#161616] font-sans">
+                                    Q{q.questionNumber || qIdx + 1}: {q.prompt.length > 80 ? `${q.prompt.slice(0, 80)}...` : q.prompt}
+                                  </p>
+                                  <span className="text-[11px] font-mono text-[#D92B8A] font-bold shrink-0">
+                                    [{q.marks}M]
+                                  </span>
+                                </div>
+                                <div className="bg-white border border-stone-200 rounded-xl p-3 text-xs font-mono text-stone-800 space-y-1">
+                                  <p className="text-emerald-700 font-bold">
+                                    ✓ Model Answer: <span className="font-normal text-stone-900">{q.correctAnswer || 'Detailed conceptual answer.'}</span>
+                                  </p>
+                                  {q.markingGuidance && (
+                                    <p className="text-stone-600 text-[11px]">
+                                      Guidance: {q.markingGuidance}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+
+                      {exam.overallMarkingNotes && (
+                        <div className="p-4 bg-pink-50/50 border border-pink-200 rounded-2xl text-xs font-mono text-stone-700">
+                          <strong className="text-[#D92B8A]">Grading Moderation Notes:</strong> {exam.overallMarkingNotes}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           ) : (
-            <div className="bg-white border border-stone-200 rounded-3xl p-12 text-center space-y-3">
-              <FileCheck2 className="w-12 h-12 text-stone-300 mx-auto" />
-              <h3 className="font-display font-bold text-lg text-stone-700 uppercase">
-                Configure exam specifications
-              </h3>
-              <p className="font-mono text-xs text-stone-500 max-w-sm mx-auto">
-                Fill in the subject, topic, and parameters on the left to generate an authentic, curriculum-aligned exam paper.
-              </p>
+            /* Empty State Placeholder */
+            <div className="bg-white border border-[#E5E0D8] rounded-3xl p-12 text-center flex flex-col items-center justify-center space-y-4 shadow-sm min-h-[500px]">
+              <div className="w-16 h-16 rounded-2xl bg-stone-100 border border-stone-200 text-stone-400 flex items-center justify-center">
+                <FileText className="w-8 h-8" />
+              </div>
+              <div className="max-w-md space-y-1.5">
+                <h3 className="font-display font-black text-lg text-[#161616] uppercase">
+                  Exam Paper Preview
+                </h3>
+                <p className="font-sans text-xs text-stone-500 leading-relaxed">
+                  Configure your exam parameters on the left (subject, pages, difficulty, instructions) and click <strong>Build Examination</strong> to synthesize an editorial-grade exam with full question layout and answers.
+                </p>
+              </div>
             </div>
           )}
         </div>

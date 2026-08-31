@@ -1,108 +1,65 @@
 import React, { useState } from 'react';
-import {
-  Compass,
-  Sparkles,
-  ChevronLeft,
-  Copy,
-  Save,
-  Check,
-  Target,
-  ArrowRight,
-  Clock,
-  ExternalLink,
-  AlertCircle,
-  RefreshCw,
+import { 
+  Compass, 
+  Sparkles, 
+  Printer, 
+  Copy, 
+  Bookmark, 
+  Check, 
+  ArrowLeft,
+  Milestone,
+  CheckCircle2
 } from 'lucide-react';
-import { LearningPathResource } from '../../types';
+import { LearningPathResource, MilestonePhase } from '../../types';
 import { SUBJECT_CATEGORIES } from '../../data/subjects';
 import { SourceMaterialUpload } from '../SourceMaterialUpload';
+import { saveResourceToStorage } from '../../utils/storage';
+import { useAuthCredit } from '../../../context/AuthCreditContext';
 
 interface LearningPathBuilderProps {
-  initialSubject?: string;
-  initialTopic?: string;
   onBack: () => void;
-  onSave: (path: LearningPathResource) => void;
+  onSaved?: () => void;
   existingResource?: LearningPathResource;
 }
 
 export const LearningPathBuilder: React.FC<LearningPathBuilderProps> = ({
-  initialSubject = 'Science & Technology',
-  initialTopic = '',
   onBack,
-  onSave,
+  onSaved,
   existingResource,
 }) => {
-  const [subject, setSubject] = useState(existingResource?.subject || initialSubject);
-  const [goal, setGoal] = useState(existingResource?.goal || initialTopic || '');
-  const [startingLevel, setStartingLevel] = useState(
-    existingResource?.startingLevel || 'Foundational (Basic Familiarity)'
-  );
-  const [targetLevel, setTargetLevel] = useState(
-    existingResource?.targetLevel || 'Advanced Professional / Research Level'
-  );
-  const [timeCommitment, setTimeCommitment] = useState(
-    existingResource?.estimatedTotalWeeks ? `${existingResource.estimatedTotalWeeks} Weeks` : '8 Weeks'
-  );
-  const [sourceMaterial, setSourceMaterial] = useState('');
-  const [isProcessingDoc, setIsProcessingDoc] = useState(false);
+  const { consumeCredits, openAuthModal, user } = useAuthCredit();
 
-  // Validation State
-  const [validationError, setValidationError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [subject, setSubject] = useState<string>(existingResource?.subject || 'Technology & Computer Science');
+  const [goal, setGoal] = useState<string>(existingResource?.title || 'Full Stack React & Cloud Developer');
+  const [totalWeeks, setTotalWeeks] = useState<number>(existingResource?.estimatedTotalWeeks || 12);
+  const [currentLevel, setCurrentLevel] = useState<string>('Foundational / Beginner');
 
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedPath, setGeneratedPath] = useState<LearningPathResource | null>(
-    existingResource || null
-  );
-  const [copiedNotification, setCopiedNotification] = useState(false);
-
-  const clearFieldError = (fieldName: string) => {
-    if (fieldErrors[fieldName]) {
-      setFieldErrors((prev) => {
-        const next = { ...prev };
-        delete next[fieldName];
-        return next;
-      });
-    }
-    if (validationError) {
-      setValidationError(null);
-    }
-  };
+  const [isGenerating, setIsGenerating] = useState<boolean>(false);
+  const [learningPath, setLearningPath] = useState<LearningPathResource | null>(existingResource || null);
+  const [copied, setCopied] = useState<boolean>(false);
+  const [saved, setSaved] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Strict validation
-    const errors: Record<string, string> = {};
-
-    if (!subject || !subject.trim()) {
-      errors.subject = 'Please select a Discipline Category before building your learning pathway.';
-    }
-    if (!goal || !goal.trim()) {
-      errors.goal = 'Please enter a Learning Goal / Target Skill before building your learning pathway.';
+    if (!goal.trim()) {
+      setError('Please provide a learning goal.');
+      return;
     }
 
-    if (Object.keys(errors).length > 0) {
-      setFieldErrors(errors);
-      const firstErrorMessage = errors.subject || errors.goal;
-      setValidationError(firstErrorMessage);
-
-      const firstFieldId = errors.subject
-        ? 'path-field-subject'
-        : errors.goal
-        ? 'path-field-goal'
-        : 'path-form';
-      const el = document.getElementById(firstFieldId);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        if ('focus' in el) (el as HTMLElement).focus();
+    const creditCheck = await consumeCredits('LEARNING_PATH', `Generated Learning Path: ${goal.slice(0, 30)}`);
+    if (!creditCheck.success) {
+      if (!user) {
+        openAuthModal();
+      } else {
+        setError(creditCheck.error || 'Insufficient credits.');
       }
       return;
     }
 
-    setValidationError(null);
-    setFieldErrors({});
+    setError(null);
     setIsGenerating(true);
+
     try {
       const response = await fetch('/api/generate/learning-path', {
         method: 'POST',
@@ -110,409 +67,277 @@ export const LearningPathBuilder: React.FC<LearningPathBuilderProps> = ({
         body: JSON.stringify({
           subject,
           goal,
-          startingLevel,
-          targetLevel,
-          timeCommitment,
-          sourceMaterial,
+          targetGoal: goal,
+          totalWeeks,
+          currentLevel,
         }),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to generate learning path');
+      const json = await response.json();
+      if (json.success && json.data) {
+        const generated: LearningPathResource = {
+          ...json.data,
+          toolType: 'learning-path',
+          estimatedTotalWeeks: totalWeeks,
+        };
+        setLearningPath(generated);
+        saveResourceToStorage(generated);
+        setSaved(true);
+        setTimeout(() => setSaved(false), 3000);
+      } else {
+        throw new Error(json.error || 'Failed to synthesize learning roadmap.');
       }
-
-      const pathData = await response.json();
-      setGeneratedPath(pathData);
-    } catch (err) {
-      console.error('Error building learning path:', err);
-      // Fallback
-      const fallbackPath: LearningPathResource = {
-        id: 'path-' + Date.now(),
-        toolType: 'learning-path',
-        title: `Mastery Roadmap: ${goal}`,
-        subject,
-        goal,
-        startingLevel,
-        targetLevel,
-        estimatedTotalWeeks: parseInt(timeCommitment) || 8,
-        createdAt: new Date().toISOString(),
-        milestones: [
-          {
-            milestoneNumber: 1,
-            phaseName: 'Phase 1: Conceptual Foundations & Core Grammar',
-            targetWeeks: 'Weeks 1-2',
-            keyObjectives: [
-              'Demystify fundamental principles, syntax, and foundational definitions.',
-              'Set up development environment and local tooling workspace.',
-              'Build first end-to-end toy model with instant feedback loops.',
-            ],
-            recommendedResources: [
-              'Open-access core handbook & primer documentation',
-              'Guided interactive walkthrough tutorials',
-            ],
-            milestoneProject: 'Self-contained diagnostic project verifying 100% prerequisite readiness.',
-          },
-          {
-            milestoneNumber: 2,
-            phaseName: 'Phase 2: Intermediate Systems & Problem Solving',
-            targetWeeks: 'Weeks 3-5',
-            keyObjectives: [
-              'Tackle multi-variable edge cases and real-world domain friction.',
-              'Incorporate performance benchmarking and automated testing practices.',
-              'Analyze open-source case studies and peer implementations.',
-            ],
-            recommendedResources: [
-              'Technical deep dives and research whitepapers',
-              'Community code review threads and architecture blueprints',
-            ],
-            milestoneProject: 'A robust intermediate solution addressing a real localized problem.',
-          },
-          {
-            milestoneNumber: 3,
-            phaseName: 'Phase 3: Advanced Specialization & Capstone',
-            targetWeeks: 'Weeks 6-8',
-            keyObjectives: [
-              'Optimize for high-scale throughput, security, and long-term maintainability.',
-              'Author thorough documentation and deliverable presentation.',
-              'Publish code and undergo external critique.',
-            ],
-            recommendedResources: [
-              'Master-level case studies and industry standards documentation',
-            ],
-            milestoneProject: 'Production-ready capstone portfolio artifact published publicly.',
-          },
-        ],
-      };
-      setGeneratedPath(fallbackPath);
+    } catch (err: any) {
+      console.error('Learning Path Error:', err);
+      setError(err.message || 'An error occurred.');
     } finally {
       setIsGenerating(false);
     }
   };
 
-  const handleCopyText = () => {
-    if (!generatedPath) return;
-    let text = `${(generatedPath.title || 'LEARNING PATH').toUpperCase()}\n`;
-    text += `GOAL: ${generatedPath.goal || goal} | TIME: ~${generatedPath.estimatedTotalWeeks || 12} WEEKS\n\n`;
-    (generatedPath.milestones || []).forEach((m) => {
-      text += `=== ${m.phaseName.toUpperCase()} (${m.targetWeeks}) ===\n`;
-      (m.keyObjectives || []).forEach((obj) => {
-        text += `  • ${obj}\n`;
-      });
-      text += `  Project: ${m.milestoneProject}\n\n`;
+  const handleCopy = () => {
+    if (!learningPath) return;
+    let text = `LEARNING ROADMAP: ${learningPath.title.toUpperCase()}\n`;
+    text += `Target Goal: ${learningPath.targetGoal} | Total Duration: ${learningPath.estimatedTotalWeeks} Weeks\n\n`;
+    text += `MILESTONES:\n`;
+    learningPath.milestones.forEach((m) => {
+      text += `\nMilestone ${m.milestoneNumber}: ${m.phaseName} (${m.targetWeeks})\n`;
+      m.keyObjectives.forEach(obj => text += `• ${obj}\n`);
+      if (m.milestoneProject) text += `Project: ${m.milestoneProject}\n`;
     });
-
     navigator.clipboard.writeText(text);
-    setCopiedNotification(true);
-    setTimeout(() => setCopiedNotification(false), 2000);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handlePrint = () => window.print();
+
+  const handleSave = () => {
+    if (!learningPath) return;
+    saveResourceToStorage(learningPath);
+    setSaved(true);
+    if (onSaved) onSaved();
+    setTimeout(() => setSaved(false), 2500);
   };
 
   return (
-    <div className="space-y-6">
-      {/* Top Bar */}
-      <div className="flex items-center justify-between pb-4 border-b border-stone-300">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <div className="flex items-center justify-between">
         <button
           onClick={onBack}
-          className="clay-pill-3d px-4 py-2 flex items-center gap-2 font-mono-code text-xs sm:text-sm font-bold text-stone-900 transition cursor-pointer"
+          className="px-4 py-2 bg-white hover:bg-stone-50 border border-[#E5E0D8] rounded-full text-xs font-mono font-bold uppercase tracking-wider text-[#161616] flex items-center gap-2 shadow-xs transition-all cursor-pointer"
         >
-          <ChevronLeft className="w-4 h-4 text-[#D63651]" />
-          <span>BACK TO BUILD</span>
+          <ArrowLeft className="w-3.5 h-3.5" />
+          Back to Build
         </button>
-
-        <div className="flex items-center gap-2">
-          <span className="clay-btn-dark px-4 py-1.5 font-mono-code text-xs sm:text-sm font-bold uppercase tracking-wider">
-            TOOL 08: LEARNING PATHWAY
-          </span>
+        <div className="px-4 py-1.5 bg-[#161616] text-white rounded-full text-[11px] font-mono font-bold uppercase tracking-widest shadow-xs">
+          Tool 08: Learning Path Builder
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Form */}
-        <div className={`lg:col-span-4 space-y-4 print:hidden ${generatedPath ? 'hidden lg:block' : ''}`}>
-          <div className="clay-card-3d p-6 sm:p-7">
-            <div className="flex items-center gap-3.5 mb-6">
-              <div className="w-12 h-12 clay-btn-dark rounded-2xl flex items-center justify-center font-bold">
-                <Compass className="w-6 h-6 text-[#E6425E]" />
-              </div>
+        <div className="lg:col-span-5 bg-white border border-[#E5E0D8] rounded-3xl p-6 sm:p-7 shadow-sm space-y-5">
+          <div className="flex items-center gap-3.5 pb-2">
+            <div className="w-11 h-11 rounded-2xl bg-[#161616] text-[#D92B8A] flex items-center justify-center shadow-xs shrink-0">
+              <Compass className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="font-display font-black text-xl tracking-tight text-[#161616] uppercase">
+                Learning Path
+              </h2>
+              <p className="font-mono text-xs text-stone-600">
+                Milestone roadmap from beginner to mastery
+              </p>
+            </div>
+          </div>
+
+          <form onSubmit={handleGenerate} className="space-y-4">
+            <div>
+              <label className="block text-xs font-mono font-bold tracking-wider text-[#161616] uppercase mb-1.5">
+                Domain / Field *
+              </label>
+              <select
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-sm font-sans text-[#161616] focus:outline-none focus:ring-2 focus:ring-[#D92B8A]"
+              >
+                {SUBJECT_CATEGORIES.map((cat) => (
+                  <option key={cat.id} value={cat.name}>{cat.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-mono font-bold tracking-wider text-[#161616] uppercase mb-1.5">
+                Target Mastery Goal *
+              </label>
+              <input
+                type="text"
+                value={goal}
+                onChange={(e) => setGoal(e.target.value)}
+                placeholder="e.g. Modern Full-Stack Web Development & APIs"
+                className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-sm font-sans text-[#161616] focus:outline-none focus:ring-2 focus:ring-[#D92B8A]"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <h2 className="font-display font-black text-[#181716] text-xl uppercase leading-tight">Learning Pathway</h2>
-                <p className="font-mono-code text-xs sm:text-sm text-stone-600 mt-0.5">Custom progressive skill roadmap</p>
+                <label className="block text-xs font-mono font-bold tracking-wider text-[#161616] uppercase mb-1.5">
+                  Starting Level
+                </label>
+                <select
+                  value={currentLevel}
+                  onChange={(e) => setCurrentLevel(e.target.value)}
+                  className="w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded-xl text-xs font-sans text-[#161616] focus:outline-none focus:ring-2 focus:ring-[#D92B8A]"
+                >
+                  <option value="Foundational / Beginner">Beginner</option>
+                  <option value="Intermediate">Intermediate</option>
+                  <option value="Advanced / Specialization">Advanced</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-mono font-bold tracking-wider text-[#161616] uppercase mb-1.5">
+                  Total Weeks
+                </label>
+                <input
+                  type="number"
+                  min={4}
+                  max={52}
+                  value={totalWeeks}
+                  onChange={(e) => setTotalWeeks(Number(e.target.value))}
+                  className="w-full py-2 px-2 text-center bg-stone-50 border border-stone-300 rounded-xl text-xs font-mono font-bold text-[#161616] focus:outline-none focus:ring-2 focus:ring-[#D92B8A]"
+                />
               </div>
             </div>
 
-            <form id="path-form" onSubmit={handleGenerate} noValidate className="space-y-4.5 text-xs sm:text-sm font-mono-code">
-              {/* Validation Alert Banner */}
-              {validationError && (
-                <div
-                  id="path-validation-alert"
-                  className="p-3.5 rounded-xl bg-red-50 border-2 border-[#D63651] text-[#D63651] flex items-start gap-2.5 text-xs sm:text-sm font-mono-code font-bold animate-in fade-in slide-in-from-top-1 shadow-sm"
-                >
-                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                  <div className="flex-1 leading-snug">
-                    <span>{validationError}</span>
-                  </div>
-                </div>
+            {error && (
+              <p className="text-xs text-red-600 font-sans p-2 rounded-xl bg-red-50 border border-red-200">
+                {error}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={isGenerating}
+              className="w-full py-3.5 px-6 rounded-full bg-gradient-to-r from-[#D92B8A] to-[#E05A2B] hover:from-[#c22079] hover:to-[#cb4e22] text-white font-display font-black text-sm uppercase tracking-wider shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            >
+              {isGenerating ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Synthesizing Roadmap...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4" />
+                  <span>Build Learning Path ↗</span>
+                </>
               )}
-
-              {/* Subject */}
-              <div>
-                <label className="block font-bold text-stone-900 uppercase mb-1.5 text-xs sm:text-sm flex items-center justify-between">
-                  <span>Discipline Category *</span>
-                  {fieldErrors.subject && (
-                    <span className="text-[#D63651] font-bold text-[11px] lowercase tracking-normal">required</span>
-                  )}
-                </label>
-                <select
-                  id="path-field-subject"
-                  value={subject}
-                  onChange={(e) => {
-                    setSubject(e.target.value);
-                    clearFieldError('subject');
-                  }}
-                  className={`w-full clay-input px-3.5 py-2.5 text-stone-900 font-bold text-xs sm:text-sm transition-all ${
-                    fieldErrors.subject
-                      ? 'border-2 border-[#D63651] ring-2 ring-[#D63651]/20 bg-red-50/30'
-                      : ''
-                  }`}
-                >
-                  <option value="">-- Select Discipline Category --</option>
-                  {SUBJECT_CATEGORIES.map((cat) => (
-                    <option key={cat.id} value={cat.name}>
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
-                {fieldErrors.subject && (
-                  <p className="text-[#D63651] text-xs font-bold mt-1.5 flex items-center gap-1 animate-in fade-in">
-                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                    <span>{fieldErrors.subject}</span>
-                  </p>
-                )}
-              </div>
-
-              {/* Goal */}
-              <div>
-                <label className="block font-bold text-stone-900 uppercase mb-1.5 text-xs sm:text-sm flex items-center justify-between">
-                  <span>Learning Goal / Target Skill *</span>
-                  {fieldErrors.goal && (
-                    <span className="text-[#D63651] font-bold text-[11px] lowercase tracking-normal">required</span>
-                  )}
-                </label>
-                <input
-                  id="path-field-goal"
-                  type="text"
-                  placeholder="e.g. Master African Economic History, Learn Data Science..."
-                  value={goal}
-                  onChange={(e) => {
-                    setGoal(e.target.value);
-                    clearFieldError('goal');
-                  }}
-                  className={`w-full clay-input px-3.5 py-2.5 text-stone-900 placeholder-stone-400 font-bold transition-all ${
-                    fieldErrors.goal
-                      ? 'border-2 border-[#D63651] ring-2 ring-[#D63651]/20 bg-red-50/30'
-                      : ''
-                  }`}
-                />
-                {fieldErrors.goal && (
-                  <p className="text-[#D63651] text-xs font-bold mt-1.5 flex items-center gap-1 animate-in fade-in">
-                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                    <span>{fieldErrors.goal}</span>
-                  </p>
-                )}
-              </div>
-
-              {/* Starting & Target Level */}
-              <div className="grid grid-cols-1 gap-3">
-                <div>
-                  <label className="block font-bold text-stone-900 uppercase mb-1.5 text-xs sm:text-sm">
-                    Current Starting Level
-                  </label>
-                  <select
-                    value={startingLevel}
-                    onChange={(e) => setStartingLevel(e.target.value)}
-                    className="w-full clay-input px-3.5 py-2.5 text-stone-900 font-bold text-xs sm:text-sm"
-                  >
-                    <option value="Absolute Beginner (Zero Knowledge)">Absolute Beginner (Zero Knowledge)</option>
-                    <option value="Foundational (Basic Familiarity)">Foundational (Basic Familiarity)</option>
-                    <option value="Intermediate (Some Practical Experience)">Intermediate (Some Practical Experience)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block font-bold text-stone-900 uppercase mb-1.5 text-xs sm:text-sm">
-                    Target Mastery Level
-                  </label>
-                  <select
-                    value={targetLevel}
-                    onChange={(e) => setTargetLevel(e.target.value)}
-                    className="w-full clay-input px-3.5 py-2.5 text-stone-900 font-bold text-xs sm:text-sm"
-                  >
-                    <option value="Working Proficiency (Independent Execution)">Working Proficiency (Independent Execution)</option>
-                    <option value="Advanced Professional / Research Level">Advanced Professional / Research Level</option>
-                    <option value="Domain Mastery (Thought Leadership & Innovation)">Domain Mastery (Thought Leadership & Innovation)</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Timeline */}
-              <div>
-                <label className="block font-bold text-stone-900 uppercase mb-1.5 text-xs sm:text-sm">
-                  Target Timeline / Duration
-                </label>
-                <select
-                  value={timeCommitment}
-                  onChange={(e) => setTimeCommitment(e.target.value)}
-                  className="w-full clay-input px-3.5 py-2.5 text-stone-900 font-bold text-xs sm:text-sm"
-                >
-                  <option value="4 Weeks (Accelerated Sprint)">4 Weeks (Accelerated Sprint)</option>
-                  <option value="8 Weeks (Standard Mastery)">8 Weeks (Standard Mastery)</option>
-                  <option value="12 Weeks (Comprehensive Deep Dive)">12 Weeks (Comprehensive Deep Dive)</option>
-                  <option value="16 Weeks (Professional Specialization)">16 Weeks (Professional Specialization)</option>
-                </select>
-              </div>
-
-              {/* Source Material Upload (Never replaces or bypasses required fields) */}
-              <SourceMaterialUpload
-                toolName="learning-path"
-                onProcessingChange={(processing) => setIsProcessingDoc(processing)}
-                onDocumentExtracted={(text) => setSourceMaterial(text)}
-                onDocumentRemoved={() => {
-                  setSourceMaterial('');
-                  setIsProcessingDoc(false);
-                }}
-              />
-
-              {/* Submit */}
-              <button
-                type="submit"
-                id="generate-path-btn"
-                disabled={isGenerating || isProcessingDoc}
-                className="w-full clay-btn-crimson py-3.5 px-5 text-xs sm:text-sm font-mono-code font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer mt-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-              >
-                {isGenerating ? (
-                  <>
-                    <Sparkles className="w-4 h-4 animate-spin text-white" />
-                    <span>SYNTHESIZING ROADMAP...</span>
-                  </>
-                ) : isProcessingDoc ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin text-white" />
-                    <span>PROCESSING DOCUMENT...</span>
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4" />
-                    <span>GENERATE PATHWAY ↗</span>
-                  </>
-                )}
-              </button>
-            </form>
-          </div>
+            </button>
+          </form>
         </div>
 
-        {/* Right Output: Learning Pathway Roadmap */}
-        <div className="lg:col-span-8 space-y-4">
-          {generatedPath ? (
+        {/* Right Preview */}
+        <div className="lg:col-span-7 space-y-4">
+          {learningPath ? (
             <div className="space-y-4">
-              {/* Header Action Bar */}
-              <div className="clay-card-3d p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3 print:hidden">
-                <div>
-                  <h3 className="font-display font-black text-[#181716] text-lg uppercase leading-snug">
-                    {generatedPath.title}
-                  </h3>
-                  <div className="flex flex-wrap items-center gap-2 mt-1 font-mono-code text-xs text-stone-700 font-bold uppercase">
-                    <span className="clay-pill-3d px-2.5 py-0.5 text-stone-900">
-                      ~{generatedPath.estimatedTotalWeeks} Weeks
-                    </span>
-                    <span>•</span>
-                    <span>{generatedPath.milestones.length} Milestones</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 font-mono-code">
+              <div className="flex flex-wrap items-center justify-between gap-2.5 pb-1 print:hidden">
+                <span className="px-3 py-1 bg-stone-100 border border-stone-200 rounded-full text-xs font-mono font-bold text-stone-700">
+                  {learningPath.milestones.length} Strategic Milestones
+                </span>
+                <div className="flex items-center gap-2">
                   <button
-                    onClick={handleCopyText}
-                    className="clay-pill-3d px-4 py-2 text-stone-900 text-xs sm:text-sm font-bold transition flex items-center gap-1.5 cursor-pointer"
-                    title="Copy Roadmap Text"
+                    type="button"
+                    onClick={handleCopy}
+                    className="px-3.5 py-2 rounded-full bg-white hover:bg-stone-50 border border-stone-300 text-[#161616] font-mono font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
                   >
-                    {copiedNotification ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                    <span>{copiedNotification ? 'Copied' : 'Copy'}</span>
+                    {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copied ? 'Copied' : 'Copy'}
                   </button>
-
                   <button
-                    onClick={() => onSave(generatedPath)}
-                    className="clay-btn-crimson px-5 py-2 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer"
+                    type="button"
+                    onClick={handlePrint}
+                    className="px-3.5 py-2 rounded-full bg-white hover:bg-stone-50 border border-stone-300 text-[#161616] font-mono font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
                   >
-                    <Save className="w-4 h-4" />
-                    <span>Save to My Builds ↗</span>
+                    <Printer className="w-3.5 h-3.5" />
+                    Print
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSave}
+                    className="px-4 py-2 rounded-full bg-gradient-to-r from-[#D92B8A] to-[#E05A2B] hover:from-[#c22079] hover:to-[#cb4e22] text-white font-mono font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                  >
+                    {saved ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Bookmark className="w-3.5 h-3.5" />}
+                    {saved ? 'Saved' : 'Save to My Builds ↗'}
                   </button>
                 </div>
               </div>
 
-              {/* Pathway Milestones Visual Timeline */}
-              <div className="space-y-6">
-                {(generatedPath.milestones || []).map((ms, idx) => (
-                  <div
-                    key={idx}
-                    className="clay-card-3d p-6 sm:p-8 space-y-5 relative"
-                  >
-                    <div className="flex flex-wrap items-start justify-between gap-3 pb-3 border-b border-stone-200">
-                      <div className="flex items-center gap-3">
-                        <span className="w-9 h-9 clay-btn-dark rounded-xl font-black text-sm flex items-center justify-center shrink-0">
-                          {ms.milestoneNumber}
-                        </span>
-                        <div>
-                          <h4 className="font-display font-black text-base sm:text-lg text-[#181716] uppercase">
-                            {ms.phaseName}
-                          </h4>
-                          <span className="clay-pill-3d px-2.5 py-0.5 text-stone-900 font-bold text-xs mt-1 inline-block">
-                            {ms.targetWeeks}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
+              <div className="bg-white border border-[#E5E0D8] rounded-3xl p-7 sm:p-10 shadow-sm space-y-7 print:border-none print:shadow-none print:p-0">
+                <div className="space-y-2 border-b border-stone-200 pb-5">
+                  <p className="text-xs font-mono font-black uppercase tracking-[0.2em] text-[#D92B8A]">
+                    PROUDLY AFRIKAN LEARNING PATHWAY
+                  </p>
+                  <h1 className="font-display font-black text-2xl sm:text-3xl uppercase tracking-tight text-[#161616]">
+                    {learningPath.title.replace(/^Learning Path:\s*/i, '')}
+                  </h1>
+                  <p className="text-xs font-mono text-stone-600">
+                    Target: {learningPath.targetGoal} • Estimated Timeline: {learningPath.estimatedTotalWeeks} Weeks
+                  </p>
+                </div>
 
-                    {/* Objectives */}
-                    <div className="space-y-2.5 font-mono-code">
-                      <h5 className="font-bold text-stone-950 text-xs sm:text-sm uppercase flex items-center gap-1.5">
-                        <Target className="w-4 h-4 text-[#D63651]" />
-                        <span>Core Learning Objectives:</span>
-                      </h5>
-                      <div className="p-4 rounded-2xl bg-white/70 border border-stone-200 space-y-2 text-xs sm:text-sm">
-                        {(ms.keyObjectives || []).map((obj, oIdx) => (
-                          <div key={oIdx} className="flex items-start gap-2.5">
-                            <span className="font-bold text-[#D63651] shrink-0">→</span>
-                            <span className="leading-relaxed font-normal text-stone-900">{obj}</span>
+                <div className="space-y-4">
+                  {learningPath.milestones.map((m, mIdx) => (
+                    <div key={mIdx} className="bg-white border border-[#E5E0D8] rounded-2xl p-5 space-y-3 shadow-2xs">
+                      <div className="flex items-center justify-between border-b border-stone-100 pb-2.5">
+                        <div className="flex items-center gap-2.5">
+                          <span className="w-7 h-7 rounded-full bg-[#161616] text-white font-mono font-bold text-xs flex items-center justify-center">
+                            {m.milestoneNumber}
+                          </span>
+                          <h4 className="font-display font-black text-sm uppercase text-[#161616]">
+                            {m.phaseName}
+                          </h4>
+                        </div>
+                        <span className="px-2.5 py-0.5 bg-pink-50 text-[#D92B8A] rounded-full text-xs font-mono font-bold">
+                          {m.targetWeeks}
+                        </span>
+                      </div>
+
+                      <div className="space-y-1.5 pl-2">
+                        {m.keyObjectives.map((obj, oIdx) => (
+                          <div key={oIdx} className="flex items-start gap-2 text-xs font-sans text-stone-800">
+                            <span className="text-[#D92B8A] font-bold">✓</span>
+                            <span>{obj}</span>
                           </div>
                         ))}
                       </div>
-                    </div>
 
-                    {/* Milestone Project */}
-                    {ms.milestoneProject && (
-                      <div className="p-4 bg-red-50/70 border border-red-200/80 rounded-2xl text-xs sm:text-sm font-mono-code">
-                        <strong className="text-[#D63651] uppercase block mb-1">
-                          ★ Key Milestone Deliverable:
-                        </strong>
-                        <p className="text-stone-900 font-medium">
-                          {typeof ms.milestoneProject === 'string'
-                            ? ms.milestoneProject
-                            : ms.milestoneProject?.title || ms.milestoneProject?.deliverableDescription || 'Milestone project deliverable'}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                ))}
+                      {m.milestoneProject && (
+                        <div className="bg-stone-50 border border-stone-200 rounded-xl p-3 text-xs font-mono text-stone-700">
+                          <strong className="text-[#161616]">Milestone Capstone: </strong>
+                          {m.milestoneProject}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           ) : (
-            <div className="clay-card-3d p-12 text-center flex flex-col items-center justify-center min-h-[460px]">
-              <div className="w-16 h-16 clay-btn-dark rounded-2xl flex items-center justify-center mb-4">
-                <Compass className="w-8 h-8 text-[#E6425E]" />
+            <div className="bg-white border border-[#E5E0D8] rounded-3xl p-12 text-center flex flex-col items-center justify-center space-y-4 shadow-sm min-h-[500px]">
+              <div className="w-16 h-16 rounded-2xl bg-stone-100 border border-stone-200 text-stone-400 flex items-center justify-center">
+                <Compass className="w-8 h-8" />
               </div>
-              <h3 className="font-display font-black text-2xl text-[#181716] uppercase">No Pathway Generated Yet</h3>
-              <p className="font-mono-code text-sm sm:text-base text-stone-700 max-w-md mt-2 leading-relaxed font-normal">
-                Define your learning target, select your current and desired proficiency levels, and click "Generate Pathway" to build a structured step-by-step roadmap.
-              </p>
+              <div className="max-w-md space-y-1.5">
+                <h3 className="font-display font-black text-lg text-[#161616] uppercase">
+                  Learning Roadmap Preview
+                </h3>
+                <p className="font-sans text-xs text-stone-500 leading-relaxed">
+                  Enter your learning objective to generate an actionable step-by-step roadmap with checkpoints, projects, and milestones.
+                </p>
+              </div>
             </div>
           )}
         </div>

@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { 
   BookOpen, 
-  Layers, 
-  Calendar, 
-  FolderOpen, 
   GraduationCap, 
+  Layers, 
+  FolderOpen, 
+  Calendar, 
+  Tag, 
+  Zap, 
   Menu, 
   X, 
-  Zap, 
-  Tag,
-  UserPlus,
-  LogIn
+  LogIn, 
+  UserPlus 
 } from 'lucide-react';
 import { useAuthCredit } from '../context/AuthCreditContext';
 import { PlanTier, PLANS } from '../types/authCredit';
@@ -26,7 +26,7 @@ interface MasterHeaderProps {
 export const MasterHeader: React.FC<MasterHeaderProps> = ({
   activeTab,
   onSelectTab,
-  savedItemCount = 0,
+  savedItemCount = 8,
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [logoError, setLogoError] = useState(false);
@@ -51,97 +51,56 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
     }
   };
 
-  const navItems: { id: MainNavTab; label: string; icon: React.ComponentType<{ className?: string }>; color: string; badge?: number }[] = [
-    { id: 'STUDY', label: 'STUDY', icon: BookOpen, color: '#D92B8A' },
-    { id: 'QUIZ', label: 'QUIZ', icon: GraduationCap, color: '#E05A2B' },
-    { id: 'BUILD', label: 'BUILD', icon: Layers, color: '#E6425E' },
-    { id: 'MY SETS', label: 'MY SETS', icon: FolderOpen, color: '#161616', badge: savedItemCount > 0 ? savedItemCount : undefined },
-    { id: 'PLANNER', label: 'PLANNER', icon: Calendar, color: '#161616' },
-    { id: 'PRICING', label: 'PRICING', icon: Tag, color: '#D92B8A' },
+  const navItems: { id: MainNavTab; label: string; icon: React.ComponentType<{ className?: string }>; badge?: number }[] = [
+    { id: 'STUDY', label: 'STUDY', icon: BookOpen },
+    { id: 'QUIZ', label: 'QUIZ', icon: GraduationCap },
+    { id: 'BUILD', label: 'BUILD', icon: Layers },
+    { id: 'MY SETS', label: 'MY SETS', icon: FolderOpen, badge: savedItemCount },
+    { id: 'PLANNER', label: 'PLANNER', icon: Calendar },
+    { id: 'PRICING', label: 'PRICING', icon: Tag },
   ];
 
-  const getTabActiveStyle = (tabId: MainNavTab) => {
-    switch (tabId) {
-      case 'STUDY':
-        return 'bg-[#161616] text-white border-[#161616] shadow-[2.5px_2.5px_0px_#D92B8A]';
-      case 'QUIZ':
-        return 'bg-[#161616] text-white border-[#161616] shadow-[2.5px_2.5px_0px_#E05A2B]';
-      case 'BUILD':
-        return 'bg-[#161616] text-white border-[#161616] shadow-[2.5px_2.5px_0px_#E6425E]';
-      case 'MY SETS':
-        return 'bg-[#161616] text-white border-[#161616] shadow-[2.5px_2.5px_0px_#D92B8A]';
-      case 'PLANNER':
-        return 'bg-[#161616] text-white border-[#161616] shadow-[2.5px_2.5px_0px_#E05A2B]';
-      case 'PRICING':
-        return 'bg-[#161616] text-white border-[#161616] shadow-[2.5px_2.5px_0px_#D92B8A]';
-      default:
-        return 'bg-[#161616] text-white border-[#161616] shadow-[2.5px_2.5px_0px_#D92B8A]';
-    }
-  };
-
   return (
-    <header className="sticky top-0 z-50 select-none bg-[#FAF7F0] border-b-2 border-[#161616] transition-colors">
-      {/* Top Editorial Ticker */}
-      <div className="bg-[#161616] text-[#FAF7F0] py-1.5 px-3 sm:px-6 text-[11px] font-mono flex items-center justify-between border-b border-stone-800 overflow-x-auto whitespace-nowrap">
-        <div className="flex items-center gap-3">
-          <span className="w-2 h-2 rounded-full bg-[#D92B8A] inline-block animate-pulse shrink-0"></span>
-          <span className="font-bold tracking-wider uppercase text-[#D92B8A]">
-            PROUDLY AFRIKAN SCHOOL
-          </span>
-          <span className="text-stone-600 hidden md:inline">|</span>
-          <span className="text-stone-300 font-medium hidden md:inline">
-            STUDY · QUIZ · BUILD · MY SETS · PLANNER · PRICING
-          </span>
-        </div>
-        <div className="flex items-center gap-4 text-[10px] sm:text-[11px] font-mono font-bold text-stone-300">
-          <span className="hidden sm:inline-flex items-center gap-1.5 text-stone-400">
-            <span>AFRICAN-CENTRED EDUCATION SUITE</span>
-          </span>
-          <span className="text-[#D92B8A]">CAPS & IEB ALIGNED</span>
-        </div>
-      </div>
-
-      {/* Main Navigation Bar */}
-      <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 lg:px-4 xl:px-6 py-2 sm:py-2.5 flex items-center justify-between gap-1 sm:gap-2 lg:gap-2 xl:gap-3">
-        {/* Brand Crest & Title */}
+    <header className="sticky top-0 z-50 select-none bg-[#FAF7F0] px-3 sm:px-6 lg:px-8 py-3 transition-all">
+      {/* Outer Floating Pill Capsule Bar matching A2.png visual style */}
+      <div className="w-full max-w-7xl mx-auto bg-white border border-[#EAE5DC] rounded-full shadow-[0_10px_35px_rgba(0,0,0,0.06),0_2px_6px_rgba(0,0,0,0.02)] px-3.5 sm:px-6 lg:px-7 py-2.5 sm:py-3 flex items-center justify-between gap-3 sm:gap-6">
+        
+        {/* Left: Brand Emblem & Typography */}
         <div
           onClick={() => onSelectTab('STUDY')}
-          className="flex items-center gap-1.5 sm:gap-2 xl:gap-2.5 cursor-pointer group shrink-0"
+          className="flex items-center gap-3 sm:gap-3.5 cursor-pointer group shrink-0"
         >
-          {/* Logo Emblem Box */}
-          <div className="w-7 h-7 sm:w-8 sm:h-8 xl:w-9 xl:h-9 bg-[#161616] rounded-xl border-2 border-[#161616] p-1 shadow-[2px_2px_0px_#D92B8A] group-hover:shadow-[3px_3px_0px_#D92B8A] transition-all flex items-center justify-center shrink-0 overflow-hidden">
+          {/* Logo Emblem Box: Vibrant Crimson Rounded Squircle */}
+          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-br from-[#E02D68] via-[#D92B8A] to-[#C92255] shadow-[0_4px_14px_rgba(217,43,138,0.35)] p-1.5 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform overflow-hidden">
             {!logoError ? (
               <img
                 src="https://sifisos.com/wp-content/uploads/2026/04/Proudly-Afrikan-Logo.png"
-                alt="Proudly Afrikan School"
-                className="w-full h-full object-contain"
+                alt="Proudly Afrikan"
+                className="w-full h-full object-contain brightness-0 invert"
                 referrerPolicy="no-referrer"
                 onError={() => setLogoError(true)}
               />
             ) : (
-              <span className="font-display font-black text-xs text-[#D92B8A] tracking-tighter">
-                PAS
+              <span className="font-display font-black text-xs text-white tracking-tighter">
+                PA
               </span>
             )}
           </div>
 
-          <div className="flex flex-col">
-            <div className="flex items-center gap-1 sm:gap-1.5">
-              <span className="font-display font-black text-xs sm:text-sm lg:text-sm xl:text-base tracking-tight text-[#161616] uppercase leading-none">
+          <div className="flex flex-col justify-center">
+            <div className="flex items-center gap-1.5">
+              <span className="font-display font-black text-base sm:text-lg lg:text-xl tracking-tight text-[#161616] uppercase leading-none">
                 PROUDLY AFRIKAN
               </span>
-              <span className="font-display font-black text-[7px] sm:text-[8px] xl:text-[9px] px-1 py-0.5 rounded bg-[#D92B8A] text-white border border-[#161616] shadow-[1px_1px_0px_#161616] uppercase leading-none">
-                SCHOOL
-              </span>
             </div>
-            <span className="font-mono text-[8px] xl:text-[9px] font-semibold text-stone-500 tracking-tight mt-0.5 hidden 2xl:inline">
-              Learn · Test · Create · Plan · Pricing
+            <span className="font-mono text-[9px] sm:text-[10px] font-bold tracking-[0.2em] text-[#6B655B] uppercase mt-1 leading-none">
+              RESOURCE GENERATOR
             </span>
           </div>
         </div>
 
-        {/* Desktop Main Menu (6 items: STUDY · QUIZ · BUILD · MY SETS · PLANNER · PRICING) */}
-        <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1 p-0.5 xl:p-1 bg-white/95 border-2 border-[#161616] rounded-2xl shadow-[2px_2px_0px_#161616] shrink-0">
+        {/* Center: Navigation Items (Preserving exact items, order, labels & functionality) */}
+        <nav className="hidden lg:flex items-center gap-5 xl:gap-7 shrink-0">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -149,133 +108,132 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
               <button
                 key={item.id}
                 onClick={() => onSelectTab(item.id)}
-                className={`px-1.5 lg:px-2 xl:px-2.5 py-1 xl:py-1.5 rounded-xl font-display font-black text-[10px] xl:text-xs tracking-wider uppercase flex items-center gap-1 xl:gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
+                className={`font-display font-black text-xs xl:text-sm tracking-wide uppercase flex items-center gap-1.5 transition-colors cursor-pointer relative py-1.5 whitespace-nowrap ${
                   isActive
-                    ? getTabActiveStyle(item.id)
-                    : 'text-stone-800 hover:bg-[#FAF7F0] hover:text-[#161616]'
+                    ? 'text-[#161616]'
+                    : 'text-stone-600 hover:text-[#161616]'
                 }`}
               >
-                <Icon className={`w-3 h-3 xl:w-3.5 xl:h-3.5 ${isActive ? 'text-white' : 'text-stone-700'}`} />
+                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-[#D92B8A]' : 'text-stone-400 group-hover:text-stone-700'}`} />
                 <span>{item.label}</span>
                 {item.badge !== undefined && (
-                  <span className={`text-[8px] xl:text-[9px] px-1 py-0.2 rounded-md font-mono ${
-                    isActive ? 'bg-[#D92B8A] text-white' : 'bg-stone-200 text-stone-800'
+                  <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-full transition-colors ${
+                    isActive ? 'bg-[#161616] text-white' : 'bg-stone-100 text-stone-600 border border-stone-200'
                   }`}>
                     {item.badge}
                   </span>
+                )}
+                {isActive && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#D92B8A] rounded-full" />
                 )}
               </button>
             );
           })}
         </nav>
 
-        {/* Right Actions: Single Dynamic Plan/Account Button, Credits Badge, and Auth if unauthenticated */}
-        <div className="flex items-center gap-1 sm:gap-1.5 lg:gap-1.5 xl:gap-2 shrink-0">
-          {/* Sole Dynamic Plan/Account Button (Plan: Free / Plan: Learner / Plan: Student / Plan: Scholar) */}
+        {/* Right: Plan Button & Credits Badge */}
+        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+          {/* Dynamic Plan Button styled as refined pill */}
           <button
             id="nav-plan-account-btn"
             onClick={openAccountModal}
-            title={`${getPlanDisplayLabel(currentPlanTier)} - Click to view current plan, credits and account/upgrade options`}
-            className="tactile-btn bg-white hover:bg-stone-50 text-[#161616] border-2 border-[#161616] px-2 sm:px-2.5 xl:px-3 py-1 sm:py-1.5 rounded-xl text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer shadow-[2px_2px_0px_#161616] whitespace-nowrap"
+            title={`${getPlanDisplayLabel(currentPlanTier)} - Click to view current plan, credits and upgrade options`}
+            className="hidden sm:flex bg-white hover:bg-stone-50 text-[#161616] border border-stone-200 rounded-full px-3.5 sm:px-4 py-2 font-mono text-[11px] sm:text-xs font-bold tracking-wider uppercase shadow-xs items-center gap-1.5 cursor-pointer active:scale-95 transition-all whitespace-nowrap"
           >
             <span className="w-2 h-2 rounded-full bg-[#D92B8A] shrink-0"></span>
-            <span className="font-display font-black text-[11px] sm:text-xs text-[#161616]">{getPlanDisplayLabel(currentPlanTier)}</span>
+            <span className="font-display font-black text-xs text-[#161616]">{getPlanDisplayLabel(currentPlanTier)}</span>
           </button>
 
-          {/* Credits Balance Badge */}
+          {/* Credits Balance Badge: Vibrant Crimson Pill */}
           <button
             onClick={openAccountModal}
             title="View Credits & Balance"
-            className="tactile-btn bg-white hover:bg-stone-50 text-[#161616] border-2 border-[#161616] px-1.5 sm:px-2 xl:px-2.5 py-1 sm:py-1.5 rounded-xl text-xs font-mono font-bold flex items-center gap-1 cursor-pointer shadow-[2px_2px_0px_#161616] whitespace-nowrap"
+            className="bg-gradient-to-r from-[#D92B8A] via-[#E03A6A] to-[#E6425E] hover:opacity-95 text-white font-mono text-[11px] sm:text-xs font-black tracking-wider uppercase rounded-full px-3.5 sm:px-4 py-2 shadow-[0_4px_14px_rgba(217,43,138,0.35)] active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
           >
-            <Zap className="w-3.5 h-3.5 text-[#D92B8A] shrink-0" />
-            <span className="text-[10px] sm:text-xs font-bold">{availableCredits.toLocaleString()}</span>
-            <span className="text-[9px] sm:text-[10px] text-stone-500 font-mono">cr</span>
+            <Zap className="w-3.5 h-3.5 fill-white text-white shrink-0" />
+            <span className="font-mono">{availableCredits.toLocaleString()}</span>
+            <span className="text-[10px] opacity-80 font-mono">cr</span>
           </button>
 
-          {/* Unauthenticated Actions (Sign In & Sign Up) */}
+          {/* Auth Trigger for Unauthenticated users */}
           {(!isAuthenticated || !user) && (
-            <div className="flex items-center gap-1 sm:gap-1.5">
-              <button
-                onClick={() => openAuthModal('signin')}
-                className="tactile-btn bg-white hover:bg-stone-50 text-[#161616] border-2 border-[#161616] px-1.5 sm:px-2 xl:px-2.5 py-1 sm:py-1.5 rounded-xl text-[10px] sm:text-xs font-display font-black flex items-center gap-1 cursor-pointer uppercase tracking-wider shadow-[2px_2px_0px_#161616] whitespace-nowrap"
-              >
-                <LogIn className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#D92B8A] shrink-0" />
-                <span>Sign In</span>
-              </button>
-
-              <button
-                onClick={() => openAuthModal('signup')}
-                className="tactile-btn bg-[#161616] hover:bg-stone-800 text-white border-2 border-[#161616] px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-xl text-[10px] sm:text-xs font-display font-black hidden xl:flex items-center gap-1 cursor-pointer uppercase tracking-wider shadow-[2px_2px_0px_#D92B8A] whitespace-nowrap"
-              >
-                <UserPlus className="w-3.5 h-3.5 text-[#D92B8A] shrink-0" />
-                <span>Sign Up</span>
-              </button>
-            </div>
+            <button
+              onClick={() => openAuthModal('signin')}
+              className="hidden 2xl:flex items-center gap-1 text-xs font-display font-black uppercase text-stone-700 hover:text-black px-2 py-1 cursor-pointer"
+            >
+              <LogIn className="w-3.5 h-3.5 text-[#D92B8A]" />
+              <span>Sign In</span>
+            </button>
           )}
 
           {/* Mobile/Tablet menu toggle button */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="lg:hidden p-1.5 rounded-xl border-2 border-[#161616] bg-white text-[#161616] shadow-[2px_2px_0px_#161616] cursor-pointer shrink-0"
+            className="lg:hidden p-2 rounded-full border border-stone-200 bg-white text-[#161616] shadow-xs hover:bg-stone-50 cursor-pointer shrink-0"
             aria-label="Toggle navigation menu"
           >
-            {isMobileMenuOpen ? <X className="w-4 h-4 sm:w-5 sm:h-5" /> : <Menu className="w-4 h-4 sm:w-5 sm:h-5" />}
+            {isMobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
           </button>
         </div>
       </div>
 
-      {/* Mobile & Tablet Drawer Menu */}
+      {/* Mobile Drawer Menu matching visual style */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden bg-white border-b-2 border-[#161616] p-4 space-y-2 animate-in slide-in-from-top-2">
-          {/* Active Plan Button in Mobile Drawer */}
+        <div className="lg:hidden mt-2 w-full max-w-7xl mx-auto bg-white border border-[#EAE5DC] rounded-3xl p-4 shadow-[0_10px_35px_rgba(0,0,0,0.08)] space-y-2 animate-in slide-in-from-top-2">
+          {/* Active Plan / Account Bar */}
           <button
             onClick={() => {
               setIsMobileMenuOpen(false);
               openAccountModal();
             }}
-            className="w-full p-3 bg-[#FAF7F0] border-2 border-[#161616] rounded-xl flex items-center justify-between mb-2 cursor-pointer shadow-[2px_2px_0px_#161616] text-left"
+            className="w-full p-3 bg-stone-50 border border-stone-200 rounded-2xl flex items-center justify-between cursor-pointer text-left"
           >
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-[#D92B8A]"></span>
               <span className="font-display font-black text-xs text-[#161616]">{getPlanDisplayLabel(currentPlanTier)}</span>
             </div>
-            <span className="text-xs font-display font-black text-[#D92B8A] uppercase hover:underline">
-              Manage / Upgrade →
-            </span>
+            <div className="flex items-center gap-1 text-xs font-mono font-bold text-[#D92B8A]">
+              <Zap className="w-3.5 h-3.5 fill-[#D92B8A]" />
+              <span>{availableCredits.toLocaleString()} cr</span>
+            </div>
           </button>
 
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => {
-                  onSelectTab(item.id);
-                  setIsMobileMenuOpen(false);
-                }}
-                className={`w-full text-left px-4 py-3 rounded-xl font-display font-black text-sm uppercase flex items-center justify-between border-2 transition-all cursor-pointer ${
-                  isActive
-                    ? getTabActiveStyle(item.id)
-                    : 'bg-[#FAF7F0] border-[#161616] text-stone-800 hover:bg-stone-50'
-                }`}
-              >
-                <div className="flex items-center gap-2.5">
-                  <Icon className="w-4 h-4" />
-                  <span>{item.label}</span>
-                </div>
-                {item.badge !== undefined && (
-                  <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-stone-200 text-stone-800">
-                    {item.badge} items
-                  </span>
-                )}
-              </button>
-            );
-          })}
+          {/* Navigation Links in exact order */}
+          <div className="space-y-1 pt-1">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    onSelectTab(item.id);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`w-full text-left px-4 py-2.5 rounded-2xl font-display font-black text-sm uppercase flex items-center justify-between transition-all cursor-pointer ${
+                    isActive
+                      ? 'bg-[#161616] text-white'
+                      : 'bg-stone-50 text-stone-800 hover:bg-stone-100'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Icon className={`w-4 h-4 ${isActive ? 'text-[#D92B8A]' : 'text-stone-500'}`} />
+                    <span>{item.label}</span>
+                  </div>
+                  {item.badge !== undefined && (
+                    <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-full ${
+                      isActive ? 'bg-stone-800 text-white' : 'bg-stone-200 text-stone-800'
+                    }`}>
+                      {item.badge}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
 
-          {/* Mobile User Auth / Account Actions */}
-          <div className="pt-3 border-t border-stone-200 space-y-2">
+          {/* Mobile User Auth Actions */}
+          <div className="pt-2 border-t border-stone-100 space-y-2">
             {!isAuthenticated || !user ? (
               <div className="grid grid-cols-2 gap-2">
                 <button
@@ -283,7 +241,7 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
                     setIsMobileMenuOpen(false);
                     openAuthModal('signin');
                   }}
-                  className="py-2.5 px-3 rounded-xl bg-white border-2 border-[#161616] text-[#161616] font-display font-black text-xs uppercase flex items-center justify-center gap-1.5 shadow-[2px_2px_0px_#161616] cursor-pointer"
+                  className="py-2.5 px-3 rounded-full bg-white border border-stone-200 text-[#161616] font-display font-black text-xs uppercase flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
                 >
                   <LogIn className="w-3.5 h-3.5 text-[#D92B8A]" />
                   <span>Sign In</span>
@@ -294,27 +252,17 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
                     setIsMobileMenuOpen(false);
                     openAuthModal('signup');
                   }}
-                  className="py-2.5 px-3 rounded-xl bg-[#161616] text-white border-2 border-[#161616] font-display font-black text-xs uppercase flex items-center justify-center gap-1.5 shadow-[2px_2px_0px_#D92B8A] cursor-pointer"
+                  className="py-2.5 px-3 rounded-full bg-gradient-to-r from-[#D92B8A] to-[#E6425E] text-white font-display font-black text-xs uppercase flex items-center justify-center gap-1.5 shadow-md cursor-pointer"
                 >
-                  <UserPlus className="w-3.5 h-3.5 text-[#D92B8A]" />
-                  <span>Sign Up (400 cr)</span>
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>Sign Up</span>
                 </button>
               </div>
             ) : null}
-
-            <button
-              onClick={() => {
-                setIsMobileMenuOpen(false);
-                openAccountModal();
-              }}
-              className="w-full py-2 px-3 rounded-xl bg-[#FAF7F0] border-2 border-[#161616] text-[#161616] font-mono font-bold text-xs uppercase flex items-center justify-center gap-1.5 shadow-[1.5px_1.5px_0px_#161616] cursor-pointer"
-            >
-              <Zap className="w-3.5 h-3.5 text-[#D92B8A]" />
-              <span>Available Credits: {availableCredits.toLocaleString()} cr</span>
-            </button>
           </div>
         </div>
       )}
     </header>
   );
 };
+

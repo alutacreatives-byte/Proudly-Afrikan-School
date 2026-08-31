@@ -1,378 +1,380 @@
 import React, { useState } from 'react';
-import {
-  GraduationCap,
-  ChevronLeft,
-  Copy,
-  Save,
-  Check,
-  AlertCircle,
-  Clock,
-  Printer,
-  Sparkles,
+import { 
+  GraduationCap, 
+  Sparkles, 
+  Printer, 
+  Copy, 
+  Bookmark, 
+  Check, 
+  ArrowLeft,
   BookOpen,
+  Clock,
+  CheckCircle2
 } from 'lucide-react';
-import { CourseBuilderResource } from '../../types';
-import { SUBJECT_CATEGORIES } from '../../data/subjects';
+import { CourseResource, CourseModule } from '../../types';
+import { SUBJECT_CATEGORIES, GRADE_LEVELS } from '../../data/subjects';
 import { SourceMaterialUpload } from '../SourceMaterialUpload';
+import { saveResourceToStorage } from '../../utils/storage';
+import { useAuthCredit } from '../../../context/AuthCreditContext';
 
 interface CourseBuilderProps {
-  initialTopic?: string;
   onBack: () => void;
-  onSave: (course: CourseBuilderResource) => void;
-  existingResource?: CourseBuilderResource;
+  onSaved?: () => void;
+  existingResource?: CourseResource;
 }
 
 export const CourseBuilder: React.FC<CourseBuilderProps> = ({
-  initialTopic = '',
   onBack,
-  onSave,
+  onSaved,
   existingResource,
 }) => {
-  const [subject, setSubject] = useState(existingResource?.subject || 'Engineering & Technology');
-  const [topic, setTopic] = useState(existingResource?.topic || initialTopic);
-  const [targetAudience, setTargetAudience] = useState(
-    existingResource?.targetAudience || 'Tertiary / Undergraduate'
-  );
-  const [weeksCount, setWeeksCount] = useState(existingResource?.totalWeeks || 8);
-  const [sourceMaterial, setSourceMaterial] = useState('');
-  const [isProcessingDoc, setIsProcessingDoc] = useState(false);
+  const { consumeCredits, openAuthModal, user } = useAuthCredit();
 
-  const [validationError, setValidationError] = useState<string | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedCourse, setGeneratedCourse] = useState<CourseBuilderResource | null>(
-    existingResource || null
-  );
-  const [copiedNotification, setCopiedNotification] = useState(false);
+  const [subject, setSubject] = useState<string>(existingResource?.subject || 'Business & Economics');
+  const [courseTitle, setCourseTitle] = useState<string>(existingResource?.title || 'AfCFTA & Intra-African Trade Dynamics');
+  const [targetAudience, setTargetAudience] = useState<string>(existingResource?.targetAudience || 'Tertiary / Undergraduate');
+  const [durationWeeks, setDurationWeeks] = useState<number>(existingResource?.durationWeeks || 8);
+  const [courseGoal, setCourseGoal] = useState<string>('');
+  const [sourceMaterial, setSourceMaterial] = useState<string>('');
+  const [sourceFileName, setSourceFileName] = useState<string>(existingResource?.sourceDocName || '');
+
+  const [isGenerating, setIsGenerating] = useState<boolean>(false);
+  const [course, setCourse] = useState<CourseResource | null>(existingResource || null);
+  const [copied, setCopied] = useState<boolean>(false);
+  const [saved, setSaved] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!subject.trim() || !topic.trim()) {
-      setValidationError('Please specify both Subject and Course Topic.');
+    if (!courseTitle.trim()) {
+      setError('Please provide a course title.');
       return;
     }
 
-    setValidationError(null);
+    const creditCheck = await consumeCredits('COURSE', `Generated Course: ${courseTitle.slice(0, 30)}`);
+    if (!creditCheck.success) {
+      if (!user) {
+        openAuthModal();
+      } else {
+        setError(creditCheck.error || 'Insufficient credits.');
+      }
+      return;
+    }
+
+    setError(null);
     setIsGenerating(true);
 
     try {
-      const response = await fetch('/api/generate/course-builder', {
+      const response = await fetch('/api/generate/course', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           subject,
-          topic,
+          topic: courseTitle,
           targetAudience,
-          weeksCount,
+          durationWeeks,
+          courseGoal,
           sourceMaterial,
+          sourceDocName: sourceFileName,
         }),
       });
 
-      if (!response.ok) throw new Error('Generation failed');
-      const resData = await response.json();
-      if (resData.data) {
-        setGeneratedCourse(resData.data);
+      const json = await response.json();
+      if (json.success && json.data) {
+        const generated: CourseResource = {
+          ...json.data,
+          toolType: 'course-builder',
+          durationWeeks,
+          sourceDocName: sourceFileName,
+        };
+        setCourse(generated);
+        saveResourceToStorage(generated);
+        setSaved(true);
+        setTimeout(() => setSaved(false), 3000);
       } else {
-        throw new Error('Invalid response structure');
+        throw new Error(json.error || 'Failed to synthesize course curriculum.');
       }
-    } catch (err) {
-      console.error('Course builder fallback used:', err);
-      const fallback: CourseBuilderResource = {
-        id: `course-${Date.now()}`,
-        toolType: 'course-builder',
-        title: `Comprehensive Syllabus: ${topic}`,
-        courseCode: 'AFR-301',
-        subject,
-        topic,
-        targetAudience,
-        prerequisites: ['Basic introductory knowledge in quantitative reasoning', 'General science foundation'],
-        courseOverview: `A rigorous multi-week curriculum exploring the foundational, computational, and practical implementations of ${topic}.`,
-        totalWeeks: Number(weeksCount) || 8,
-        weeklySyllabus: [
-          {
-            weekNumber: 1,
-            title: 'Week 1: Foundations, History & Theoretical Paradigms',
-            description: 'Introduction to foundational axioms, nomenclature, and developmental context.',
-            lectureTopics: ['Origins & Definition', 'Core Mathematical/Structural Models', 'Domain Terminology'],
-            requiredReadings: ['Chapter 1: Foundational Frameworks', 'Regional Case Study #1'],
-            assignmentOrMilestone: 'Diagnostic reflection paper (500 words)',
-          },
-          {
-            weekNumber: 2,
-            title: 'Week 2: Quantitative Mechanics & Systems Analysis',
-            description: 'Deep dive into deterministic and stochastic modeling.',
-            lectureTopics: ['System Dynamics', 'Equilibrium Criteria', 'Computational Simulation'],
-            requiredReadings: ['Technical Paper: Systemic Interventions in Africa'],
-            assignmentOrMilestone: 'Problem Set 1 (10 computational questions)',
-          },
-          {
-            weekNumber: 3,
-            title: 'Week 3: Practical Implementation & Capstone Project Formulation',
-            description: 'Translating theory into scalable industrial or community solutions.',
-            lectureTopics: ['Scalability Constraints', 'Policy & Ethics', 'Capstone Proposal Workshop'],
-            requiredReadings: ['Industry Whitepaper: Future Horizons'],
-            assignmentOrMilestone: 'Capstone Project Proposal Submission',
-          },
-        ],
-        gradingCriteria: [
-          { item: 'Weekly Problem Sets', percentage: 30 },
-          { item: 'Midterm Examination', percentage: 25 },
-          { item: 'Collaborative Capstone Project', percentage: 35 },
-          { item: 'Participation & Engagement', percentage: 10 },
-        ],
-        createdAt: new Date().toISOString(),
-      };
-      setGeneratedCourse(fallback);
+    } catch (err: any) {
+      console.error('Course Builder Error:', err);
+      setError(err.message || 'An error occurred.');
     } finally {
       setIsGenerating(false);
     }
   };
 
   const handleCopy = () => {
-    if (!generatedCourse) return;
-    let text = `${generatedCourse.title.toUpperCase()}\n`;
-    text += `CODE: ${generatedCourse.courseCode} | SUBJECT: ${generatedCourse.subject} | DURATION: ${generatedCourse.totalWeeks} WEEKS\n\n`;
-    text += `OVERVIEW:\n${generatedCourse.courseOverview}\n\n`;
-    text += `WEEKLY SYLLABUS:\n`;
-    generatedCourse.weeklySyllabus.forEach((w) => {
-      text += `=== ${w.title} ===\n`;
-      text += `${w.description}\n`;
-      w.lectureTopics.forEach((lt) => (text += `  • Lecture: ${lt}\n`));
-      if (w.assignmentOrMilestone) text += `  • Milestone: ${w.assignmentOrMilestone}\n`;
-      text += `\n`;
+    if (!course) return;
+    let text = `COURSE CURRICULUM: ${course.title.toUpperCase()}\n`;
+    text += `Target: ${course.targetAudience} | Duration: ${course.durationWeeks} Weeks\n\n`;
+    text += `DESCRIPTION:\n${course.description}\n\n`;
+    text += `MODULES:\n`;
+    course.modules.forEach((m) => {
+      text += `\nModule ${m.moduleNumber}: ${m.title} (${m.estimatedHours} Hours)\n`;
+      m.lessons.forEach((l, idx) => {
+        text += `  Lesson ${idx + 1}: ${l.lessonTitle}\n    Objective: ${l.learningObjective}\n`;
+      });
     });
-
     navigator.clipboard.writeText(text);
-    setCopiedNotification(true);
-    setTimeout(() => setCopiedNotification(false), 2000);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handlePrint = () => window.print();
+
+  const handleSave = () => {
+    if (!course) return;
+    saveResourceToStorage(course);
+    setSaved(true);
+    if (onSaved) onSaved();
+    setTimeout(() => setSaved(false), 2500);
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between pb-4 border-b border-stone-300">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <div className="flex items-center justify-between">
         <button
           onClick={onBack}
-          className="clay-pill-3d px-4 py-2 flex items-center gap-2 font-mono text-xs sm:text-sm font-bold text-stone-900 transition cursor-pointer"
+          className="px-4 py-2 bg-white hover:bg-stone-50 border border-[#E5E0D8] rounded-full text-xs font-mono font-bold uppercase tracking-wider text-[#161616] flex items-center gap-2 shadow-xs transition-all cursor-pointer"
         >
-          <ChevronLeft className="w-4 h-4 text-[#D63651]" />
-          <span>BACK TO BUILD</span>
+          <ArrowLeft className="w-3.5 h-3.5" />
+          Back to Build
         </button>
-
-        <span className="clay-btn-dark px-4 py-1.5 font-mono text-xs sm:text-sm font-bold uppercase tracking-wider">
-          TOOL 07: COURSE BUILDER
-        </span>
+        <div className="px-4 py-1.5 bg-[#161616] text-white rounded-full text-[11px] font-mono font-bold uppercase tracking-widest shadow-xs">
+          Tool 07: Course Builder
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className={`lg:col-span-4 space-y-4 print:hidden ${generatedCourse ? 'hidden lg:block' : ''}`}>
-          <div className="clay-card-3d p-6 sm:p-7 bg-white border border-stone-200 rounded-3xl shadow-sm">
-            <div className="flex items-center gap-3.5 mb-6">
-              <div className="w-12 h-12 clay-btn-dark rounded-2xl flex items-center justify-center font-bold">
-                <GraduationCap className="w-6 h-6 text-[#E6425E]" />
-              </div>
-              <div>
-                <h2 className="font-display font-black text-[#181716] text-xl uppercase leading-tight">Course Builder</h2>
-                <p className="font-mono text-xs text-stone-600 mt-0.5">Multi-week university-grade syllabi</p>
-              </div>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Left Form */}
+        <div className="lg:col-span-5 bg-white border border-[#E5E0D8] rounded-3xl p-6 sm:p-7 shadow-sm space-y-5">
+          <div className="flex items-center gap-3.5 pb-2">
+            <div className="w-11 h-11 rounded-2xl bg-[#161616] text-[#D92B8A] flex items-center justify-center shadow-xs shrink-0">
+              <GraduationCap className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="font-display font-black text-xl tracking-tight text-[#161616] uppercase">
+                Build A Course
+              </h2>
+              <p className="font-mono text-xs text-stone-600">
+                Modular multi-week syllabus & lesson breakdown
+              </p>
+            </div>
+          </div>
+
+          <form onSubmit={handleGenerate} className="space-y-4">
+            <div>
+              <label className="block text-xs font-mono font-bold tracking-wider text-[#161616] uppercase mb-1.5">
+                Subject Category *
+              </label>
+              <select
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-sm font-sans text-[#161616] focus:outline-none focus:ring-2 focus:ring-[#D92B8A]"
+              >
+                {SUBJECT_CATEGORIES.map((cat) => (
+                  <option key={cat.id} value={cat.name}>{cat.name}</option>
+                ))}
+              </select>
             </div>
 
-            <form onSubmit={handleGenerate} className="space-y-4 font-mono text-xs sm:text-sm">
-              {validationError && (
-                <div className="p-3 rounded-xl bg-red-50 border border-[#D63651] text-[#D63651] flex items-center gap-2 font-bold">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  <span>{validationError}</span>
-                </div>
-              )}
+            <div>
+              <label className="block text-xs font-mono font-bold tracking-wider text-[#161616] uppercase mb-1.5">
+                Course Title or Topic *
+              </label>
+              <input
+                type="text"
+                value={courseTitle}
+                onChange={(e) => setCourseTitle(e.target.value)}
+                placeholder="e.g. AfCFTA & Cross-Border African Logistics"
+                className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-sm font-sans text-[#161616] focus:outline-none focus:ring-2 focus:ring-[#D92B8A]"
+                required
+              />
+            </div>
 
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block font-bold text-stone-900 uppercase mb-1">Academic Discipline *</label>
+                <label className="block text-xs font-mono font-bold tracking-wider text-[#161616] uppercase mb-1.5">
+                  Target Level
+                </label>
                 <select
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  className="w-full clay-input px-3.5 py-2.5 text-stone-900 font-bold"
+                  value={targetAudience}
+                  onChange={(e) => setTargetAudience(e.target.value)}
+                  className="w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded-xl text-xs font-sans text-[#161616] focus:outline-none focus:ring-2 focus:ring-[#D92B8A]"
                 >
-                  {SUBJECT_CATEGORIES.map((cat) => (
-                    <option key={cat.id} value={cat.name}>
-                      {cat.name}
-                    </option>
+                  {GRADE_LEVELS.map((g) => (
+                    <option key={g} value={g}>{g}</option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="block font-bold text-stone-900 uppercase mb-1">Course Topic / Scope *</label>
+                <label className="block text-xs font-mono font-bold tracking-wider text-[#161616] uppercase mb-1.5">
+                  Duration (Weeks)
+                </label>
                 <input
-                  type="text"
-                  placeholder="e.g. Applied Machine Learning, Pan-African Economics..."
-                  value={topic}
-                  onChange={(e) => setTopic(e.target.value)}
-                  className="w-full clay-input px-3.5 py-2.5 text-stone-900 font-bold"
+                  type="number"
+                  min={1}
+                  max={52}
+                  value={durationWeeks}
+                  onChange={(e) => setDurationWeeks(Number(e.target.value))}
+                  className="w-full py-2 px-2 text-center bg-stone-50 border border-stone-300 rounded-xl text-xs font-mono font-bold text-[#161616] focus:outline-none focus:ring-2 focus:ring-[#D92B8A]"
                 />
               </div>
+            </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-stone-900 uppercase mb-1">Target Audience</label>
-                  <select
-                    value={targetAudience}
-                    onChange={(e) => setTargetAudience(e.target.value)}
-                    className="w-full clay-input px-3 py-2 text-stone-900 font-bold text-xs"
-                  >
-                    <option value="Senior Secondary / Advanced Placement">Advanced High School</option>
-                    <option value="Tertiary / Undergraduate">Undergraduate</option>
-                    <option value="Postgraduate / Professional">Postgraduate</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block font-bold text-stone-900 uppercase mb-1">Duration</label>
-                  <select
-                    value={weeksCount}
-                    onChange={(e) => setWeeksCount(Number(e.target.value))}
-                    className="w-full clay-input px-3 py-2 text-stone-900 font-bold text-xs"
-                  >
-                    <option value={4}>4 Weeks (Short)</option>
-                    <option value={8}>8 Weeks (Standard)</option>
-                    <option value={12}>12 Weeks (Semester)</option>
-                  </select>
-                </div>
-              </div>
-
-              <SourceMaterialUpload
-                toolName="course-builder"
-                onProcessingChange={(p) => setIsProcessingDoc(p)}
-                onDocumentExtracted={(txt) => setSourceMaterial(txt)}
-                onDocumentRemoved={() => setSourceMaterial('')}
+            <div>
+              <label className="block text-xs font-mono font-bold tracking-wider text-[#161616] uppercase mb-1.5">
+                Target Learning Outcomes (Optional)
+              </label>
+              <textarea
+                rows={2}
+                value={courseGoal}
+                onChange={(e) => setCourseGoal(e.target.value)}
+                placeholder="e.g. Master tariff policies, rules of origin, and transport corridors..."
+                className="w-full px-3.5 py-2 bg-stone-50 border border-stone-300 rounded-xl text-xs font-sans text-[#161616] focus:outline-none focus:ring-2 focus:ring-[#D92B8A] resize-none"
               />
+            </div>
 
-              <button
-                type="submit"
-                disabled={isGenerating || isProcessingDoc}
-                className="w-full clay-btn-crimson py-3.5 px-5 font-mono font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer mt-2 disabled:opacity-50"
-              >
-                <Sparkles className="w-4 h-4" />
-                <span>{isGenerating ? 'DESIGNING SYLLABUS...' : 'BUILD COMPLETE COURSE'}</span>
-              </button>
-            </form>
-          </div>
+            <SourceMaterialUpload
+              label="Source Material"
+              optionalTag="OPTIONAL"
+              currentFileName={sourceFileName}
+              onTextExtracted={(text, name) => {
+                setSourceMaterial(text);
+                setSourceFileName(name);
+              }}
+              onClear={() => {
+                setSourceMaterial('');
+                setSourceFileName('');
+              }}
+            />
+
+            {error && (
+              <p className="text-xs text-red-600 font-sans p-2 rounded-xl bg-red-50 border border-red-200">
+                {error}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={isGenerating}
+              className="w-full py-3.5 px-6 rounded-full bg-gradient-to-r from-[#D92B8A] to-[#E05A2B] hover:from-[#c22079] hover:to-[#cb4e22] text-white font-display font-black text-sm uppercase tracking-wider shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            >
+              {isGenerating ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Synthesizing Course Syllabus...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4" />
+                  <span>Build Course Syllabus ↗</span>
+                </>
+              )}
+            </button>
+          </form>
         </div>
 
-        <div className={`lg:col-span-8 ${!generatedCourse ? 'hidden lg:block' : ''}`}>
-          {generatedCourse ? (
-            <div className="bg-white border border-stone-200 rounded-3xl p-6 sm:p-10 shadow-md space-y-6">
-              <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-stone-200 print:hidden">
-                <span className="font-mono text-xs font-bold text-stone-600">
-                  {generatedCourse.weeklySyllabus.length} ACADEMIC MODULES
+        {/* Right Preview */}
+        <div className="lg:col-span-7 space-y-4">
+          {course ? (
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-2.5 pb-1 print:hidden">
+                <span className="px-3 py-1 bg-stone-100 border border-stone-200 rounded-full text-xs font-mono font-bold text-stone-700">
+                  {course.modules.length} Course Modules ({course.durationWeeks} Weeks)
                 </span>
-
                 <div className="flex items-center gap-2">
                   <button
+                    type="button"
                     onClick={handleCopy}
-                    className="p-2 rounded-xl bg-stone-100 border border-stone-200 text-stone-700 hover:bg-stone-200 transition cursor-pointer flex items-center gap-1 font-mono text-xs font-bold"
+                    className="px-3.5 py-2 rounded-full bg-white hover:bg-stone-50 border border-stone-300 text-[#161616] font-mono font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
                   >
-                    {copiedNotification ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
-                    <span>{copiedNotification ? 'Copied' : 'Copy'}</span>
+                    {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copied ? 'Copied' : 'Copy'}
                   </button>
                   <button
-                    onClick={() => window.print()}
-                    className="p-2 rounded-xl bg-stone-100 border border-stone-200 text-stone-700 hover:bg-stone-200 transition cursor-pointer"
+                    type="button"
+                    onClick={handlePrint}
+                    className="px-3.5 py-2 rounded-full bg-white hover:bg-stone-50 border border-stone-300 text-[#161616] font-mono font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
                   >
-                    <Printer className="w-4 h-4" />
+                    <Printer className="w-3.5 h-3.5" />
+                    Print
                   </button>
                   <button
-                    onClick={() => onSave(generatedCourse)}
-                    className="clay-btn-crimson px-4 py-2 rounded-xl font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer"
+                    type="button"
+                    onClick={handleSave}
+                    className="px-4 py-2 rounded-full bg-gradient-to-r from-[#D92B8A] to-[#E05A2B] hover:from-[#c22079] hover:to-[#cb4e22] text-white font-mono font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
                   >
-                    <Save className="w-4 h-4" />
-                    <span>SAVE TO VAULT</span>
+                    {saved ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Bookmark className="w-3.5 h-3.5" />}
+                    {saved ? 'Saved' : 'Save to My Builds ↗'}
                   </button>
                 </div>
               </div>
 
-              <div className="space-y-6">
-                <div>
-                  <div className="flex items-center gap-2 text-xs font-mono text-[#D63651] font-bold uppercase mb-1">
-                    <span>{generatedCourse.courseCode || 'AFR-COURSE'}</span>
-                    <span>•</span>
-                    <span>{generatedCourse.totalWeeks} WEEKS</span>
-                  </div>
-                  <h1 className="font-display font-black text-2xl sm:text-3xl text-stone-900 uppercase">
-                    {generatedCourse.title}
-                  </h1>
-                </div>
-
-                <div className="bg-stone-50 border border-stone-200 rounded-2xl p-5 space-y-2">
-                  <h3 className="font-display font-bold text-stone-900 text-base uppercase">Course Scope & Overview</h3>
-                  <p className="font-mono text-xs sm:text-sm text-stone-700 leading-relaxed">
-                    {generatedCourse.courseOverview}
+              <div className="bg-white border border-[#E5E0D8] rounded-3xl p-7 sm:p-10 shadow-sm space-y-7 print:border-none print:shadow-none print:p-0">
+                <div className="space-y-2 border-b border-stone-200 pb-5">
+                  <p className="text-xs font-mono font-black uppercase tracking-[0.2em] text-[#D92B8A]">
+                    PROUDLY AFRIKAN COURSE SYLLABUS
                   </p>
+                  <h1 className="font-display font-black text-2xl sm:text-3xl uppercase tracking-tight text-[#161616]">
+                    {course.title.replace(/^Course:\s*/i, '')}
+                  </h1>
+                  <div className="flex flex-wrap gap-2 pt-1 text-xs font-mono text-stone-600">
+                    <span className="bg-stone-100 px-3 py-1 rounded-full border border-stone-200">
+                      Level: {course.targetAudience}
+                    </span>
+                    <span className="bg-pink-50 text-[#D92B8A] px-3 py-1 rounded-full border border-pink-200 font-bold">
+                      {course.durationWeeks} Weeks
+                    </span>
+                  </div>
                 </div>
 
-                {/* Grading Weight Breakdown */}
-                {generatedCourse.gradingCriteria && (
-                  <div className="p-4 bg-white border border-stone-200 rounded-2xl space-y-2">
-                    <h4 className="font-display font-bold text-stone-900 text-sm uppercase">Assessment Breakdown</h4>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      {generatedCourse.gradingCriteria.map((gc, i) => (
-                        <div key={i} className="p-2.5 bg-stone-50 rounded-xl border border-stone-200 text-center font-mono text-xs">
-                          <span className="font-bold text-stone-900 block">{gc.percentage}%</span>
-                          <span className="text-[11px] text-stone-500">{gc.item}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                <div className="bg-[#FAF7F0] border border-[#E5E0D8] rounded-2xl p-4 text-xs font-sans text-stone-800 leading-relaxed">
+                  {course.description}
+                </div>
 
-                {/* Weekly Modules */}
                 <div className="space-y-4">
-                  <h3 className="font-display font-black text-lg text-stone-900 uppercase">
-                    Weekly Curriculum & Lecture Sequence
-                  </h3>
-
-                  <div className="space-y-4">
-                    {generatedCourse.weeklySyllabus.map((week, idx) => (
-                      <div key={idx} className="border border-stone-200 rounded-2xl p-4 sm:p-5 bg-white shadow-xs space-y-3">
-                        <div className="flex items-center justify-between pb-2 border-b border-stone-100">
-                          <h4 className="font-display font-bold text-stone-900 text-base">
-                            {week.title}
-                          </h4>
-                          <span className="font-mono text-xs font-bold text-[#D63651]">
-                            Week {week.weekNumber}
-                          </span>
-                        </div>
-
-                        <p className="font-mono text-xs text-stone-600">{week.description}</p>
-
-                        <div className="space-y-2 pt-1 font-mono text-xs">
-                          <div>
-                            <span className="font-bold text-stone-800 uppercase block mb-1">Lecture Topics:</span>
-                            <ul className="list-disc list-inside space-y-0.5 text-stone-700">
-                              {week.lectureTopics.map((lt, i) => (
-                                <li key={i}>{lt}</li>
-                              ))}
-                            </ul>
-                          </div>
-
-                          {week.assignmentOrMilestone && (
-                            <div className="p-2.5 bg-amber-50 rounded-xl border border-amber-200 text-amber-900 mt-2">
-                              <span className="font-bold">Milestone / Deliverable:</span> {week.assignmentOrMilestone}
-                            </div>
-                          )}
-                        </div>
+                  {course.modules.map((mod, mIdx) => (
+                    <div key={mod.id || mIdx} className="bg-white border border-[#E5E0D8] rounded-2xl p-5 space-y-3 shadow-2xs">
+                      <div className="flex items-center justify-between border-b border-stone-100 pb-2.5">
+                        <h4 className="font-display font-black text-sm uppercase text-[#161616]">
+                          Module {mod.moduleNumber}: {mod.title}
+                        </h4>
+                        <span className="px-2.5 py-0.5 bg-stone-100 text-stone-700 rounded-full text-xs font-mono font-bold">
+                          {mod.estimatedHours} Hours
+                        </span>
                       </div>
-                    ))}
-                  </div>
+                      <div className="space-y-2 pl-1">
+                        {mod.lessons.map((lesson, lIdx) => (
+                          <div key={lesson.id || lIdx} className="bg-stone-50 border border-stone-200 rounded-xl p-3 space-y-1 text-xs font-sans">
+                            <p className="font-bold text-[#161616]">
+                              Lesson {lIdx + 1}: {lesson.lessonTitle}
+                            </p>
+                            <p className="text-stone-600">
+                              <span className="font-mono text-[#D92B8A] font-bold">Outcome: </span>
+                              {lesson.learningObjective}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
           ) : (
-            <div className="bg-white border border-stone-200 rounded-3xl p-12 text-center space-y-3">
-              <GraduationCap className="w-12 h-12 text-stone-300 mx-auto" />
-              <h3 className="font-display font-bold text-lg text-stone-700 uppercase">
-                Configure syllabus structure
-              </h3>
-              <p className="font-mono text-xs text-stone-500 max-w-sm mx-auto">
-                Generate university-standard multi-week courses complete with lecture schedules, milestones, and grading rubrics.
-              </p>
+            <div className="bg-white border border-[#E5E0D8] rounded-3xl p-12 text-center flex flex-col items-center justify-center space-y-4 shadow-sm min-h-[500px]">
+              <div className="w-16 h-16 rounded-2xl bg-stone-100 border border-stone-200 text-stone-400 flex items-center justify-center">
+                <GraduationCap className="w-8 h-8" />
+              </div>
+              <div className="max-w-md space-y-1.5">
+                <h3 className="font-display font-black text-lg text-[#161616] uppercase">
+                  Course Syllabus Preview
+                </h3>
+                <p className="font-sans text-xs text-stone-500 leading-relaxed">
+                  Enter your subject and target timeframe to generate a multi-module syllabus with granular lesson objectives and learning activities.
+                </p>
+              </div>
             </div>
           )}
         </div>

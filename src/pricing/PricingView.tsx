@@ -138,102 +138,185 @@ export const PricingView: React.FC<PricingViewProps> = ({ onNavigateToTab }) => 
           </div>
         )}
 
-        {/* 4 Plans Grid - Matching exact neo-brutalist card styling from screenshot */}
+        {/* 4 Plans Grid - Matching exact soft-embossed card styling from Pricing.jpeg */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 sm:gap-7 items-stretch">
           {plansList.map((plan) => {
             const isCurrent = currentPlan === plan.id;
-            const isPopular = plan.isPopular;
+            const isPopular = plan.id === 'STUDENT';
+
+            // Distinct plan title colors matching reference
+            const titleColor = 
+              plan.id === 'FREE' ? '#E62E43' :
+              plan.id === 'LEARNER' ? '#D96B27' :
+              plan.id === 'STUDENT' ? '#D92B8A' : '#D33842';
+
+            // Distinct badge next to title
+            const getBadge = () => {
+              if (plan.id === 'FREE') {
+                return (
+                  <span className="px-2.5 py-0.5 rounded-full bg-[#161616] text-white font-mono text-[10px] font-bold uppercase tracking-wider shadow-xs">
+                    CURRENT
+                  </span>
+                );
+              }
+              if (plan.id === 'LEARNER') {
+                return (
+                  <span className="px-2.5 py-0.5 rounded-full bg-white/90 text-stone-700 font-mono text-[10px] font-bold uppercase tracking-wider border border-stone-200 shadow-xs">
+                    ACTIVE
+                  </span>
+                );
+              }
+              if (plan.id === 'SCHOLAR') {
+                return (
+                  <span className="px-2.5 py-0.5 rounded-full bg-white/90 text-stone-700 font-mono text-[10px] font-bold uppercase tracking-wider border border-stone-200 shadow-xs">
+                    PLUS
+                  </span>
+                );
+              }
+              return null;
+            };
+
+            // Custom features matching reference exact phrasing
+            const getFeaturesList = () => {
+              if (plan.id === 'FREE') {
+                return [
+                  '400 once-off AI credits on sign',
+                  'Unlimited access to Study.',
+                  'Full access to My Sets library',
+                  'Standard AI generation speed',
+                  'No recurring payment',
+                ];
+              }
+              if (plan.id === 'LEARNER') {
+                return [
+                  '1,500 AI credits per month',
+                  'Monthly recurring subscription',
+                  'All AI generation tools enabled',
+                  'Export worksheets and exams to PDF',
+                  'Standard customer support',
+                ];
+              }
+              if (plan.id === 'STUDENT') {
+                return [
+                  '4,000 AI credits per month',
+                  'Monthly recurring subscription',
+                  'MOST POPULAR for South SA',
+                  'Deep study packs & multi-section exams',
+                  'Rollover support & priority assistance',
+                ];
+              }
+              return [
+                '12,000 AI credits per month',
+                'Monthly recurring subscription',
+                'Full curriculum & learning path',
+                'Multi-section exam paper & rubric generator',
+                'Direct support: support@proudlyafrikan.org',
+              ];
+            };
+
+            const getCreditLabel = () => {
+              if (plan.id === 'FREE') return '400 CREDITS ONCE-OFF';
+              if (plan.id === 'LEARNER') return '1,500 CREDITS / MONTH';
+              if (plan.id === 'STUDENT') return '4,000 CREDITS / MONTH';
+              return '12,000 CREDITS / PLUS';
+            };
 
             return (
               <div
                 key={plan.id}
                 onClick={() => !isCurrent && handlePlanClick(plan.id)}
-                className={`relative rounded-3xl bg-white border-2 border-[#161616] p-6 sm:p-7 flex flex-col justify-between transition-all duration-200 cursor-pointer ${
+                className={`relative rounded-[32px] p-6 sm:p-7 flex flex-col justify-between transition-all duration-300 cursor-pointer ${
                   isPopular 
-                    ? 'shadow-[6px_6px_0px_#D92B8A] ring-2 ring-[#D92B8A]/40 hover:-translate-y-1' 
-                    : 'shadow-[4px_4px_0px_#161616] hover:shadow-[6px_6px_0px_#161616] hover:-translate-y-1'
+                    ? 'bg-[#FDFBF7] border-2 border-[#D92B8A] shadow-[0_0_30px_rgba(217,43,138,0.22),0_12px_35px_rgba(0,0,0,0.06)] hover:shadow-[0_0_40px_rgba(217,43,138,0.32),0_16px_40px_rgba(0,0,0,0.08)] hover:-translate-y-1' 
+                    : 'bg-[#FDFBF7] border border-[#EAE3D6] shadow-[0_10px_30px_rgba(0,0,0,0.04),0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-[0_16px_36px_rgba(0,0,0,0.07)] hover:-translate-y-1'
                 }`}
               >
-                {/* Popular Badge */}
+                {/* Popular Badge for Student */}
                 {isPopular && (
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3.5 py-1 rounded-full bg-[#D92B8A] text-white font-display font-black text-[10px] sm:text-[11px] tracking-wider uppercase border-2 border-[#161616] shadow-[2px_2px_0px_#161616] whitespace-nowrap z-10">
-                    ★ MOST POPULAR
+                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-[#E02D68] via-[#D92B8A] to-[#C92255] text-white font-mono font-black text-[10px] tracking-wider uppercase shadow-[0_4px_16px_rgba(217,43,138,0.55)] whitespace-nowrap z-10 flex items-center gap-1">
+                    <span>★ MOST POPULAR</span>
                   </div>
                 )}
 
                 <div>
-                  {/* Card Header with Title and Current Pill */}
-                  <div className="flex items-center justify-between mb-2">
+                  {/* Card Header with Title and Pill Badge */}
+                  <div className="flex items-center justify-between mb-1.5">
                     <h3 
                       className="font-display font-black text-2xl sm:text-3xl tracking-tight uppercase"
-                      style={{ color: plan.color }}
+                      style={{ color: titleColor }}
                     >
                       {plan.name}
                     </h3>
 
-                    {isCurrent && (
-                      <span className="px-2.5 py-0.5 rounded-full bg-[#161616] text-white font-mono text-[10px] font-bold uppercase tracking-wider border border-[#161616]">
-                        Current
-                      </span>
-                    )}
+                    {getBadge()}
                   </div>
 
-                  <p className="font-mono text-xs text-stone-600 font-medium mb-4 min-h-[36px] leading-relaxed">
+                  {/* Tagline */}
+                  <p className="font-sans text-xs sm:text-[13px] text-stone-800 font-medium mb-4 min-h-[38px] leading-relaxed">
                     {plan.tagline}
                   </p>
 
-                  {/* Inner Box with 2px black border for Price & Credits */}
-                  <div className="p-4 sm:p-5 rounded-2xl bg-white border-2 border-[#161616] mb-5 shadow-[2px_2px_0px_#161616]">
-                    <div className="flex items-baseline gap-1">
-                      <span className="font-display font-black text-4xl text-[#161616]">
+                  {/* Inset Neumorphic Price & Credit Box */}
+                  <div className={`p-4 sm:p-5 rounded-2xl mb-5 transition-colors ${
+                    isPopular
+                      ? 'bg-[#FAF0F4] border border-[#F5D0DE] shadow-[inset_1px_1px_3px_rgba(224,45,104,0.06),inset_-1px_-1px_3px_rgba(255,255,255,0.9)]'
+                      : 'bg-[#F5EFEB] border border-[#E9E1D4] shadow-[inset_1px_1px_3px_rgba(0,0,0,0.04),inset_-1px_-1px_3px_rgba(255,255,255,0.8)]'
+                  }`}>
+                    <div className="flex items-baseline">
+                      <span className="font-display font-black text-3xl sm:text-4xl text-[#161616] tracking-tight">
                         R{plan.priceZar}
                       </span>
-                      <span className="font-mono text-xs text-stone-600 font-bold">
+                      <span className="font-mono text-xs sm:text-sm text-stone-600 font-bold ml-1.5">
                         {plan.priceZar === 0 ? 'once-off' : '/month'}
                       </span>
                     </div>
 
-                    <div className="mt-2.5 flex items-center gap-1.5 text-xs font-display font-black uppercase text-[#161616] border-t border-stone-100 pt-2">
-                      <Zap className="w-4 h-4 text-[#D92B8A] shrink-0" />
-                      <span>{plan.monthlyCredits.toLocaleString()} CREDITS {plan.isOnceOff ? 'ONCE-OFF' : '/ MONTH'}</span>
+                    <div className={`mt-2.5 pt-2.5 flex items-center gap-1.5 text-xs font-mono font-bold tracking-tight text-[#161616] border-t ${
+                      isPopular ? 'border-[#F0C4D4]' : 'border-[#E3D9C9]'
+                    }`}>
+                      <Zap className="w-3.5 h-3.5 text-[#D92B8A] fill-[#D92B8A]/20 shrink-0" />
+                      <span>{getCreditLabel()}</span>
                     </div>
                   </div>
 
                   {/* Features List */}
-                  <div className="space-y-2.5 mb-6">
-                    <p className="font-mono text-[11px] uppercase font-bold text-stone-500 tracking-wider">
-                      Included in this plan:
+                  <div className="space-y-2 mb-6">
+                    <p className="font-mono text-[11px] uppercase font-bold text-stone-900 tracking-wider mb-2.5">
+                      INCLUDED IN THIS PLAN:
                     </p>
-                    {plan.features.map((feat, idx) => (
-                      <div key={idx} className="flex items-start gap-2 text-xs font-medium text-stone-800 leading-snug">
-                        <Check className="w-4 h-4 text-[#D92B8A] shrink-0 mt-0.5 stroke-[2.5]" />
+                    {getFeaturesList().map((feat, idx) => (
+                      <div key={idx} className="flex items-start gap-2 text-xs text-stone-800 font-normal leading-snug">
+                        <Check className="w-3.5 h-3.5 text-[#D92B8A] shrink-0 mt-0.5 stroke-[2.5]" />
                         <span>{feat}</span>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                {/* Plan Action Button */}
-                <div className="pt-4 border-t-2 border-stone-200">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (!isCurrent) handlePlanClick(plan.id);
-                    }}
-                    disabled={isCurrent}
-                    className={`tactile-btn w-full py-3.5 px-5 rounded-2xl font-display font-black text-xs uppercase tracking-wider flex items-center ${
-                      isCurrent ? 'justify-center' : 'justify-between'
-                    } transition-all cursor-pointer border-2 ${
-                      isCurrent
-                        ? 'bg-stone-100 text-stone-400 border-stone-300 shadow-none cursor-default'
-                        : isPopular
-                        ? 'bg-[#D92B8A] hover:bg-[#c02377] text-white border-[#161616] shadow-[3px_3px_0px_#161616]'
-                        : 'bg-[#161616] hover:bg-stone-800 text-white border-[#161616] shadow-[3px_3px_0px_#161616]'
-                    }`}
-                  >
-                    <span>{isCurrent ? 'Active Plan' : `Select ${plan.name} Plan`}</span>
-                    {!isCurrent && <ArrowRight className="w-4 h-4 stroke-[2.5]" />}
-                  </button>
+                {/* Bottom Action Button Group matching reference */}
+                <div className="mt-4 pt-2">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!isCurrent) handlePlanClick(plan.id);
+                      }}
+                      className="bg-[#F2ECE1] hover:bg-[#EAE2D4] active:scale-[0.98] rounded-full py-2.5 sm:py-3 px-4 flex-1 text-center font-display font-black text-xs sm:text-[13px] tracking-wider text-[#161616] uppercase shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),0_2px_6px_rgba(0,0,0,0.03)] border border-[#E3D9C9] transition-all cursor-pointer"
+                    >
+                      <span>SELECT PLAN</span>
+                    </button>
+
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!isCurrent) handlePlanClick(plan.id);
+                      }}
+                      className="w-10 h-10 rounded-full bg-[#161616] hover:bg-stone-800 active:scale-95 text-white flex items-center justify-center shadow-md transition-all shrink-0 cursor-pointer"
+                      title={`Select ${plan.name}`}
+                    >
+                      <ArrowRight className="w-4 h-4 stroke-[2.5]" />
+                    </button>
+                  </div>
                 </div>
               </div>
             );
