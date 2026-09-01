@@ -81,26 +81,14 @@ export const MindMapGenerator: React.FC<MindMapGeneratorProps> = ({
 
   // Form State
   const [subject, setSubject] = useState<string>(existingResource?.subject || 'Sciences & STEM');
-  const [topic, setTopic] = useState<string>(existingResource?.topic || 'Renewable Energy Technologies in Africa');
+  const [topic, setTopic] = useState<string>(existingResource?.topic || '');
   const [gradeLevel, setGradeLevel] = useState<string>(existingResource?.gradeLevel || 'Senior Secondary / High School (Grades 9-12)');
   const [sourceMaterial, setSourceMaterial] = useState<string>('');
   const [sourceFileName, setSourceFileName] = useState<string>(existingResource?.sourceDocName || '');
 
   // UI & Output States
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
-  const [mindMap, setMindMap] = useState<MindMapResource | null>(
-    existingResource || {
-      id: 'mm-default',
-      title: 'Renewable Energy Technologies in Africa',
-      subject: 'Sciences & STEM',
-      topic: 'Renewable Energy Technologies in Africa',
-      gradeLevel: 'Senior Secondary / High School (Grades 9-12)',
-      createdAt: new Date().toISOString(),
-      toolType: 'mind-map',
-      rootNode: DEFAULT_MIND_MAP,
-      summary: 'A structured hierarchical visualization exploring renewable solar, geothermal, hydro, and financing frameworks in Africa.'
-    }
-  );
+  const [mindMap, setMindMap] = useState<MindMapResource | null>(existingResource || null);
   const [copied, setCopied] = useState<boolean>(false);
   const [saved, setSaved] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -460,8 +448,18 @@ export const MindMapGenerator: React.FC<MindMapGeneratorProps> = ({
               </div>
             </div>
           ) : (
-            <div className="bg-white border border-stone-200 rounded-3xl p-12 text-center text-stone-500 font-mono text-xs">
-              Configure parameters on the left and click "Generate Mind Map".
+            <div className="bg-white border border-[#E5E0D8] rounded-3xl p-12 text-center flex flex-col items-center justify-center space-y-4 shadow-sm min-h-[500px]">
+              <div className="w-16 h-16 rounded-2xl bg-stone-100 border border-stone-200 text-stone-400 flex items-center justify-center">
+                <GitBranch className="w-8 h-8" />
+              </div>
+              <div className="max-w-md space-y-1.5">
+                <h3 className="font-display font-black text-lg text-[#161616] uppercase">
+                  Mind Map Tree Preview
+                </h3>
+                <p className="font-sans text-xs text-stone-500 leading-relaxed">
+                  Enter your central topic, subject domain, and optional notes or document on the left, then click <strong>Generate Mind Map</strong> to synthesize an interactive visual hierarchy.
+                </p>
+              </div>
             </div>
           )}
         </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BuildToolType, SavedResource, ExamPaper, WorksheetResource, MindMapResource, StudyPackResource, LessonPlanResource, PresentationResource, CourseResource, LearningPathResource } from './types';
 import { BuildHome } from './components/BuildHome';
 import { ExamGenerator } from './components/generators/ExamGenerator';
@@ -21,6 +21,10 @@ export const BuildApp: React.FC = () => {
     setSavedCount(getSavedResources().length);
   };
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [activeTool]);
+
   const handleSelectTool = (toolId: BuildToolType, prefillTopic?: string, prefillCategory?: string) => {
     if (prefillTopic) {
       setActiveResource({
@@ -35,17 +39,20 @@ export const BuildApp: React.FC = () => {
       setActiveResource(null);
     }
     setActiveTool(toolId);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleOpenSavedResource = (resource: SavedResource) => {
     setActiveResource(resource);
     setActiveTool(resource.toolType);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleBackToGrid = () => {
     setActiveTool(null);
     setActiveResource(null);
     refreshSavedCount();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Render sub-view
