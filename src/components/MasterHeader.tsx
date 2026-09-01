@@ -131,28 +131,17 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
           })}
         </nav>
 
-        {/* Right: Plan Button & Credits Badge */}
+        {/* Right: Plan Button & Actions */}
         <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
           {/* Dynamic Plan Button styled as refined pill */}
           <button
             id="nav-plan-account-btn"
             onClick={openAccountModal}
-            title={`${getPlanDisplayLabel(currentPlanTier)} - Click to view current plan, credits and upgrade options`}
+            title={`${getPlanDisplayLabel(currentPlanTier)} - Click to view current plan and account settings`}
             className="hidden sm:flex bg-white hover:bg-stone-50 text-[#161616] border border-stone-200 rounded-full px-3.5 sm:px-4 py-2 font-mono text-[11px] sm:text-xs font-bold tracking-wider uppercase shadow-xs items-center gap-1.5 cursor-pointer active:scale-95 transition-all whitespace-nowrap"
           >
             <span className="w-2 h-2 rounded-full bg-[#D92B8A] shrink-0"></span>
             <span className="font-display font-black text-xs text-[#161616]">{getPlanDisplayLabel(currentPlanTier)}</span>
-          </button>
-
-          {/* Credits Balance Badge: Vibrant Crimson Pill */}
-          <button
-            onClick={openAccountModal}
-            title="View Credits & Balance"
-            className="bg-gradient-to-r from-[#D92B8A] via-[#E03A6A] to-[#E6425E] hover:opacity-95 text-white font-mono text-[11px] sm:text-xs font-black tracking-wider uppercase rounded-full px-3.5 sm:px-4 py-2 shadow-[0_4px_14px_rgba(217,43,138,0.35)] active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
-          >
-            <Zap className="w-3.5 h-3.5 fill-white text-white shrink-0" />
-            <span className="font-mono">{availableCredits.toLocaleString()}</span>
-            <span className="text-[10px] opacity-80 font-mono">cr</span>
           </button>
 
           {/* Auth Trigger for Unauthenticated users */}
@@ -192,10 +181,7 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
               <span className="w-2.5 h-2.5 rounded-full bg-[#D92B8A]"></span>
               <span className="font-display font-black text-xs text-[#161616]">{getPlanDisplayLabel(currentPlanTier)}</span>
             </div>
-            <div className="flex items-center gap-1 text-xs font-mono font-bold text-[#D92B8A]">
-              <Zap className="w-3.5 h-3.5 fill-[#D92B8A]" />
-              <span>{availableCredits.toLocaleString()} cr</span>
-            </div>
+            <span className="text-[11px] font-mono font-bold text-stone-500 uppercase">Account Settings</span>
           </button>
 
           {/* Navigation Links in exact order */}

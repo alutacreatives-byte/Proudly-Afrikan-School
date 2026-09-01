@@ -144,8 +144,8 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
       let itemCountLabel = '1 Document';
       if (res.toolType === 'exam') kindLabel = 'EXAM PAPER';
       else if (res.toolType === 'worksheet') kindLabel = 'WORKSHEET';
+      else if (res.toolType === 'mind-map') kindLabel = 'MIND MAP';
       else if (res.toolType === 'lesson-plan') kindLabel = 'LESSON PLAN';
-      else if (res.toolType === 'pdf-quiz') kindLabel = 'PDF QUIZ';
       else if (res.toolType === 'pdf-studypack') kindLabel = 'STUDY PACK';
       else if (res.toolType === 'presentation') kindLabel = 'SLIDE DECK';
       else if (res.toolType === 'course-builder') kindLabel = 'CURRICULUM COURSE';
@@ -255,13 +255,12 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
       saveRecentQuiz(dup);
       showToast('Quiz duplicated.');
     } else if (item.kind === 'build' && item.originalBuildResource) {
-      const dup: SavedResource = {
+      const dup = {
         ...item.originalBuildResource,
         id: `res-${Date.now()}`,
         title: `${item.originalBuildResource.title} (Copy)`,
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
+      } as SavedResource;
       saveResourceToStorage(dup);
       showToast('Build resource duplicated.');
     }

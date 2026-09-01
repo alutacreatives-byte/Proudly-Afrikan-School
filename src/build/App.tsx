@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { BuildToolType, SavedResource, ExamPaper, WorksheetResource, MindMapResource, StudyPackResource, LessonPlanResource, PresentationResource, CourseResource, LearningPathResource } from './types';
-import { ToolGrid } from './components/ToolGrid';
+import { BuildHome } from './components/BuildHome';
 import { ExamGenerator } from './components/generators/ExamGenerator';
 import { WorksheetGenerator } from './components/generators/WorksheetGenerator';
 import { MindMapGenerator } from './components/generators/MindMapGenerator';
@@ -21,8 +21,19 @@ export const BuildApp: React.FC = () => {
     setSavedCount(getSavedResources().length);
   };
 
-  const handleSelectTool = (toolId: BuildToolType) => {
-    setActiveResource(null);
+  const handleSelectTool = (toolId: BuildToolType, prefillTopic?: string, prefillCategory?: string) => {
+    if (prefillTopic) {
+      setActiveResource({
+        id: `temp-${Date.now()}`,
+        title: prefillTopic,
+        topic: prefillTopic,
+        subject: prefillCategory,
+        createdAt: new Date().toISOString(),
+        toolType: toolId,
+      } as any);
+    } else {
+      setActiveResource(null);
+    }
     setActiveTool(toolId);
   };
 
@@ -128,7 +139,7 @@ export const BuildApp: React.FC = () => {
   }
 
   return (
-    <ToolGrid
+    <BuildHome
       onSelectTool={handleSelectTool}
       onOpenMyResources={() => setActiveTool('my-resources')}
       savedCount={savedCount}
@@ -137,3 +148,4 @@ export const BuildApp: React.FC = () => {
 };
 
 export default BuildApp;
+
