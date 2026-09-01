@@ -9,23 +9,66 @@ import * as pdfParseModule from 'pdf-parse';
 const rawPdfParse = (pdfParseModule as any).default || pdfParseModule;
 
 async function extractTextFromPdf(buffer: Buffer): Promise<string> {
-  if (typeof rawPdfParse === 'function') {
-    const pdfData = await rawPdfParse(buffer);
-    return pdfData?.text || '';
-  }
-  const PDFParseClass = rawPdfParse?.PDFParse || (pdfParseModule as any)?.PDFParse;
-  if (typeof PDFParseClass === 'function') {
-    const parser = new PDFParseClass({ data: buffer });
-    try {
-      const result = await parser.getText();
-      return result?.text || '';
-    } finally {
-      if (typeof parser.destroy === 'function') {
-        await parser.destroy().catch(() => {});
+  // Stage 1: Try modern PDFParse class (pdf-parse v2+)
+  try {
+    const PDFParseClass = (pdfParseModule as any)?.PDFParse || (pdfParseModule as any)?.default?.PDFParse || rawPdfParse?.PDFParse;
+    if (typeof PDFParseClass === 'function') {
+      const parser = new PDFParseClass({ data: buffer });
+      try {
+        const result = await parser.getText();
+        if (result?.text && typeof result.text === 'string' && result.text.trim().length > 0) {
+          return result.text.trim();
+        }
+      } finally {
+        if (typeof parser.destroy === 'function') {
+          await parser.destroy().catch(() => {});
+        }
       }
     }
+  } catch (pdfErr: any) {
+    console.warn('[PDF parser] PDFParse class extraction notice:', pdfErr?.message || pdfErr);
   }
-  throw new Error('PDF parsing library interface not recognized');
+
+  // Stage 2: Try legacy function interface (pdf-parse v1 compatibility)
+  if (typeof rawPdfParse === 'function') {
+    try {
+      const pdfData = await rawPdfParse(buffer);
+      if (pdfData?.text && typeof pdfData.text === 'string' && pdfData.text.trim().length > 0) {
+        return pdfData.text.trim();
+      }
+    } catch (e: any) {
+      console.warn('[PDF parser] legacy function extraction notice:', e?.message || e);
+    }
+  }
+
+  // Stage 3: Direct binary stream printable text extraction fallback for unencrypted PDFs
+  try {
+    const bufferString = buffer.toString('binary');
+    const textStreams: string[] = [];
+    const streamRegex = /BT[\s\S]*?ET/g;
+    let match;
+    while ((match = streamRegex.exec(bufferString)) !== null) {
+      const chunk = match[0]
+        .replace(/\(([^)]+)\)\s*Tj/g, '$1 ')
+        .replace(/\[([^\]]+)\]\s*TJ/g, '$1 ')
+        .replace(/[^\x20-\x7E\n\r\t]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      if (chunk.length > 2) {
+        textStreams.push(chunk);
+      }
+    }
+    if (textStreams.length > 0) {
+      const joined = textStreams.join('\n\n').trim();
+      if (joined.length >= 15) {
+        return joined;
+      }
+    }
+  } catch (streamErr) {
+    console.warn('[PDF parser] binary stream fallback notice:', streamErr);
+  }
+
+  return '';
 }
 
 import { GoogleGenAI } from '@google/genai';
@@ -151,15 +194,17 @@ export function registerStudyRoutes(app: express.Express): void {
   // Document Parsing
   app.post('/api/parse-document', async (req, res) => {
     try {
-      const { base64, fileType, fileName } = req.body;
-      if (!base64) {
+      const { base64, fileType, fileName, mimeType } = req.body;
+      if (!base64 || typeof base64 !== 'string') {
         return res.status(400).json({ error: 'Base64 file payload is required.' });
       }
 
-      const buffer = Buffer.from(base64, 'base64');
+      // Remove Data URL scheme prefix if present (e.g. data:application/pdf;base64,...)
+      const cleanBase64 = base64.replace(/^data:[^;]+;base64,/, '').trim();
+      const buffer = Buffer.from(cleanBase64, 'base64');
       let extractedText = '';
 
-      const normalizedType = (fileType || '').toLowerCase();
+      const normalizedType = `${fileType || ''} ${mimeType || ''}`.toLowerCase();
       const normalizedName = (fileName || '').toLowerCase();
 
       if (normalizedType.includes('pdf') || normalizedName.endsWith('.pdf')) {
@@ -167,15 +212,17 @@ export function registerStudyRoutes(app: express.Express): void {
       } else if (
         normalizedType.includes('word') || 
         normalizedType.includes('docx') || 
+        normalizedType.includes('officedocument') ||
         normalizedName.endsWith('.docx') || 
         normalizedName.endsWith('.doc')
       ) {
-        const docResult = await mammoth.extractRawText({ buffer });
+        const docResult = await mammoth.extractRawText({ buffer }).catch(() => ({ value: '' }));
         extractedText = docResult.value;
       } else if (
         normalizedType.includes('text') || 
         normalizedName.endsWith('.txt') || 
-        normalizedName.endsWith('.md')
+        normalizedName.endsWith('.md') ||
+        normalizedName.endsWith('.csv')
       ) {
         extractedText = buffer.toString('utf-8');
       } else {
@@ -201,9 +248,9 @@ export function registerStudyRoutes(app: express.Express): void {
         wordCount: cleanedText.split(/\s+/).filter(Boolean).length
       });
     } catch (err: any) {
-      console.error('Error parsing document in server route:', err);
-      return res.status(500).json({ 
-        error: `Document extraction failed: ${err.message || 'Unknown parser error'}` 
+      console.warn('Document parser warning in server route:', err?.message || err);
+      return res.status(422).json({ 
+        error: `Document extraction failed: ${err.message || 'Unable to parse document structure'}` 
       });
     }
   });

@@ -148,16 +148,17 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
       else if (res.toolType === 'lesson-plan') kindLabel = 'LESSON PLAN';
       else if (res.toolType === 'pdf-studypack') kindLabel = 'STUDY PACK';
       else if (res.toolType === 'presentation') kindLabel = 'SLIDE DECK';
-      else if (res.toolType === 'course-builder') kindLabel = 'CURRICULUM COURSE';
+      else if (res.toolType === 'course-builder' || res.toolType === 'course') kindLabel = 'CURRICULUM COURSE';
       else if (res.toolType === 'learning-path') kindLabel = 'LEARNING PATH';
 
+      const anyRes = res as any;
       items.push({
         id: `build-${res.id}`,
         kind: 'build',
         kindLabel,
         title: res.title,
-        description: `${res.gradeLevel ? `${res.gradeLevel} · ` : ''}${res.topic ? `Topic: ${res.topic}` : 'Created with Proudly Afrikan Build.'}`,
-        categoryOrSubject: res.subject || 'Curriculum',
+        description: `${anyRes.gradeLevel ? `${anyRes.gradeLevel} · ` : ''}${anyRes.topic ? `Topic: ${anyRes.topic}` : 'Created with Proudly Afrikan Build.'}`,
+        categoryOrSubject: anyRes.subject || 'Curriculum',
         createdAt: res.createdAt || new Date().toISOString(),
         itemCount: 1,
         itemCountLabel,

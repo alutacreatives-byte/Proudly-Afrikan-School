@@ -11,6 +11,7 @@ import {
   HomeworkAttachment,
   HomeworkEvaluation
 } from '../types';
+import { extractTextFromFile } from '../../quiz/utils/pdfExtractor';
 
 export interface GenerateSetParams {
   topic?: string;
@@ -630,77 +631,97 @@ Rigorous conceptual modeling ensures durable retention. Understanding both the i
       };
     }
 
+    const fileNameLower = file.name.toLowerCase();
+
+    // 1. Plain text / Markdown / CSV extraction directly
+    const isPlainText = file.type === 'text/plain' || fileNameLower.endsWith('.txt') || fileNameLower.endsWith('.md') || fileNameLower.endsWith('.csv');
+    if (isPlainText) {
+      try {
+        const text = await file.text();
+        return {
+          text,
+          fileName: file.name,
+          wordCount: text.trim().split(/\s+/).filter(Boolean).length
+        };
+      } catch (e) {
+        console.warn('Plain text extraction issue:', e);
+      }
+    }
+
+    // 2. Client-side PDF extraction with pdfjs if it's a PDF
+    if (fileNameLower.endsWith('.pdf') || file.type === 'application/pdf') {
+      try {
+        const clientRes = await extractTextFromFile(file);
+        if (clientRes.text && clientRes.text.trim().length > 10) {
+          const cleanText = clientRes.text.trim();
+          return {
+            text: cleanText,
+            fileName: file.name,
+            wordCount: cleanText.split(/\s+/).filter(Boolean).length
+          };
+        }
+      } catch (clientPdfErr) {
+        console.warn('Client-side PDF parse attempt noted, proceeding to server-side parser:', clientPdfErr);
+      }
+    }
+
+    // 3. Server-side document parser (DOCX, PDF, and binary formats)
     return new Promise((resolve) => {
       const reader = new FileReader();
-      const isPlainText = file.type === 'text/plain' || file.name.endsWith('.txt') || file.name.endsWith('.md') || file.name.endsWith('.csv');
 
-      if (isPlainText) {
-        reader.onload = (e) => {
-          const text = (e.target?.result as string) || '';
-          resolve({
-            text,
-            fileName: file.name,
-            wordCount: text.trim().split(/\s+/).filter(Boolean).length
+      reader.onload = async (e) => {
+        try {
+          const rawResult = (e.target?.result as string) || '';
+          // Strip data URL prefix if present so server receives clean base64
+          const base64 = rawResult.replace(/^data:[^;]+;base64,/, '').trim();
+
+          const res = await fetch('/api/parse-document', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              fileName: file.name,
+              base64,
+              fileType: file.type || 'application/octet-stream',
+              mimeType: file.type || 'application/octet-stream'
+            })
           });
-        };
-        reader.onerror = () => {
-          resolve({
-            text: '',
-            fileName: file.name,
-            wordCount: 0
-          });
-        };
-        reader.readAsText(file);
-      } else {
-        // Read as base64 and parse via server endpoint
-        reader.onload = async (e) => {
-          try {
-            const base64 = e.target?.result as string;
-            const res = await fetch('/api/parse-document', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
+
+          if (res.ok) {
+            const data = await res.json();
+            if (data && typeof data.text === 'string' && data.text.trim().length > 0) {
+              return resolve({
+                text: data.text,
                 fileName: file.name,
-                base64,
-                mimeType: file.type || 'application/octet-stream'
-              })
-            });
-
-            if (res.ok) {
-              const data = await res.json();
-              if (data && typeof data.text === 'string') {
-                return resolve({
-                  text: data.text,
-                  fileName: file.name,
-                  wordCount: data.wordCount || data.text.trim().split(/\s+/).filter(Boolean).length
-                });
-              }
+                wordCount: data.wordCount || data.text.trim().split(/\s+/).filter(Boolean).length
+              });
             }
-
-            // Graceful non-throwing fallback
-            resolve({
-              text: '',
-              fileName: file.name,
-              wordCount: 0
-            });
-          } catch (err: any) {
-            console.warn('Document parsing endpoint notice:', err?.message || err);
-            resolve({
-              text: '',
-              fileName: file.name,
-              wordCount: 0
-            });
           }
-        };
-        reader.onerror = () => {
+
+          // Non-throwing graceful resolve
           resolve({
             text: '',
             fileName: file.name,
             wordCount: 0
           });
-        };
-        reader.readAsDataURL(file);
-      }
+        } catch (err: any) {
+          console.warn('Document parsing endpoint notice:', err?.message || err);
+          resolve({
+            text: '',
+            fileName: file.name,
+            wordCount: 0
+          });
+        }
+      };
+
+      reader.onerror = () => {
+        resolve({
+          text: '',
+          fileName: file.name,
+          wordCount: 0
+        });
+      };
+
+      reader.readAsDataURL(file);
     });
   }
 }

@@ -125,12 +125,12 @@ export const BuildApp: React.FC = () => {
     );
   }
 
-  if (activeTool === 'course-builder') {
+  if (activeTool === 'course-builder' || activeTool === 'course') {
     return (
       <CourseBuilder
         onBack={handleBackToGrid}
         onSaved={refreshSavedCount}
-        existingResource={activeResource?.toolType === 'course-builder' ? (activeResource as CourseResource) : undefined}
+        existingResource={(activeResource?.toolType === 'course-builder' || activeResource?.toolType === 'course') ? (activeResource as CourseResource) : undefined}
       />
     );
   }
