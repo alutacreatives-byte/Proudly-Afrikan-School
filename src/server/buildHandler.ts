@@ -737,49 +737,92 @@ function normalizeLessonPlan(data: any, subject: string, topic: string, gradeLev
 }
 
 function normalizeCourse(data: any, subject: string, title: string, gradeLevel: string) {
+  const durationWeeks = Number(data.durationWeeks) || Math.max(4, Math.ceil((Number(data.totalEstimatedHours) || 36) / 3)) || 12;
+  const courseOverview = data.courseOverview || data.description || `Comprehensive ${title || subject} curriculum designed for deep conceptual mastery and practical application.`;
+
   const learningOutcomes = Array.isArray(data.learningOutcomes) && data.learningOutcomes.length > 0
     ? data.learningOutcomes
     : Array.isArray(data.courseObjectives) && data.courseObjectives.length > 0
     ? data.courseObjectives
     : [
-        `Master foundational principles and frameworks of ${title || subject}.`,
-        `Apply theoretical knowledge to practical case studies and authentic challenges.`,
-        `Synthesize integrated solutions ready for professional or academic deployment.`
+        `Master foundational principles and analytical frameworks of ${title || subject}.`,
+        `Apply theoretical models to real-world scenarios and critical inquiry problems.`,
+        `Synthesize integrated solutions ready for academic and professional advancement.`
       ];
 
-  const modules = (Array.isArray(data.modules) ? data.modules : []).map((mod: any, mIdx: number) => ({
-    id: mod.id || `mod-${mIdx + 1}`,
-    moduleNumber: mod.moduleNumber || mIdx + 1,
-    title: mod.title || `Module ${mIdx + 1}: Core Concepts`,
-    overview: mod.overview || 'In-depth exploration of core module competencies.',
-    estimatedHours: Number(mod.estimatedHours) || 8,
-    lessons: (Array.isArray(mod.lessons) ? mod.lessons : []).map((l: any, lIdx: number) => ({
-      id: l.id || `l-${mIdx + 1}-${lIdx + 1}`,
-      lessonTitle: l.lessonTitle || l.title || `Lesson ${lIdx + 1}`,
-      title: l.title || l.lessonTitle || `Lesson ${lIdx + 1}`,
-      learningObjective: l.learningObjective || l.summary || (Array.isArray(l.keyLearningOutcomes) ? l.keyLearningOutcomes.join('; ') : 'Understand core mechanisms.'),
-      summary: l.summary || l.learningObjective || 'Lesson overview and focus.',
-      recommendedActivity: l.recommendedActivity || l.deliveryFormat || 'Guided analytical practice.',
-      deliveryFormat: l.deliveryFormat || l.recommendedActivity || 'Interactive lecture & exercise',
-      estimatedMinutes: Number(l.estimatedMinutes) || 60,
-    })),
-  }));
+  const rawModules = Array.isArray(data.modules) && data.modules.length > 0 ? data.modules : [
+    {
+      moduleNumber: 1,
+      title: 'Foundational Principles & Core Concepts',
+      description: `Introduction to the essential paradigms and core structures of ${title || subject}.`,
+      learningOutcomes: [`Understand core terminology and foundational mechanics of ${title || subject}.`],
+      keyTopics: ['Core Definitions', 'Historical Context', 'Fundamental Models'],
+    },
+    {
+      moduleNumber: 2,
+      title: 'Applied Methodologies & Practical Analysis',
+      description: `Hands-on inquiry, case studies, and systemic applications in ${title || subject}.`,
+      learningOutcomes: [`Apply analysis techniques to solve intermediate challenges in ${title || subject}.`],
+      keyTopics: ['Methods & Frameworks', 'Case Studies', 'Comparative Analysis'],
+    },
+    {
+      moduleNumber: 3,
+      title: 'Advanced Synthesis & Capstone Applications',
+      description: `Advanced problem sets, cross-disciplinary integration, and project execution.`,
+      learningOutcomes: [`Synthesize complex solutions and present defensible conclusions.`],
+      keyTopics: ['Advanced Topics', 'Integrative Project', 'Evaluation & Review'],
+    }
+  ];
 
-  const durationWeeks = Number(data.durationWeeks) || Math.max(4, Math.ceil((Number(data.totalEstimatedHours) || 36) / 3)) || 12;
+  const modules = rawModules.map((mod: any, mIdx: number) => {
+    const modNumber = Number(mod.moduleNumber) || mIdx + 1;
+    const modTitle = mod.title || `Module ${modNumber}: Core Concepts`;
+    const modDesc = mod.description || mod.overview || `In-depth exploration of core module competencies for ${modTitle}.`;
+
+    const modOutcomes = Array.isArray(mod.learningOutcomes) && mod.learningOutcomes.length > 0
+      ? mod.learningOutcomes
+      : Array.isArray(mod.lessons) && mod.lessons.length > 0
+      ? mod.lessons.map((l: any) => l.learningObjective || l.title || 'Master module objective')
+      : [`Master the fundamental principles covered in ${modTitle}.`];
+
+    const modTopics = Array.isArray(mod.keyTopics) && mod.keyTopics.length > 0
+      ? mod.keyTopics
+      : Array.isArray(mod.lessons) && mod.lessons.length > 0
+      ? mod.lessons.map((l: any) => l.lessonTitle || l.title || 'Key topic')
+      : ['Fundamental Concepts', 'Applied Analysis', 'Key Principles'];
+
+    return {
+      id: mod.id || `mod-${modNumber}`,
+      moduleNumber: modNumber,
+      title: modTitle,
+      description: modDesc,
+      overview: modDesc,
+      estimatedHours: Number(mod.estimatedHours) || 8,
+      learningOutcomes: modOutcomes,
+      keyTopics: modTopics,
+      practicalProjectOrTask: mod.practicalProjectOrTask || mod.project || `Hands-on analytical project for Module ${modNumber}`,
+      lessons: Array.isArray(mod.lessons) ? mod.lessons : []
+    };
+  });
 
   return {
     ...data,
     id: data.id || `course-${Date.now()}`,
     title: data.title || title || `${subject} Master Curriculum`,
     subject: data.subject || subject || 'Higher Education',
+    topic: data.topic || title || subject || 'Core Curriculum',
     gradeLevel: data.gradeLevel || gradeLevel || 'Tertiary / Undergraduate',
-    description: data.description || 'Comprehensive curriculum designed for mastery and practical application.',
     targetAudience: data.targetAudience || 'Students, educators, and lifelong learners',
+    courseOverview,
+    description: courseOverview,
     durationWeeks,
-    totalEstimatedHours: data.totalEstimatedHours || durationWeeks * 3,
+    totalWeeksOrHours: data.totalWeeksOrHours || `${durationWeeks} Weeks (${data.totalEstimatedHours || durationWeeks * 3} Hours)`,
+    totalEstimatedHours: Number(data.totalEstimatedHours) || durationWeeks * 3,
     learningOutcomes,
     courseObjectives: learningOutcomes,
     modules,
+    toolType: 'course',
+    createdAt: data.createdAt || new Date().toISOString(),
   };
 }
 
@@ -791,33 +834,77 @@ function normalizeLearningPath(data: any, subject: string, title: string, target
   }
   if (!estimatedTotalWeeks) estimatedTotalWeeks = 24;
 
-  const milestones = Array.isArray(data.milestones) && data.milestones.length > 0
+  const rawMilestones = Array.isArray(data.milestones) && data.milestones.length > 0
     ? data.milestones
     : Array.isArray(data.stages) && data.stages.length > 0
-    ? data.stages.map((st: any, idx: number) => ({
-        id: st.id || `ms-${idx + 1}`,
-        milestoneNumber: st.stageNumber || idx + 1,
-        phaseName: st.title || st.tier || `Stage ${idx + 1}: Foundational Core`,
-        targetWeeks: st.estimatedWeeks ? `${st.estimatedWeeks} Weeks` : '4-6 Weeks',
-        keyObjectives: Array.isArray(st.keyCompetenciesToMaster) ? st.keyCompetenciesToMaster : (Array.isArray(st.recommendedModulesOrTopics) ? st.recommendedModulesOrTopics : [`Master phase competencies for ${title || subject}`]),
-        milestoneProject: st.milestoneProjectOrAssessment || 'Milestone Capstone Deliverable',
-      }))
+    ? data.stages
     : [
         {
+          stepNumber: 1,
           milestoneNumber: 1,
-          phaseName: 'Foundation & Principles',
-          targetWeeks: '6 Weeks',
-          keyObjectives: [`Understand core principles of ${title || subject}`],
-          milestoneProject: 'Foundational portfolio submission',
+          title: 'Stage 1: Core Foundations & Frameworks',
+          phaseName: 'Stage 1: Core Foundations & Frameworks',
+          estimatedHours: 20,
+          description: `Establish bedrock conceptual knowledge and essential terminology in ${title || subject}.`,
+          skillsAcquired: [`Core theoretical models of ${title || subject}`, 'Vocabulary and structural foundations'],
+          suggestedActivities: ['Read foundational unit guides', 'Complete diagnostic practice sets'],
+          checkpointAssessment: 'Foundational concept validation quiz and portfolio submission'
         },
         {
+          stepNumber: 2,
           milestoneNumber: 2,
-          phaseName: 'Applied Mastery & Systems',
-          targetWeeks: '8 Weeks',
-          keyObjectives: [`Build complex implementations in ${title || subject}`],
-          milestoneProject: 'Applied practical capstone',
+          title: 'Stage 2: Intermediate Application & Problem Solving',
+          phaseName: 'Stage 2: Intermediate Application & Problem Solving',
+          estimatedHours: 35,
+          description: `Transition from passive understanding to active implementation and case analysis.`,
+          skillsAcquired: ['Applied methodologies', 'Analytical problem solving', 'Comparative case review'],
+          suggestedActivities: ['Work through guided case studies', 'Build intermediate practice exercises'],
+          checkpointAssessment: 'Intermediate applied assessment and practical case solution'
+        },
+        {
+          stepNumber: 3,
+          milestoneNumber: 3,
+          title: 'Stage 3: Advanced Mastery & Independent Synthesis',
+          phaseName: 'Stage 3: Advanced Mastery & Independent Synthesis',
+          estimatedHours: 45,
+          description: `Tackle complex multi-variable challenges, edge cases, and integrated projects.`,
+          skillsAcquired: ['Advanced synthesis', 'Independent project execution', 'Systemic evaluation'],
+          suggestedActivities: ['Architect end-to-end capstone project', 'Peer review and defend findings'],
+          checkpointAssessment: 'Comprehensive capstone defense and mastery certification'
         }
       ];
+
+  const milestones = rawMilestones.map((st: any, idx: number) => {
+    const stepNum = Number(st.stepNumber || st.milestoneNumber || st.stageNumber) || idx + 1;
+    const msTitle = st.title || st.phaseName || st.tier || `Milestone ${stepNum}: Competency Unit`;
+    const estHours = Number(st.estimatedHours) || (st.targetWeeks ? parseInt(st.targetWeeks, 10) * 10 : 20);
+    const skills = Array.isArray(st.skillsAcquired) && st.skillsAcquired.length > 0
+      ? st.skillsAcquired
+      : Array.isArray(st.keyObjectives) && st.keyObjectives.length > 0
+      ? st.keyObjectives
+      : Array.isArray(st.keyCompetenciesToMaster) && st.keyCompetenciesToMaster.length > 0
+      ? st.keyCompetenciesToMaster
+      : [`Master essential competencies in ${title || subject}`];
+
+    const desc = st.description || (Array.isArray(st.keyObjectives) ? st.keyObjectives.join('. ') : `Structured milestone focused on mastering ${msTitle}.`);
+    const checkpoint = st.checkpointAssessment || st.milestoneProject || st.milestoneProjectOrAssessment || 'Milestone project checkpoint evaluation';
+
+    return {
+      id: st.id || `ms-${stepNum}`,
+      stepNumber: stepNum,
+      milestoneNumber: stepNum,
+      title: msTitle,
+      phaseName: msTitle,
+      estimatedHours: estHours,
+      targetWeeks: st.targetWeeks || `${Math.max(2, Math.ceil(estHours / 10))} Weeks`,
+      description: desc,
+      skillsAcquired: skills,
+      keyObjectives: skills,
+      suggestedActivities: Array.isArray(st.suggestedActivities) ? st.suggestedActivities : ['Complete module readings', 'Practice application exercises'],
+      checkpointAssessment: checkpoint,
+      milestoneProject: checkpoint,
+    };
+  });
 
   return {
     ...data,
@@ -826,10 +913,19 @@ function normalizeLearningPath(data: any, subject: string, title: string, target
     subject: data.subject || subject || 'Specialized Education',
     targetGoal: data.targetGoal || data.targetCareerOrEducationalGoal || targetGoal || 'Comprehensive Professional Competence',
     targetCareerOrEducationalGoal: data.targetCareerOrEducationalGoal || data.targetGoal || targetGoal || 'Comprehensive Professional Competence',
+    startingLevel: data.startingLevel || 'Beginner / Intermediate',
+    targetLevel: data.targetLevel || 'Advanced Fluency / Professional Mastery',
+    totalEstimatedWeeks: estimatedTotalWeeks,
     estimatedTotalWeeks,
     totalEstimatedDuration: `${estimatedTotalWeeks} Weeks`,
     milestones,
-    stages: data.stages || milestones,
+    stages: milestones,
+    recommendations: Array.isArray(data.recommendations) ? data.recommendations : [
+      'Maintain weekly consistent practice and revision habits.',
+      'Document learnings in a personal portfolio after completing each milestone checkpoint.'
+    ],
+    toolType: 'learning-path',
+    createdAt: data.createdAt || new Date().toISOString(),
   };
 }
 
@@ -887,17 +983,48 @@ function normalizePdfStudyPack(data: any, sourceDocName: string, gradeLevel: str
 }
 
 function normalizePresentation(data: any, subject: string, topic: string, audienceLevel: string) {
-  const slides = (Array.isArray(data.slides) ? data.slides : []).map((s: any, idx: number) => ({
-    id: s.id || `s-${idx + 1}`,
-    slideNumber: s.slideNumber || idx + 1,
-    slideType: s.slideType || (idx === 0 ? 'title' : 'content'),
-    title: s.title || `Slide ${idx + 1}: ${topic || subject}`,
-    subtitle: s.subtitle || '',
-    bulletPoints: Array.isArray(s.bulletPoints) ? s.bulletPoints : [`Key concept point for ${topic || subject}`],
-    suggestedVisualOrDiagram: s.suggestedVisualOrDiagram || 'Conceptual breakdown diagram',
-    discussionOrEngagementPrompt: s.discussionOrEngagementPrompt || 'What are the main implications of this finding?',
-    speakerNotes: s.speakerNotes || 'Provide concrete examples and invite student perspectives.',
-  }));
+  const rawSlides = Array.isArray(data.slides) && data.slides.length > 0 ? data.slides : [
+    {
+      slideNumber: 1,
+      title: `Introduction to ${topic || subject}`,
+      bulletPoints: [`Overview and significance of ${topic || subject}`, 'Core learning objectives', 'Key historical and practical contexts'],
+      speakerNotes: `Welcome everyone. Today we will explore ${topic || subject}, analyzing its core mechanisms and real-world relevance.`
+    },
+    {
+      slideNumber: 2,
+      title: 'Core Principles & Mechanisms',
+      bulletPoints: ['Foundational frameworks and structural rules', 'Critical dynamics and equations/relationships', 'Common misconceptions and clarifications'],
+      speakerNotes: 'Focus on explaining the underlying mechanisms that make these principles work.'
+    },
+    {
+      slideNumber: 3,
+      title: 'Applied Scenarios & Summary',
+      bulletPoints: ['Real-world case studies and demonstrations', 'Synthesizing takeaways for mastery', 'Next steps and recommended inquiries'],
+      speakerNotes: 'Invite questions and encourage participants to apply the concept to their own projects.'
+    }
+  ];
+
+  const slides = rawSlides.map((s: any, idx: number) => {
+    const rawBullets = Array.isArray(s.bullets) && s.bullets.length > 0
+      ? s.bullets
+      : Array.isArray(s.bulletPoints) && s.bulletPoints.length > 0
+      ? s.bulletPoints
+      : [`Core analytical foundation of ${topic || subject}`, `Key mechanisms and practical examples`, `Summary takeaway and discussion question`];
+
+    return {
+      id: s.id || `s-${idx + 1}`,
+      slideNumber: Number(s.slideNumber) || idx + 1,
+      slideType: s.slideType || (idx === 0 ? 'title' : 'content'),
+      title: s.title || `Slide ${idx + 1}: ${topic || subject}`,
+      subtitle: s.subtitle || '',
+      bullets: rawBullets,
+      bulletPoints: rawBullets,
+      suggestedVisualOrDiagram: s.suggestedVisualOrDiagram || s.visualCue || 'Conceptual breakdown diagram',
+      visualCue: s.visualCue || s.suggestedVisualOrDiagram || 'Conceptual breakdown diagram',
+      discussionOrEngagementPrompt: s.discussionOrEngagementPrompt || 'What are the main implications of this concept?',
+      speakerNotes: s.speakerNotes || 'Provide concrete examples and invite student engagement.',
+    };
+  });
 
   return {
     ...data,
@@ -906,11 +1033,14 @@ function normalizePresentation(data: any, subject: string, topic: string, audien
     subtitle: data.subtitle || 'Educational Presentation Deck',
     subject: data.subject || subject || 'Academic Subject',
     topic: data.topic || topic || 'Core Topic',
-    targetAudience: data.targetAudience || audienceLevel || 'Senior Secondary / High School (Grades 9-12)',
-    gradeLevel: data.targetAudience || audienceLevel || 'Senior Secondary / High School (Grades 9-12)',
+    audienceLevel: data.audienceLevel || data.targetAudience || audienceLevel || 'Senior Secondary / High School (Grades 9-12)',
+    targetAudience: data.targetAudience || data.audienceLevel || audienceLevel || 'Senior Secondary / High School (Grades 9-12)',
+    gradeLevel: data.gradeLevel || data.audienceLevel || audienceLevel || 'Senior Secondary / High School (Grades 9-12)',
     themeOrColorMood: data.themeOrColorMood || data.presentationStyle || 'High Contrast Academic & Dynamic',
     slidesCount: slides.length,
     slides,
+    toolType: 'presentation',
+    createdAt: data.createdAt || new Date().toISOString(),
   };
 }
 

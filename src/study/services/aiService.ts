@@ -9,9 +9,606 @@ import {
   SummaryType,
   HomeworkActionType,
   HomeworkAttachment,
-  HomeworkEvaluation
+  HomeworkEvaluation,
+  StudyToolType,
+  StudyToolInput,
+  StudyToolResult,
+  StudyGuideResult,
+  FlashcardResult,
+  QuizResult,
+  PdfQuizResult,
+  PresentationResult,
+  CourseResult,
+  LearningPathResult,
+  StudyGuideSection,
+  FlashcardCard,
+  QuizQuestion,
+  PresentationSlide,
+  CourseModule,
+  LearningStage
 } from '../types';
 import { extractTextFromFile } from '../../quiz/utils/pdfExtractor';
+
+// ==========================================
+// 1. SHARED AI JSON PARSER & VALIDATORS
+// ==========================================
+
+export async function callAIAndParseJson<T>(prompt: string): Promise<T> {
+  const response = await fetch('/api/generate', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ prompt }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Generation failed.');
+  }
+
+  const data = await response.json();
+
+  if (!data || typeof data !== 'object') {
+    throw new Error('Invalid generation response.');
+  }
+
+  return data as T;
+}
+
+export function validateStudyGuide(result: StudyGuideResult): void {
+  if (!result || typeof result !== 'object') {
+    throw new Error('Invalid study guide data received.');
+  }
+  if (!result.title || typeof result.title !== 'string' || !result.title.trim()) {
+    throw new Error('Study guide is missing a title.');
+  }
+  if (!Array.isArray(result.sections) || result.sections.length === 0) {
+    throw new Error('No study guide sections were generated.');
+  }
+  result.sections.forEach((s, idx) => {
+    if (!s.heading || !s.heading.trim()) {
+      s.heading = `Section ${idx + 1}: Key Topic`;
+    }
+    if (!s.content || typeof s.content !== 'string' || !s.content.trim()) {
+      throw new Error(`Section "${s.heading}" has invalid or missing content.`);
+    }
+  });
+}
+
+export function validateFlashcards(result: FlashcardResult): void {
+  if (!result || typeof result !== 'object') {
+    throw new Error('Invalid flashcard data received.');
+  }
+  if (!result.title || typeof result.title !== 'string' || !result.title.trim()) {
+    throw new Error('Flashcard set is missing a title.');
+  }
+  if (!Array.isArray(result.cards) || result.cards.length === 0) {
+    throw new Error('No flashcards were generated.');
+  }
+  result.cards.forEach((card, idx) => {
+    if (
+      typeof card.front !== 'string' ||
+      typeof card.back !== 'string' ||
+      !card.front.trim() ||
+      !card.back.trim()
+    ) {
+      throw new Error(`Flashcard #${idx + 1} contains empty or invalid content.`);
+    }
+  });
+}
+
+export function validateQuiz(result: QuizResult): void {
+  if (!result || typeof result !== 'object') {
+    throw new Error('Invalid quiz data received.');
+  }
+  if (!result.title || typeof result.title !== 'string' || !result.title.trim()) {
+    throw new Error('Quiz is missing a title.');
+  }
+  if (!Array.isArray(result.questions) || result.questions.length === 0) {
+    throw new Error('No quiz questions were generated.');
+  }
+  result.questions.forEach((q, idx) => {
+    if (!q.prompt || typeof q.prompt !== 'string' || !q.prompt.trim()) {
+      throw new Error(`Question #${idx + 1} is missing a prompt.`);
+    }
+    if (!Array.isArray(q.options) || q.options.length < 2) {
+      throw new Error(`Question #${idx + 1} must have at least 2 options.`);
+    }
+  });
+}
+
+export function validatePdfQuiz(result: PdfQuizResult): void {
+  if (!result || typeof result !== 'object') {
+    throw new Error('Invalid PDF quiz data received.');
+  }
+  if (!result.title || typeof result.title !== 'string') {
+    result.title = 'Document Mastery Quiz';
+  }
+  if (!Array.isArray(result.questions) || result.questions.length === 0) {
+    throw new Error('No document-grounded quiz questions were generated.');
+  }
+  result.questions.forEach((q, idx) => {
+    if (!q.prompt || typeof q.prompt !== 'string' || !q.prompt.trim()) {
+      throw new Error(`Document question #${idx + 1} is missing a prompt.`);
+    }
+    if (!Array.isArray(q.options) || q.options.length < 2) {
+      throw new Error(`Document question #${idx + 1} must have options.`);
+    }
+  });
+}
+
+export function validatePresentation(result: PresentationResult): void {
+  if (!result || typeof result !== 'object') {
+    throw new Error('Invalid presentation data received.');
+  }
+  if (!result.title || typeof result.title !== 'string' || !result.title.trim()) {
+    throw new Error('Presentation is missing a title.');
+  }
+  if (!Array.isArray(result.slides) || result.slides.length === 0) {
+    throw new Error('No presentation slides were generated.');
+  }
+  result.slides.forEach((slide, idx) => {
+    if (!slide.title || typeof slide.title !== 'string' || !slide.title.trim()) {
+      slide.title = `Slide ${idx + 1}`;
+    }
+    if (!Array.isArray(slide.bullets) || slide.bullets.length === 0) {
+      slide.bullets = ['Key concept discussion point'];
+    }
+  });
+}
+
+export function validateCourse(result: CourseResult): void {
+  if (!result || typeof result !== 'object') {
+    throw new Error('Invalid course curriculum data received.');
+  }
+  if (!result.title || typeof result.title !== 'string' || !result.title.trim()) {
+    throw new Error('Course is missing a title.');
+  }
+  if (!Array.isArray(result.modules) || result.modules.length === 0) {
+    throw new Error('No course modules were generated.');
+  }
+  result.modules.forEach((mod, idx) => {
+    if (!mod.title || typeof mod.title !== 'string' || !mod.title.trim()) {
+      mod.title = `Module ${idx + 1}: Core Principles`;
+    }
+    if (!Array.isArray(mod.learningOutcomes) || mod.learningOutcomes.length === 0) {
+      mod.learningOutcomes = [`Understand core competencies for ${mod.title}`];
+    }
+  });
+}
+
+export function validateLearningPath(result: LearningPathResult): void {
+  if (!result || typeof result !== 'object') {
+    throw new Error('Invalid learning pathway data received.');
+  }
+  if (!result.title || typeof result.title !== 'string' || !result.title.trim()) {
+    throw new Error('Learning pathway is missing a title.');
+  }
+  if (!Array.isArray(result.stages) || result.stages.length === 0) {
+    throw new Error('No learning roadmap stages were generated.');
+  }
+  result.stages.forEach((st, idx) => {
+    if (!st.title || typeof st.title !== 'string' || !st.title.trim()) {
+      st.title = `Stage ${idx + 1}: Foundational Core`;
+    }
+  });
+}
+
+// ==========================================
+// 2. DEDICATED STUDY TOOL GENERATORS
+// ==========================================
+
+export async function generateStudyGuide(input: StudyToolInput): Promise<StudyGuideResult> {
+  const topic = input.topic || 'Core Curriculum Study Guide';
+  const sourceContext = input.sourceMaterial ? `\n\nSource material to base the study guide on:\n${input.sourceMaterial}` : '';
+
+  const prompt = `
+Create a comprehensive, structured Study Guide for students and learners.
+
+Topic:
+${topic}
+Category / Subject: ${input.category || 'General Academic'}
+Grade / Target Level: ${input.gradeLevel || 'Secondary / Higher Education'}${sourceContext}
+
+Return ONLY valid JSON matching this schema:
+{
+  "title": "Comprehensive Study Guide: ${topic}",
+  "subject": "${input.category || 'General Academic'}",
+  "topic": "${topic}",
+  "overview": "A concise executive overview of the topic...",
+  "sections": [
+    {
+      "heading": "1. Foundational Core Principles",
+      "content": "In-depth explanatory text breaking down the mechanisms...",
+      "bulletPoints": ["Key takeaway point 1", "Key takeaway point 2"],
+      "keyTerms": [
+        { "term": "Core Term", "definition": "Clear concise definition" }
+      ]
+    },
+    {
+      "heading": "2. Methodologies & Practical Applications",
+      "content": "How these concepts apply in real-world scenarios...",
+      "bulletPoints": ["Applied example 1", "Applied example 2"],
+      "keyTerms": [
+        { "term": "Applied Framework", "definition": "Definition" }
+      ]
+    },
+    {
+      "heading": "3. Advanced Synthesis & Exam Retention",
+      "content": "Key connections, common pitfalls to avoid, and synthesis...",
+      "bulletPoints": ["Synthesis insight 1", "Memory trigger 2"]
+    }
+  ],
+  "keyTerms": [
+    { "term": "Primary Concept", "definition": "Definition of the main idea" },
+    { "term": "Secondary Pillar", "definition": "Definition of supporting framework" }
+  ],
+  "importantTakeaways": [
+    "High-yield takeaway 1",
+    "High-yield takeaway 2",
+    "High-yield takeaway 3"
+  ],
+  "reviewQuestions": [
+    {
+      "question": "Diagnostic conceptual question?",
+      "answer": "Complete explanatory answer",
+      "hint": "Clue for self-testing"
+    }
+  ]
+}
+`;
+
+  const result = await callAIAndParseJson<StudyGuideResult>(prompt);
+  result.toolType = 'study-guide';
+  result.id = `guide-${Date.now()}`;
+  result.createdAt = new Date().toISOString();
+  validateStudyGuide(result);
+  return result;
+}
+
+export async function generateFlashcards(input: StudyToolInput): Promise<FlashcardResult> {
+  const topic = input.topic || 'Core Curriculum Flashcards';
+  const count = input.count || 8;
+  const sourceContext = input.sourceMaterial ? `\n\nSource material to base the cards on:\n${input.sourceMaterial}` : '';
+
+  const prompt = `
+Create high-yield study flashcards designed for active recall and spaced repetition.
+
+Topic:
+${topic}
+Number of cards: ${count}
+Subject / Category: ${input.category || 'General Knowledge'}
+Target Level: ${input.gradeLevel || 'Secondary / Higher Education'}${sourceContext}
+
+Return ONLY valid JSON matching this schema:
+{
+  "title": "Study Flashcards: ${topic}",
+  "subject": "${input.category || 'General Knowledge'}",
+  "topic": "${topic}",
+  "description": "Active recall flashcards covering core definitions, mechanisms, and applications of ${topic}.",
+  "cards": [
+    {
+      "front": "Clear, specific question or prompt about a core principle",
+      "back": "Accurate, concise, educational answer",
+      "hint": "Optional conceptual hint",
+      "category": "${input.category || 'Core Concept'}"
+    }
+  ]
+}
+Every card must contain accurate, readable educational content based on the supplied topic and material. Generate exactly ${count} cards.
+`;
+
+  const result = await callAIAndParseJson<FlashcardResult>(prompt);
+  result.toolType = 'flashcards';
+  result.id = `fc-${Date.now()}`;
+  result.createdAt = new Date().toISOString();
+  validateFlashcards(result);
+  return result;
+}
+
+export async function generateQuiz(input: StudyToolInput): Promise<QuizResult> {
+  const topic = input.topic || 'Mastery Practice Quiz';
+  const count = input.count || 5;
+  const sourceContext = input.sourceMaterial ? `\n\nSource material to test:\n${input.sourceMaterial}` : '';
+
+  const prompt = `
+Create an interactive practice quiz designed to assess deep conceptual understanding.
+
+Topic:
+${topic}
+Number of questions: ${count}
+Difficulty: ${input.difficulty || 'Medium'}
+Subject / Category: ${input.category || 'General Knowledge'}${sourceContext}
+
+Return ONLY valid JSON matching this schema:
+{
+  "title": "Practice Quiz: ${topic}",
+  "subject": "${input.category || 'General Knowledge'}",
+  "topic": "${topic}",
+  "description": "Test and reinforce your mastery of ${topic} with instant feedback.",
+  "difficulty": "${input.difficulty || 'Medium'}",
+  "timeLimitMinutes": ${Math.max(5, count * 2)},
+  "questions": [
+    {
+      "id": "q1",
+      "questionNumber": 1,
+      "prompt": "Clear, rigorous question statement testing conceptual understanding",
+      "options": [
+        "Correct answer statement",
+        "Plausible distractor 1",
+        "Plausible distractor 2",
+        "Plausible distractor 3"
+      ],
+      "correctAnswer": 0,
+      "explanation": "Detailed explanation of why the correct option is right and the underlying principle."
+    }
+  ]
+}
+Make sure correctAnswer is an integer (0, 1, 2, or 3) representing the index of the correct option in the options array.
+`;
+
+  const result = await callAIAndParseJson<QuizResult>(prompt);
+  result.toolType = 'quiz';
+  result.id = `quiz-${Date.now()}`;
+  result.createdAt = new Date().toISOString();
+  validateQuiz(result);
+  return result;
+}
+
+export async function generatePdfQuiz(input: StudyToolInput): Promise<PdfQuizResult> {
+  const source = input.sourceMaterial || input.topic || 'Uploaded Document Notes';
+  const docName = input.fileName || 'Course Document';
+  const count = input.count || 5;
+
+  const prompt = `
+Create a grounded assessment quiz strictly based on the following document content.
+
+Document Name: ${docName}
+Number of Questions: ${count}
+
+Document Content:
+${source.slice(0, 14000)}
+
+Return ONLY valid JSON matching this schema:
+{
+  "title": "Document Mastery Quiz: ${docName}",
+  "documentName": "${docName}",
+  "sourceSnippet": "${source.slice(0, 200).replace(/[\r\n]+/g, ' ')}...",
+  "questions": [
+    {
+      "id": "dq1",
+      "questionNumber": 1,
+      "prompt": "Grounded question directly assessing facts or arguments from the text",
+      "options": [
+        "Correct answer based on the document",
+        "Misleading interpretation",
+        "Contradicting statement",
+        "Unrelated fact"
+      ],
+      "correctAnswer": 0,
+      "explanation": "Citation or explanation of why this is correct based on the provided document text."
+    }
+  ]
+}
+`;
+
+  const result = await callAIAndParseJson<PdfQuizResult>(prompt);
+  result.toolType = 'pdf-quiz';
+  result.id = `pdfquiz-${Date.now()}`;
+  result.createdAt = new Date().toISOString();
+  validatePdfQuiz(result);
+  return result;
+}
+
+export async function generatePresentation(input: StudyToolInput): Promise<PresentationResult> {
+  const topic = input.topic || 'Core Presentation';
+  const count = input.count || 6;
+  const sourceContext = input.sourceMaterial ? `\n\nSource material:\n${input.sourceMaterial}` : '';
+
+  const prompt = `
+Create a structured presentation slide deck outline for academic lectures or study groups.
+
+Topic:
+${topic}
+Slides Count: ${count}
+Subject / Category: ${input.category || 'Academic Subject'}
+Audience / Level: ${input.gradeLevel || 'Secondary / Higher Education'}${sourceContext}
+
+Return ONLY valid JSON matching this schema:
+{
+  "title": "Presentation: ${topic}",
+  "subtitle": "Comprehensive Academic Slide Deck",
+  "subject": "${input.category || 'Academic Subject'}",
+  "topic": "${topic}",
+  "audienceLevel": "${input.gradeLevel || 'Secondary / Higher Education'}",
+  "slides": [
+    {
+      "id": "s1",
+      "slideNumber": 1,
+      "title": "Introduction to ${topic}",
+      "bullets": [
+        "Overview and context of ${topic}",
+        "Core learning objectives for the session",
+        "Significance and practical impact"
+      ],
+      "speakerNotes": "Welcome participants and frame the central question.",
+      "visualCue": "Conceptual flowchart showing high-level relationship",
+      "discussionPrompt": "What prior experience or questions do you bring to this topic?"
+    }
+  ]
+}
+`;
+
+  const result = await callAIAndParseJson<PresentationResult>(prompt);
+  result.toolType = 'presentation';
+  result.id = `pres-${Date.now()}`;
+  result.createdAt = new Date().toISOString();
+  validatePresentation(result);
+  return result;
+}
+
+export async function generateCourse(input: StudyToolInput): Promise<CourseResult> {
+  const topic = input.topic || 'Master Curriculum';
+  const sourceContext = input.sourceMaterial ? `\n\nSource material:\n${input.sourceMaterial}` : '';
+
+  const prompt = `
+Design a multi-week modular course curriculum for deep mastery.
+
+Topic:
+${topic}
+Subject / Category: ${input.category || 'Higher Education'}
+Target Level: ${input.gradeLevel || 'Undergraduate / Professional'}${sourceContext}
+
+Return ONLY valid JSON matching this schema:
+{
+  "title": "Course Curriculum: ${topic}",
+  "subject": "${input.category || 'Higher Education'}",
+  "topic": "${topic}",
+  "courseOverview": "A thorough narrative describing the curriculum scope and competencies.",
+  "durationWeeks": 6,
+  "learningOutcomes": [
+    "Master foundational principles of ${topic}",
+    "Analyze and apply core methodologies to authentic problems",
+    "Synthesize comprehensive capstone deliverables"
+  ],
+  "modules": [
+    {
+      "id": "m1",
+      "moduleNumber": 1,
+      "title": "Module 1: Foundations & Core Frameworks",
+      "description": "Exploration of bedrock principles and terminology.",
+      "learningOutcomes": [
+        "Define essential terms and structural mechanisms"
+      ],
+      "keyTopics": ["Historical Context", "Core Definitions", "Primary Dynamics"],
+      "practicalProjectOrTask": "Unit 1 diagnostic case study and portfolio submission",
+      "lessons": [
+        {
+          "id": "l1",
+          "lessonTitle": "Lesson 1.1: Theoretical Bedrock",
+          "learningObjective": "Understand the governing frameworks",
+          "summary": "Covers foundational mechanics and vocabulary.",
+          "estimatedMinutes": 45
+        }
+      ]
+    }
+  ]
+}
+`;
+
+  const result = await callAIAndParseJson<CourseResult>(prompt);
+  result.toolType = 'course';
+  result.id = `course-${Date.now()}`;
+  result.createdAt = new Date().toISOString();
+  validateCourse(result);
+  return result;
+}
+
+export async function generateLearningPath(input: StudyToolInput): Promise<LearningPathResult> {
+  const topic = input.topic || 'Mastery Learning Roadmap';
+  const targetGoal = input.targetGoal || 'Professional & Academic Fluency';
+  const sourceContext = input.sourceMaterial ? `\n\nSource material:\n${input.sourceMaterial}` : '';
+
+  const prompt = `
+Construct a step-by-step progressive learning roadmap and milestone pathway.
+
+Topic:
+${topic}
+Target Goal / Outcome: ${targetGoal}
+Starting Level: ${input.startingLevel || 'Beginner / Intermediate'}
+Subject / Category: ${input.category || 'Lifelong Learning'}${sourceContext}
+
+Return ONLY valid JSON matching this schema:
+{
+  "title": "Learning Roadmap: ${topic}",
+  "subject": "${input.category || 'Lifelong Learning'}",
+  "targetGoal": "${targetGoal}",
+  "totalEstimatedWeeks": 8,
+  "stages": [
+    {
+      "id": "st1",
+      "stepNumber": 1,
+      "title": "Stage 1: Foundational Literacy & Core Mechanics",
+      "estimatedHours": 15,
+      "description": "Build bedrock vocabulary and understand fundamental principles.",
+      "skillsAcquired": ["Key terminology", "Conceptual mapping"],
+      "suggestedActivities": ["Complete foundational reading units", "Practice diagnostic active recall sets"],
+      "checkpointAssessment": "Foundational competency quiz and self-explanation check"
+    },
+    {
+      "id": "st2",
+      "stepNumber": 2,
+      "title": "Stage 2: Applied Methodologies & Case Analysis",
+      "estimatedHours": 25,
+      "description": "Transition from theory to authentic scenario analysis.",
+      "skillsAcquired": ["Applied problem solving", "Analytical frameworks"],
+      "suggestedActivities": ["Analyze real-world case studies", "Solve multi-variable practice problems"],
+      "checkpointAssessment": "Applied project review and milestone deliverable"
+    },
+    {
+      "id": "st3",
+      "stepNumber": 3,
+      "title": "Stage 3: Advanced Synthesis & Independent Execution",
+      "estimatedHours": 30,
+      "description": "Tackle complex edge cases and integrate cross-domain insights.",
+      "skillsAcquired": ["Systemic evaluation", "Capstone execution"],
+      "suggestedActivities": ["Architect comprehensive synthesis project", "Present and defend findings"],
+      "checkpointAssessment": "Final capstone defense and mastery certification"
+    }
+  ],
+  "recommendations": [
+    "Dedicate 3-5 hours weekly to active problem-solving rather than passive review.",
+    "Complete checkpoint assessments before advancing to the next stage."
+  ]
+}
+`;
+
+  const result = await callAIAndParseJson<LearningPathResult>(prompt);
+  result.toolType = 'learning-path';
+  result.id = `path-${Date.now()}`;
+  result.createdAt = new Date().toISOString();
+  validateLearningPath(result);
+  return result;
+}
+
+// ==========================================
+// 3. MAIN STUDY TOOL DISPATCHER
+// ==========================================
+
+export async function generateStudyTool(
+  tool: StudyToolType,
+  input: StudyToolInput
+): Promise<StudyToolResult> {
+  switch (tool) {
+    case 'study-guide':
+      return generateStudyGuide(input);
+
+    case 'flashcards':
+      return generateFlashcards(input);
+
+    case 'quiz':
+      return generateQuiz(input);
+
+    case 'pdf-quiz':
+      return generatePdfQuiz(input);
+
+    case 'presentation':
+      return generatePresentation(input);
+
+    case 'course':
+      return generateCourse(input);
+
+    case 'learning-path':
+      return generateLearningPath(input);
+
+    default:
+      throw new Error(`Unsupported Study tool: ${tool}`);
+  }
+}
+
+// ==========================================
+// 4. LEGACY SERVICE CLASS FOR BACKWARD COMPAT
+// ==========================================
 
 export interface GenerateSetParams {
   topic?: string;

@@ -279,3 +279,190 @@ export interface StudySummary {
   generatedAt: string;
 }
 
+// 5. Dedicated Study Tools & Dispatcher Types
+export type StudyToolType = 
+  | 'study-guide'
+  | 'flashcards'
+  | 'quiz'
+  | 'pdf-quiz'
+  | 'presentation'
+  | 'course'
+  | 'learning-path';
+
+export interface StudyToolInput {
+  topic?: string;
+  sourceMaterial?: string;
+  category?: string;
+  gradeLevel?: string;
+  difficulty?: 'Easy' | 'Medium' | 'Hard' | 'Advanced' | string;
+  count?: number;
+  durationMinutes?: number;
+  fileName?: string;
+  startingLevel?: string;
+  targetGoal?: string;
+}
+
+export interface StudyGuideSection {
+  heading: string;
+  content: string;
+  bulletPoints?: string[];
+  keyTerms?: { term: string; definition: string }[];
+}
+
+export interface StudyGuideResult {
+  id?: string;
+  title: string;
+  subject?: string;
+  topic?: string;
+  overview: string;
+  sections: StudyGuideSection[];
+  keyTerms?: { term: string; definition: string }[];
+  importantTakeaways?: string[];
+  reviewQuestions?: { question: string; answer: string; hint?: string }[];
+  toolType?: 'study-guide';
+  createdAt?: string;
+}
+
+export interface FlashcardCard {
+  id?: string;
+  front: string;
+  back: string;
+  hint?: string;
+  category?: string;
+}
+
+export interface FlashcardResult {
+  id?: string;
+  title: string;
+  subject?: string;
+  topic?: string;
+  description?: string;
+  cards: FlashcardCard[];
+  toolType?: 'flashcards';
+  createdAt?: string;
+}
+
+export interface QuizQuestion {
+  id?: string;
+  questionNumber?: number;
+  prompt: string;
+  options: string[];
+  correctAnswer: number | string;
+  explanation: string;
+  category?: string;
+}
+
+export interface QuizResult {
+  id?: string;
+  title: string;
+  subject?: string;
+  topic?: string;
+  description?: string;
+  difficulty?: string;
+  timeLimitMinutes?: number;
+  questions: QuizQuestion[];
+  toolType?: 'quiz';
+  createdAt?: string;
+}
+
+export interface PdfQuizResult {
+  id?: string;
+  title: string;
+  documentName?: string;
+  sourceSnippet?: string;
+  questions: QuizQuestion[];
+  toolType?: 'pdf-quiz';
+  createdAt?: string;
+}
+
+export interface PresentationSlide {
+  id?: string;
+  slideNumber: number;
+  title: string;
+  bullets: string[];
+  speakerNotes: string;
+  visualCue?: string;
+  discussionPrompt?: string;
+}
+
+export interface PresentationResult {
+  id?: string;
+  title: string;
+  subtitle?: string;
+  subject?: string;
+  topic?: string;
+  audienceLevel?: string;
+  slides: PresentationSlide[];
+  toolType?: 'presentation';
+  createdAt?: string;
+}
+
+export interface CourseModuleLesson {
+  id?: string;
+  lessonTitle: string;
+  learningObjective: string;
+  summary: string;
+  estimatedMinutes?: number;
+}
+
+export interface CourseModule {
+  id?: string;
+  moduleNumber: number;
+  title: string;
+  description: string;
+  learningOutcomes: string[];
+  keyTopics: string[];
+  practicalProjectOrTask?: string;
+  lessons?: CourseModuleLesson[];
+}
+
+export interface CourseResult {
+  id?: string;
+  title: string;
+  subject?: string;
+  topic?: string;
+  courseOverview: string;
+  durationWeeks: number;
+  learningOutcomes: string[];
+  modules: CourseModule[];
+  toolType?: 'course';
+  createdAt?: string;
+}
+
+export interface LearningStage {
+  id?: string;
+  stepNumber: number;
+  title: string;
+  estimatedHours: number;
+  description: string;
+  skillsAcquired: string[];
+  suggestedActivities: string[];
+  checkpointAssessment: string;
+}
+
+export interface LearningPathResult {
+  id?: string;
+  title: string;
+  subject?: string;
+  topic?: string;
+  targetGoal: string;
+  totalEstimatedWeeks: number;
+  stages: LearningStage[];
+  recommendations: string[];
+  toolType?: 'learning-path';
+  createdAt?: string;
+}
+
+export type FlashcardsResult = FlashcardResult;
+export type StudyQuizResult = QuizResult;
+
+export type StudyToolResult = 
+  | StudyGuideResult
+  | FlashcardResult
+  | QuizResult
+  | PdfQuizResult
+  | PresentationResult
+  | CourseResult
+  | LearningPathResult;
+
+

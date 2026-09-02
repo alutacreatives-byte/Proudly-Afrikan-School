@@ -1,525 +1,267 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  AppView, 
+  StudyToolType, 
   StudySet, 
-  StudyConcept, 
-  UserStats, 
-  FlashcardRating, 
-  UserProfile
+  AppView, 
+  StudyGuideResult,
+  FlashcardsResult,
+  StudyQuizResult,
+  PdfQuizResult,
+  PresentationResult,
+  CourseResult,
+  LearningPathResult
 } from './types';
-import { StorageService } from './services/storageService';
-import { HomeScreen } from './components/HomeScreen';
-import { SubjectExplorer } from './components/SubjectExplorer';
+import { StudyHome } from './components/StudyHome';
+import { StudyGuideGenerator } from './components/generators/StudyGuideGenerator';
+import { FlashcardGenerator } from './components/generators/FlashcardGenerator';
+import { StudyQuizGenerator } from './components/generators/StudyQuizGenerator';
+import { PdfQuizGenerator } from './components/generators/PdfQuizGenerator';
+import { StudyPresentationGenerator } from './components/generators/StudyPresentationGenerator';
+import { StudyCourseGenerator } from './components/generators/StudyCourseGenerator';
+import { StudyLearningPathGenerator } from './components/generators/StudyLearningPathGenerator';
+import { StudyMyResources } from './components/StudyMyResources';
 import { FlashcardsView } from './components/FlashcardsView';
 import { PracticeView } from './components/PracticeView';
 import { StudySessionView } from './components/StudySessionView';
-import { StudyPlanView } from './components/StudyPlanView';
-import { ReviewView } from './components/ReviewView';
-import { ToolsView } from './components/ToolsView';
-import { LibraryView } from './components/LibraryView';
-import { CreateSetModal, GeneratorMode, InputMethod } from './components/CreateSetModal';
 import { StudySetDetailView } from './components/StudySetDetailView';
-import { SessionSummaryModal } from './components/SessionSummaryModal';
 import { StudyTutorModal } from './components/StudyTutorModal';
-import { HomeworkView } from './components/HomeworkView';
-import { StudyHubView } from './components/StudyHubView';
+import { StorageService } from './services/storageService';
+import { getSavedResources } from '../build/utils/storage';
 
 export interface StudyAppProps {
-  key?: React.Key;
   initialSet?: StudySet | null;
   initialView?: AppView;
   onNavigateToTab?: (tab: 'STUDY' | 'QUIZ' | 'BUILD' | 'MY SETS' | 'PLANNER') => void;
   onOpenGlobalTutor?: () => void;
 }
 
-export default function App({
+export default function StudyApp({
   initialSet,
   initialView,
   onNavigateToTab,
   onOpenGlobalTutor,
 }: StudyAppProps = {}) {
-  const [currentView, setCurrentView] = useState<AppView>(initialView || 'home');
-  const [viewHistory, setViewHistory] = useState<AppView[]>([initialView || 'home']);
-  const [currentUser, setCurrentUser] = useState<UserProfile>(() => StorageService.getCurrentUser());
-  const [studySets, setStudySets] = useState<StudySet[]>([]);
-  const [activeSet, setActiveSet] = useState<StudySet | null>(initialSet || null);
+  const [activeTool, setActiveTool] = useState<StudyToolType | 'my-resources' | 'legacy-view' | null>(null);
+  const [activeResource, setActiveResource] = useState<any>(null);
+  const [savedCount, setSavedCount] = useState<number>(() => getSavedResources().length);
+
+  // Legacy set state for cross-tab compatibility
+  const [activeLegacySet, setActiveLegacySet] = useState<StudySet | null>(initialSet || null);
+  const [legacyView, setLegacyView] = useState<AppView | null>(initialView || null);
+  const [isTutorOpen, setIsTutorOpen] = useState<boolean>(false);
 
   useEffect(() => {
     if (initialSet) {
-      setActiveSet(initialSet);
-      if (initialView) {
-        setCurrentView(initialView);
+      setActiveLegacySet(initialSet);
+      if (initialView && initialView !== 'home') {
+        setLegacyView(initialView);
+        setActiveTool('legacy-view');
       }
     }
   }, [initialSet, initialView]);
 
-  const [stats, setStats] = useState<UserStats>(StorageService.getUserStats());
-  const [reviewItems, setReviewItems] = useState(StorageService.getConceptsNeedingReview());
-  
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
-  const [createModalMethod, setCreateModalMethod] = useState<InputMethod>('topic');
-  const [createModalTopic, setCreateModalTopic] = useState<string>('');
-  const [createModalMode, setCreateModalMode] = useState<GeneratorMode>('lesson-plan');
+  const refreshSavedCount = () => {
+    setSavedCount(getSavedResources().length);
+  };
 
-  const [isGlobalTutorOpen, setIsGlobalTutorOpen] = useState<boolean>(false);
-  const [globalTutorInitialMode, setGlobalTutorInitialMode] = useState<'tutor' | 'homework'>('homework');
-  const [explorerCategory, setExplorerCategory] = useState<string>('ALL SUBJECTS');
-  const [sessionSummary, setSessionSummary] = useState<{
-    isOpen: boolean;
-    total: number;
-    confident: number;
-    struggled: number;
-    setTitle?: string;
-  }>({
-    isOpen: false,
-    total: 0,
-    confident: 0,
-    struggled: 0,
-  });
-
-  // Load sets & stats on mount
   useEffect(() => {
-    refreshData();
-  }, []);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [activeTool]);
 
-  const refreshData = () => {
-    const sets = StorageService.getAllSets();
-    setStudySets(sets);
-    if (!activeSet && sets.length > 0) {
-      setActiveSet(sets[0]);
+  const handleSelectTool = (toolId: StudyToolType, prefillTopic?: string, prefillCategory?: string) => {
+    if (prefillTopic) {
+      setActiveResource({
+        id: `temp-${Date.now()}`,
+        title: prefillTopic,
+        topic: prefillTopic,
+        subject: prefillCategory,
+        createdAt: new Date().toISOString(),
+        toolType: toolId,
+      });
+    } else {
+      setActiveResource(null);
     }
-    setStats(StorageService.getUserStats());
-    setReviewItems(StorageService.getConceptsNeedingReview());
-    setCurrentUser(StorageService.getCurrentUser());
-  };
-
-  const handleUserChanged = (newUser: UserProfile) => {
-    setCurrentUser(newUser);
-    refreshData();
-  };
-
-  const featuredSets = useMemo(() => {
-    return studySets.filter(s => s.featured || s.isCustom);
-  }, [studySets]);
-
-  // Dynamic Curriculum Mastery calculation based on active subject/topic
-  const currentSubjectName = useMemo(() => {
-    if (activeSet) {
-      return activeSet.category || activeSet.title;
-    }
-    return 'AFRICAN HISTORY';
-  }, [activeSet]);
-
-  const normalizedSubjectName = currentSubjectName.toUpperCase();
-
-  const currentMasteryPercentage = useMemo(() => {
-    const matchingKey = Object.keys(stats.subjectMastery).find(
-      k => k.toUpperCase() === normalizedSubjectName || 
-           normalizedSubjectName.includes(k.toUpperCase()) || 
-           k.toUpperCase().includes(normalizedSubjectName)
-    );
-    if (matchingKey && stats.subjectMastery[matchingKey]) {
-      return Math.min(100, Math.max(0, stats.subjectMastery[matchingKey].percentage));
-    }
-    return 0;
-  }, [stats.subjectMastery, normalizedSubjectName]);
-
-  // Navigation & Set Selection
-  const handleSelectSet = (set: StudySet, targetMode?: AppView) => {
-    setActiveSet(set);
-    const nextView = targetMode || 'study';
-    setViewHistory(prev => (prev[prev.length - 1] === nextView ? prev : [...prev, nextView]));
-    setCurrentView(nextView);
+    setActiveTool(toolId);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleNavigate = (view: AppView, categoryFilter?: string) => {
-    if (categoryFilter) {
-      setExplorerCategory(categoryFilter);
-    }
-    // If navigating directly to a mode that needs an active set, ensure activeSet is set
-    if (['study', 'learn', 'flashcards', 'practice'].includes(view) && !activeSet && studySets.length > 0) {
-      setActiveSet(studySets[0]);
-    }
-    setViewHistory(prev => (prev[prev.length - 1] === view ? prev : [...prev, view]));
-    setCurrentView(view);
+  const handleOpenSavedResource = (resource: any) => {
+    setActiveResource(resource.data || resource);
+    setActiveTool(resource.toolType as StudyToolType);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleGoBack = () => {
-    setViewHistory(prev => {
-      if (prev.length > 1) {
-        const nextHistory = prev.slice(0, -1);
-        const previousView = nextHistory[nextHistory.length - 1];
-        setCurrentView(previousView);
-        return nextHistory;
-      } else {
-        setCurrentView('home');
-        return ['home'];
-      }
-    });
+  const handleBackToGrid = () => {
+    setActiveTool(null);
+    setActiveResource(null);
+    setLegacyView(null);
+    refreshSavedCount();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleOpenCreateModal = (
-    method: InputMethod = 'topic',
-    topic: string = '',
-    mode: GeneratorMode = 'lesson-plan'
-  ) => {
-    setCreateModalMethod(method);
-    setCreateModalTopic(topic);
-    setCreateModalMode(mode);
-    setIsCreateModalOpen(true);
-  };
-
-  // Recording interactions
-  const handleRecordFlashcardRating = (conceptId: string, rating: FlashcardRating) => {
+  // Legacy interactions
+  const handleRecordFlashcardRating = (conceptId: string, rating: any) => {
     StorageService.recordFlashcardRating(conceptId, rating);
-    refreshData();
   };
 
   const handleRecordPracticeAnswer = (conceptId: string, isCorrect: boolean) => {
     StorageService.recordPracticeAnswer(conceptId, isCorrect);
-    refreshData();
   };
 
-  // Session completion
-  const handleCompleteFlashcards = (result: { total: number; confident: number; struggled: number }) => {
-    if (activeSet) {
-      StorageService.recordSessionResult({
-        setId: activeSet.id,
-        setTitle: activeSet.title,
-        durationMinutes: 5,
-        totalConcepts: result.total,
-        confidentCount: result.confident,
-        struggledCount: result.struggled,
-        struggledConceptIds: [],
-        timestamp: new Date().toISOString(),
-        mode: 'flashcards',
-      });
+  // 1. My Saved Study Library
+  if (activeTool === 'my-resources') {
+    return (
+      <StudyMyResources
+        onBack={handleBackToGrid}
+        onOpenResource={handleOpenSavedResource}
+      />
+    );
+  }
+
+  // 2. Study Guide Generator (Tool 01)
+  if (activeTool === 'study-guide') {
+    return (
+      <StudyGuideGenerator
+        onBack={handleBackToGrid}
+        onSaved={refreshSavedCount}
+        existingResource={activeResource as StudyGuideResult}
+      />
+    );
+  }
+
+  // 3. Flashcard Generator (Tool 02)
+  if (activeTool === 'flashcards') {
+    return (
+      <FlashcardGenerator
+        onBack={handleBackToGrid}
+        onSaved={refreshSavedCount}
+        existingResource={activeResource as FlashcardsResult}
+      />
+    );
+  }
+
+  // 4. Practice Quiz Generator (Tool 03)
+  if (activeTool === 'quiz') {
+    return (
+      <StudyQuizGenerator
+        onBack={handleBackToGrid}
+        onSaved={refreshSavedCount}
+        existingResource={activeResource as StudyQuizResult}
+      />
+    );
+  }
+
+  // 5. PDF & Document Quiz (Tool 04)
+  if (activeTool === 'pdf-quiz') {
+    return (
+      <PdfQuizGenerator
+        onBack={handleBackToGrid}
+        onSaved={refreshSavedCount}
+        existingResource={activeResource as PdfQuizResult}
+      />
+    );
+  }
+
+  // 6. Presentation Slide Generator (Tool 05)
+  if (activeTool === 'presentation') {
+    return (
+      <StudyPresentationGenerator
+        onBack={handleBackToGrid}
+        onSaved={refreshSavedCount}
+        existingResource={activeResource as PresentationResult}
+      />
+    );
+  }
+
+  // 7. Course Curriculum Generator (Tool 06)
+  if (activeTool === 'course') {
+    return (
+      <StudyCourseGenerator
+        onBack={handleBackToGrid}
+        onSaved={refreshSavedCount}
+        existingResource={activeResource as CourseResult}
+      />
+    );
+  }
+
+  // 8. Learning Pathway Generator (Tool 07)
+  if (activeTool === 'learning-path') {
+    return (
+      <StudyLearningPathGenerator
+        onBack={handleBackToGrid}
+        onSaved={refreshSavedCount}
+        existingResource={activeResource as LearningPathResult}
+      />
+    );
+  }
+
+  // Legacy Views for sets launched from My Sets workspace or Planner
+  if (activeTool === 'legacy-view' && activeLegacySet) {
+    if (legacyView === 'flashcards') {
+      return (
+        <FlashcardsView
+          studySet={activeLegacySet}
+          onBack={handleBackToGrid}
+          onGoHome={handleBackToGrid}
+          onRecordRating={handleRecordFlashcardRating}
+          onCompleteSession={() => handleBackToGrid()}
+        />
+      );
     }
-    refreshData();
-    setSessionSummary({
-      isOpen: true,
-      total: result.total,
-      confident: result.confident,
-      struggled: result.struggled,
-      setTitle: activeSet?.title,
-    });
-  };
-
-  const handleCompletePractice = (result: { total: number; correct: number; incorrect: number }) => {
-    if (activeSet) {
-      StorageService.recordSessionResult({
-        setId: activeSet.id,
-        setTitle: activeSet.title,
-        durationMinutes: 5,
-        totalConcepts: result.total,
-        confidentCount: result.correct,
-        struggledCount: result.incorrect,
-        struggledConceptIds: [],
-        timestamp: new Date().toISOString(),
-        mode: 'practice',
-      });
+    if (legacyView === 'practice') {
+      return (
+        <PracticeView
+          studySet={activeLegacySet}
+          onBack={handleBackToGrid}
+          onGoHome={handleBackToGrid}
+          onRecordAnswer={handleRecordPracticeAnswer}
+          onCompletePractice={() => handleBackToGrid()}
+          onNavigateToFlashcards={() => setLegacyView('flashcards')}
+        />
+      );
     }
-    refreshData();
-    setSessionSummary({
-      isOpen: true,
-      total: result.total,
-      confident: result.correct,
-      struggled: result.incorrect,
-      setTitle: activeSet?.title,
-    });
-  };
-
-  const handleCompleteGuidedStudy = (result: { total: number; confident: number; struggled: number; minutes: number }) => {
-    if (activeSet) {
-      StorageService.recordSessionResult({
-        setId: activeSet.id,
-        setTitle: activeSet.title,
-        durationMinutes: result.minutes,
-        totalConcepts: result.total,
-        confidentCount: result.confident,
-        struggledCount: result.struggled,
-        struggledConceptIds: [],
-        timestamp: new Date().toISOString(),
-        mode: 'study',
-      });
+    if (legacyView === 'study' || legacyView === 'learn') {
+      return (
+        <StudySessionView
+          studySet={activeLegacySet}
+          onBack={handleBackToGrid}
+          onGoHome={handleBackToGrid}
+          onFinishLesson={() => handleBackToGrid()}
+          onNavigateToFlashcards={() => setLegacyView('flashcards')}
+          onNavigateToPractice={() => setLegacyView('practice')}
+        />
+      );
     }
-    refreshData();
-    setSessionSummary({
-      isOpen: true,
-      total: result.total,
-      confident: result.confident,
-      struggled: result.struggled,
-      setTitle: activeSet?.title,
-    });
-  };
+    return (
+      <StudySetDetailView
+        studySet={activeLegacySet}
+        onBack={handleBackToGrid}
+        onGoHome={handleBackToGrid}
+        onLaunchMode={(mode) => setLegacyView(mode)}
+        onLaunchConceptLesson={() => setLegacyView('study')}
+      />
+    );
+  }
 
-  const handleSetCreated = (newSet: StudySet) => {
-    refreshData();
-    setActiveSet(newSet);
-    setCurrentView('study');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleDeleteCustomSet = (setId: string) => {
-    if (confirm('Are you sure you want to delete this custom study set?')) {
-      StorageService.deleteCustomSet(setId);
-      refreshData();
-      if (activeSet?.id === setId) {
-        const sets = StorageService.getAllSets();
-        setActiveSet(sets[0] || null);
-      }
-    }
-  };
-
-  const handleStartReviewSession = (concepts: StudyConcept[]) => {
-    const reviewSet: StudySet = {
-      id: `review-${Date.now()}`,
-      title: `Spaced Review Session (${concepts.length} Concepts)`,
-      description: 'Curated active recall and reinforcement queue for concepts requiring review.',
-      category: 'SPACED REVIEW',
-      estimatedMinutes: Math.max(5, concepts.length * 2),
-      createdAt: new Date().toISOString(),
-      concepts: concepts,
-    };
-    setActiveSet(reviewSet);
-    handleNavigate('flashcards');
-  };
-
-  const handleOpenGlobalTutor = (mode: 'tutor' | 'homework' = 'homework') => {
-    setGlobalTutorInitialMode(mode);
-    setIsGlobalTutorOpen(true);
-  };
-
+  // Default Main Study View (Home Grid)
   return (
-    <div id="app-root" className="min-h-screen bg-[#FDFBF7] text-[#161616] flex flex-col font-sans selection:bg-[#D92B8A] selection:text-white">
-      {/* Main Content Viewport */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6">
-        {/* DESTINATION 1: STUDY */}
-        {currentView === 'home' && (
-          <HomeScreen
-            onNavigate={handleNavigate}
-            onSelectSet={handleSelectSet}
-            featuredSets={featuredSets}
-            reviewItemsCount={reviewItems.length}
-            stats={stats}
-            onCreateSetClick={(method, topic, mode) => handleOpenCreateModal(method || 'topic', topic || '', mode || 'lesson-plan')}
-            onOpenTutor={handleOpenGlobalTutor}
-            onStartReview={() => {
-              if (reviewItems.length > 0) {
-                handleStartReviewSession(reviewItems);
-              } else {
-                setCurrentView('review');
-              }
-            }}
-            onStartStudyPlan={() => setCurrentView('planner')}
-          />
-        )}
-
-        {(currentView === 'study-hub' || (currentView === 'study' && !activeSet)) && (
-          <StudyHubView
-            studySets={studySets}
-            activeSet={activeSet}
-            onSelectSet={handleSelectSet}
-            onNavigate={handleNavigate}
-            reviewItemsCount={reviewItems.length}
-            stats={stats}
-            onCreateSetClick={() => handleOpenCreateModal('topic', '')}
-            onBack={handleGoBack}
-          />
-        )}
-
-        {currentView === 'sets' && (
-          <SubjectExplorer
-            studySets={studySets}
-            initialCategory={explorerCategory}
-            onSelectSet={handleSelectSet}
-            onCreateSetClick={() => handleOpenCreateModal('topic', '')}
-            onDeleteCustomSet={handleDeleteCustomSet}
-            onOpenTutor={handleOpenGlobalTutor}
-            onBack={handleGoBack}
-            onGoHome={() => handleNavigate('home')}
-          />
-        )}
-
-        {currentView === 'set-detail' && activeSet && (
-          <StudySetDetailView
-            studySet={activeSet}
-            onBack={handleGoBack}
-            onGoHome={() => handleNavigate('home')}
-            onLaunchMode={(mode) => handleNavigate(mode)}
-            onLaunchConceptLesson={() => {
-              handleNavigate('study');
-            }}
-          />
-        )}
-
-        {(currentView === 'study' || currentView === 'learn') && activeSet && (
-          <StudySessionView
-            studySet={activeSet}
-            onBack={handleGoBack}
-            onGoHome={() => handleNavigate('home')}
-            onFinishLesson={(setId, count) => {
-              handleCompleteGuidedStudy({
-                total: activeSet.concepts.length,
-                confident: count,
-                struggled: activeSet.concepts.length - count,
-                minutes: activeSet.estimatedMinutes || 10,
-              });
-            }}
-            onNavigateToFlashcards={(set) => {
-              handleSelectSet(set, 'flashcards');
-            }}
-            onNavigateToPractice={(set) => {
-              handleSelectSet(set, 'practice');
-            }}
-          />
-        )}
-
-        {currentView === 'flashcards' && activeSet && (
-          <FlashcardsView
-            studySet={activeSet}
-            onBack={handleGoBack}
-            onGoHome={() => handleNavigate('home')}
-            onRecordRating={handleRecordFlashcardRating}
-            onCompleteSession={handleCompleteFlashcards}
-          />
-        )}
-
-        {currentView === 'practice' && activeSet && (
-          <PracticeView
-            studySet={activeSet}
-            onBack={handleGoBack}
-            onGoHome={() => handleNavigate('home')}
-            onRecordAnswer={handleRecordPracticeAnswer}
-            onCompletePractice={(result) => {
-              handleCompletePractice({
-                total: result.total,
-                correct: result.reinforced,
-                incorrect: result.needsReview,
-              });
-            }}
-            onNavigateToFlashcards={(set) => {
-              handleSelectSet(set, 'flashcards');
-            }}
-          />
-        )}
-
-        {currentView === 'review' && (
-          <ReviewView
-            reviewItems={reviewItems}
-            onStartReviewSession={handleStartReviewSession}
-            onExploreSets={() => handleNavigate('sets')}
-            onBack={handleGoBack}
-            onGoHome={() => handleNavigate('home')}
-          />
-        )}
-
-        {/* DESTINATION 2: TOOLS */}
-        {(currentView === 'tools' || currentView === 'create') && (
-          <ToolsView
-            onNavigate={handleNavigate}
-            onCreateSetClick={(method, topic, mode) => handleOpenCreateModal(method || 'topic', topic || '', mode || 'lesson-plan')}
-            onSelectSet={handleSelectSet}
-            onOpenTutor={handleOpenGlobalTutor}
-            onBack={handleGoBack}
-            onGoHome={() => handleNavigate('home')}
-          />
-        )}
-
-        {currentView === 'homework' && (
-          <HomeworkView
-            studySets={studySets}
-            activeSet={activeSet}
-            onSelectSet={handleSelectSet}
-            onNavigate={handleNavigate}
-            onBack={handleGoBack}
-            onGoHome={() => handleNavigate('home')}
-          />
-        )}
-
-        {/* DESTINATION 3: PLANNER */}
-        {currentView === 'planner' && (
-          <StudyPlanView
-            onStartSession={(concepts, title, durationMinutes, targetMode) => {
-              const planSet: StudySet = {
-                id: `plan-${Date.now()}`,
-                title: title,
-                description: `Time-boxed ${durationMinutes}-minute study session curated for your retention.`,
-                category: 'TIME-BOXED STUDY',
-                estimatedMinutes: durationMinutes,
-                createdAt: new Date().toISOString(),
-                concepts: concepts,
-              };
-              setActiveSet(planSet);
-              handleNavigate(targetMode || 'study');
-            }}
-            onExploreSets={() => handleNavigate('sets')}
-            onBack={handleGoBack}
-            onGoHome={() => handleNavigate('home')}
-          />
-        )}
-
-        {/* DESTINATION 4: MY LIBRARY */}
-        {(currentView === 'library' || currentView === 'archive' || currentView === 'progress') && (
-          <LibraryView
-            currentUser={currentUser}
-            studySets={studySets}
-            stats={stats}
-            onSelectSet={handleSelectSet}
-            onExploreSets={() => handleNavigate('sets')}
-            onUserChanged={handleUserChanged}
-            onNavigate={handleNavigate}
-            onCreateSetClick={() => handleOpenCreateModal('topic', '')}
-            onBack={handleGoBack}
-            onGoHome={() => handleNavigate('home')}
-          />
-        )}
-      </main>
-
-      {/* Create Set Modal with full Generator Mode & Input Method support */}
-      <CreateSetModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        onSetCreated={handleSetCreated}
-        initialMethod={createModalMethod}
-        initialTopic={createModalTopic}
-        initialGeneratorMode={createModalMode}
+    <div className="w-full">
+      <StudyHome
+        onSelectTool={handleSelectTool}
+        onOpenMyResources={() => setActiveTool('my-resources')}
+        savedCount={savedCount}
       />
 
-      {/* Session Summary Modal */}
-      <SessionSummaryModal
-        isOpen={sessionSummary.isOpen}
-        onClose={() => setSessionSummary(prev => ({ ...prev, isOpen: false }))}
-        result={sessionSummary}
-        onReviewNow={() => {
-          setSessionSummary(prev => ({ ...prev, isOpen: false }));
-          if (reviewItems.length > 0) {
-            handleStartReviewSession(reviewItems);
-          } else {
-            setCurrentView('review');
-          }
-        }}
-        onBackToStudy={() => {
-          setSessionSummary(prev => ({ ...prev, isOpen: false }));
-          setCurrentView('study');
-        }}
-        onGoHome={() => {
-          setSessionSummary(prev => ({ ...prev, isOpen: false }));
-          setCurrentView('home');
-        }}
-      />
-
-      {/* Global AI Study Tutor & Homework Help Modal */}
-      <StudyTutorModal
-        isOpen={isGlobalTutorOpen}
-        onClose={() => setIsGlobalTutorOpen(false)}
-        studySet={activeSet}
-        availableSets={studySets}
-        initialMode={globalTutorInitialMode}
-      />
+      {/* Global AI Tutor Modal */}
+      {isTutorOpen && (
+        <StudyTutorModal
+          isOpen={isTutorOpen}
+          onClose={() => setIsTutorOpen(false)}
+          studySet={activeLegacySet}
+          availableSets={StorageService.getAllSets()}
+          initialMode="tutor"
+        />
+      )}
     </div>
   );
 }
