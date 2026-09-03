@@ -18,7 +18,8 @@ import {
   Layers,
   FileQuestion,
   Wrench,
-  Lightbulb
+  Lightbulb,
+  Camera
 } from 'lucide-react';
 
 interface ToolsViewProps {
@@ -188,7 +189,7 @@ export const ToolsView: React.FC<ToolsViewProps> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {/* Card 01: Type a Topic */}
           <div
             id="tool-input-topic"
@@ -260,6 +261,31 @@ export const ToolsView: React.FC<ToolsViewProps> = ({
             </div>
             <div className="mt-5 pt-3 border-t border-stone-100 flex items-center justify-between font-mono text-xs font-bold uppercase text-stone-800 group-hover:text-[#D92B8A]">
               <span>UPLOAD FILE</span>
+              <ArrowUpRight className="w-4 h-4" />
+            </div>
+          </div>
+
+          {/* Card 04: Capture Photo */}
+          <div
+            id="tool-input-capture"
+            onClick={() => onCreateSetClick('capture')}
+            className="rounded-3xl bg-white border border-stone-200/90 shadow-sm hover:shadow-md hover:border-pink-300 transition-all p-6 flex flex-col justify-between cursor-pointer group"
+          >
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-xs font-bold text-stone-400 group-hover:text-[#D92B8A]">04 • CAMERA</span>
+                <span className="px-2.5 py-0.5 bg-pink-100 text-[#D92B8A] rounded-full font-mono text-xs font-bold uppercase">PHOTO OCR</span>
+              </div>
+              <div className="w-10 h-10 rounded-full bg-[#18181B] text-[#D92B8A] flex items-center justify-center">
+                <Camera className="w-5 h-5 text-[#D92B8A]" />
+              </div>
+              <h3 className="font-display font-black text-xl uppercase text-stone-900">CAPTURE IT</h3>
+              <p className="text-sm text-stone-600 leading-relaxed font-normal">
+                Photograph homework, textbook pages, handwritten work, equations, diagrams, or worksheets for instant AI OCR.
+              </p>
+            </div>
+            <div className="mt-5 pt-3 border-t border-stone-100 flex items-center justify-between font-mono text-xs font-bold uppercase text-stone-800 group-hover:text-[#D92B8A]">
+              <span>CAPTURE PHOTO</span>
               <ArrowUpRight className="w-4 h-4" />
             </div>
           </div>

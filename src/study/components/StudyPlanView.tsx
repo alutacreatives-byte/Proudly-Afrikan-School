@@ -4,6 +4,7 @@ import { StorageService } from '../services/storageService';
 import { AIService } from '../services/aiService';
 import { isTextCorruptedOrUnreadable } from '../utils/textValidation';
 import { GlobalNavigationButtons } from './GlobalNavigationButtons';
+import { CameraCaptureModal } from './CameraCaptureModal';
 import { 
   Clock, 
   Sparkles, 
@@ -26,6 +27,7 @@ import {
   Type,
   ClipboardList,
   Upload,
+  Camera,
   Paperclip,
   Trash2,
   Loader2,
@@ -37,11 +39,12 @@ interface StudyPlanViewProps {
   onExploreSets: () => void;
   onBack?: () => void;
   onGoHome?: () => void;
+  initialInputMethod?: PlannerInputMethod;
 }
 
 export type StudyGoal = 'learn_new' | 'exam_prep' | 'improve_weak' | 'spaced_review';
 export type ScheduleTarget = 'today' | 'tomorrow' | 'custom_date';
-export type PlannerInputMethod = 'type' | 'paste' | 'upload';
+export type PlannerInputMethod = 'type' | 'paste' | 'upload' | 'capture';
 
 export interface PlannerUploadedDoc {
   name: string;
@@ -55,6 +58,7 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
   onExploreSets,
   onBack,
   onGoHome,
+  initialInputMethod = 'type',
 }) => {
   // Storage data
   const allSets = useMemo(() => StorageService.getAllSets(), []);
@@ -71,8 +75,8 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
     return Array.from(subjects);
   }, [allSets]);
 
-  // --- 1. WHAT: Study Input Method (TYPE IT | PASTE IT | UPLOAD IT) & Subject/Topic ---
-  const [inputMethod, setInputMethod] = useState<PlannerInputMethod>('type');
+  // --- 1. WHAT: Study Input Method (TYPE IT | PASTE IT | UPLOAD IT | CAPTURE IT) & Subject/Topic ---
+  const [inputMethod, setInputMethod] = useState<PlannerInputMethod>(initialInputMethod);
   const [selectedSubject, setSelectedSubject] = useState<string>('ALL SUBJECTS');
   const [typedTopic, setTypedTopic] = useState<string>('');
   
@@ -86,7 +90,16 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
   const [docUploadError, setDocUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Dynamic generated set state for custom inputs (topic/notes/doc)
+  // Captured Camera Photo State (CAPTURE IT)
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [capturedFileName, setCapturedFileName] = useState<string>('');
+  const [capturedText, setCapturedText] = useState<string>('');
+  const [isCameraModalOpen, setIsCameraModalOpen] = useState<boolean>(false);
+  const [isProcessingPhoto, setIsProcessingPhoto] = useState<boolean>(false);
+  const [cameraPhotoError, setCameraPhotoError] = useState<string | null>(null);
+  const cameraFileInputRef = useRef<HTMLInputElement>(null);
+
+  // Dynamic generated set state for custom inputs (topic/notes/doc/photo)
   const [customGeneratedConcepts, setCustomGeneratedConcepts] = useState<StudyConcept[] | null>(null);
   const [isGeneratingCustomPlan, setIsGeneratingCustomPlan] = useState<boolean>(false);
   const [customGenerationError, setCustomGenerationError] = useState<string | null>(null);
@@ -107,11 +120,18 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
   // --- 4. HOW LONG: Duration (10, 30, 60 minutes) ---
   const [selectedDuration, setSelectedDuration] = useState<StudyPlanDuration>(30);
 
+  // Synchronize initial input method if changed (never auto-open camera on mount)
+  useEffect(() => {
+    if (initialInputMethod) {
+      setInputMethod(initialInputMethod);
+    }
+  }, [initialInputMethod]);
+
   // Reset custom generated concepts when user changes input method or text
   useEffect(() => {
     setCustomGeneratedConcepts(null);
     setCustomGenerationError(null);
-  }, [inputMethod, typedTopic, pastedNotes, uploadedDoc]);
+  }, [inputMethod, typedTopic, pastedNotes, uploadedDoc, capturedImage, capturedText]);
 
   // Handle document upload
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -158,6 +178,41 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
     setDocUploadError(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
+    }
+  };
+
+  // Handle camera photo capture (CAPTURE IT)
+  const handlePhotoCaptured = async (photoBlob: Blob, photoDataUrl: string, fileName: string) => {
+    setCapturedImage(photoDataUrl);
+    setCapturedFileName(fileName);
+    setCameraPhotoError(null);
+    setIsProcessingPhoto(true);
+
+    try {
+      const file = new File([photoBlob], fileName, { type: photoBlob.type || 'image/jpeg' });
+      const parsed = await AIService.parseDocument(file);
+      const isCorrupted = isTextCorruptedOrUnreadable(parsed.text);
+      const cleanText = isCorrupted ? '' : parsed.text;
+      setCapturedText(cleanText || 'Transcribed study material ready for analysis and drills.');
+
+      if (!customTitle) {
+        setCustomTitle(`Photographed Material • ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`);
+      }
+    } catch (err: any) {
+      console.warn('Photo OCR parsing warning:', err);
+      setCapturedText('Photographed study material ready for curriculum generation.');
+    } finally {
+      setIsProcessingPhoto(false);
+    }
+  };
+
+  const handleClearCapturedPhoto = () => {
+    setCapturedImage(null);
+    setCapturedFileName('');
+    setCapturedText('');
+    setCameraPhotoError(null);
+    if (cameraFileInputRef.current) {
+      cameraFileInputRef.current.value = '';
     }
   };
 
@@ -256,7 +311,7 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
     // If custom generated concepts are already active (from user's typed topic, notes, or doc)
     if (customGeneratedConcepts && customGeneratedConcepts.length > 0) {
       const activeConcepts = customGeneratedConcepts.slice(0, targetCount);
-      const activeTitle = customTitle || (inputMethod === 'paste' ? 'Custom Study Notes' : inputMethod === 'upload' ? (uploadedDoc?.name || 'Custom Document') : typedTopic);
+      const activeTitle = customTitle || (inputMethod === 'paste' ? 'Custom Study Notes' : inputMethod === 'upload' ? (uploadedDoc?.name || 'Custom Document') : inputMethod === 'capture' ? (capturedFileName || 'Captured Study Material') : typedTopic);
       
       const conceptsWithReasons = activeConcepts.map((c, idx) => ({
         concept: c,
@@ -268,7 +323,7 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
         durationMinutes: selectedDuration,
         concepts: activeConcepts,
         conceptsWithReasons,
-        rationale: `Personalized study plan derived strictly from your provided ${inputMethod === 'paste' ? 'study notes' : inputMethod === 'upload' ? 'document' : 'topic'}. Calibrated for sequential recall, flashcards, and formative checks.`,
+        rationale: `Personalized study plan derived strictly from your provided ${inputMethod === 'paste' ? 'study notes' : inputMethod === 'upload' ? 'document' : inputMethod === 'capture' ? 'photographed study material' : 'topic'}. Calibrated for sequential recall, flashcards, and formative checks.`,
         weakCount: 0,
         newCount: activeConcepts.length,
         isCustomSourced: true,
@@ -481,6 +536,13 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
         setDocUploadError('Please upload a document first.');
         return;
       }
+    } else if (inputMethod === 'capture') {
+      contentToStudy = capturedText.trim() || 'Photographed study material';
+      topicToStudy = customTitle.trim() || capturedFileName || 'Captured Study Material';
+      if (!capturedImage && !capturedText) {
+        setCameraPhotoError('Please photograph your study material first.');
+        return;
+      }
     }
 
     setIsGeneratingCustomPlan(true);
@@ -539,6 +601,7 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
     if (customGeneratedConcepts && customGeneratedConcepts.length > 0) return false;
     if (inputMethod === 'paste' && pastedNotes.trim().length > 0) return true;
     if (inputMethod === 'upload' && uploadedDoc) return true;
+    if (inputMethod === 'capture' && (capturedText.trim().length > 0 || capturedImage)) return true;
     if (inputMethod === 'type' && typedTopic.trim().length > 2) {
       const existingMatch = allSets.flatMap(s => s.concepts).some(c => 
         c.title.toLowerCase().includes(typedTopic.trim().toLowerCase()) ||
@@ -547,7 +610,7 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
       return !existingMatch;
     }
     return false;
-  }, [inputMethod, pastedNotes, uploadedDoc, typedTopic, customGeneratedConcepts, allSets]);
+  }, [inputMethod, pastedNotes, uploadedDoc, capturedText, capturedImage, typedTopic, customGeneratedConcepts, allSets]);
 
   return (
     <div id="study-plan-view-root" className="max-w-4xl mx-auto space-y-8 pb-16">
@@ -569,12 +632,12 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
           STUDY PLANNER
         </h1>
         <p className="text-sm sm:text-base text-stone-600 font-normal leading-relaxed max-w-2xl">
-          Provide what you want to study using <strong className="font-bold text-stone-900">Type It</strong>, <strong className="font-bold text-stone-900">Paste It</strong>, or <strong className="font-bold text-stone-900">Upload It</strong>. Your plan connects directly into the <strong className="font-bold text-stone-800">Learn → Flashcards → Practice → Review</strong> workflow.
+          Provide what you want to study using <strong className="font-bold text-stone-900">Type It</strong>, <strong className="font-bold text-stone-900">Paste It</strong>, <strong className="font-bold text-stone-900">Upload It</strong>, or <strong className="font-bold text-stone-900">Capture It</strong>. Your plan connects directly into the <strong className="font-bold text-stone-800">Learn → Flashcards → Practice → Review</strong> workflow.
         </p>
       </div>
 
       {/* =========================================================
-          STEP 1: WHAT DO YOU WANT TO STUDY? (TYPE IT | PASTE IT | UPLOAD IT)
+          STEP 1: WHAT DO YOU WANT TO STUDY? (TYPE IT | PASTE IT | UPLOAD IT | CAPTURE IT)
           ========================================================= */}
       <div className="bg-white border border-stone-200/90 rounded-3xl p-6 sm:p-7 shadow-sm space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-stone-100 pb-3 gap-2">
@@ -587,23 +650,23 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
             </h2>
           </div>
           <span className="font-mono text-xs font-bold text-[#D92B8A] uppercase">
-            3 INPUT OPTIONS
+            4 INPUT OPTIONS
           </span>
         </div>
 
-        {/* 3 Study-Input Option Tabs: TYPE IT | PASTE IT | UPLOAD IT */}
-        <div className="grid grid-cols-3 gap-2 bg-stone-100/80 p-1.5 rounded-2xl">
+        {/* 4 Study-Input Option Tabs: TYPE IT | PASTE IT | UPLOAD IT | CAPTURE IT */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-stone-100/80 p-1.5 rounded-2xl">
           <button
             type="button"
             id="planner-tab-type"
             onClick={() => setInputMethod('type')}
-            className={`py-3 px-2 sm:px-4 rounded-xl font-display text-xs sm:text-sm font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer ${
+            className={`py-3 px-2 sm:px-3 rounded-xl font-display text-xs sm:text-sm font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap ${
               inputMethod === 'type'
                 ? 'bg-white text-stone-950 shadow-sm border border-stone-200/60'
                 : 'text-stone-600 hover:text-stone-900 hover:bg-white/40'
             }`}
           >
-            <Type className={`w-4 h-4 ${inputMethod === 'type' ? 'text-[#D92B8A]' : 'text-stone-400'}`} />
+            <Type className={`w-4 h-4 shrink-0 ${inputMethod === 'type' ? 'text-[#D92B8A]' : 'text-stone-400'}`} />
             <span>TYPE IT</span>
           </button>
 
@@ -611,13 +674,13 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
             type="button"
             id="planner-tab-paste"
             onClick={() => setInputMethod('paste')}
-            className={`py-3 px-2 sm:px-4 rounded-xl font-display text-xs sm:text-sm font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer ${
+            className={`py-3 px-2 sm:px-3 rounded-xl font-display text-xs sm:text-sm font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap ${
               inputMethod === 'paste'
                 ? 'bg-white text-stone-950 shadow-sm border border-stone-200/60'
                 : 'text-stone-600 hover:text-stone-900 hover:bg-white/40'
             }`}
           >
-            <ClipboardList className={`w-4 h-4 ${inputMethod === 'paste' ? 'text-[#D92B8A]' : 'text-stone-400'}`} />
+            <ClipboardList className={`w-4 h-4 shrink-0 ${inputMethod === 'paste' ? 'text-[#D92B8A]' : 'text-stone-400'}`} />
             <span>PASTE IT</span>
           </button>
 
@@ -625,14 +688,33 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
             type="button"
             id="planner-tab-upload"
             onClick={() => setInputMethod('upload')}
-            className={`py-3 px-2 sm:px-4 rounded-xl font-display text-xs sm:text-sm font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer ${
+            className={`py-3 px-2 sm:px-3 rounded-xl font-display text-xs sm:text-sm font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap ${
               inputMethod === 'upload'
                 ? 'bg-white text-stone-950 shadow-sm border border-stone-200/60'
                 : 'text-stone-600 hover:text-stone-900 hover:bg-white/40'
             }`}
           >
-            <Upload className={`w-4 h-4 ${inputMethod === 'upload' ? 'text-[#D92B8A]' : 'text-stone-400'}`} />
+            <Upload className={`w-4 h-4 shrink-0 ${inputMethod === 'upload' ? 'text-[#D92B8A]' : 'text-stone-400'}`} />
             <span>UPLOAD IT</span>
+          </button>
+
+          <button
+            type="button"
+            id="planner-tab-capture"
+            onClick={() => {
+              setInputMethod('capture');
+              if (!capturedImage) {
+                setIsCameraModalOpen(true);
+              }
+            }}
+            className={`py-3 px-2 sm:px-3 rounded-xl font-display text-xs sm:text-sm font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap ${
+              inputMethod === 'capture'
+                ? 'bg-white text-stone-950 shadow-sm border border-stone-200/60'
+                : 'text-stone-600 hover:text-stone-900 hover:bg-white/40'
+            }`}
+          >
+            <Camera className={`w-4 h-4 shrink-0 ${inputMethod === 'capture' ? 'text-[#D92B8A]' : 'text-stone-400'}`} />
+            <span>CAPTURE IT</span>
           </button>
         </div>
 
@@ -833,6 +915,151 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
           </div>
         )}
 
+        {/* TAB 4: CAPTURE IT */}
+        {inputMethod === 'capture' && (
+          <div className="space-y-4 pt-1">
+            <div className="space-y-1.5">
+              <label htmlFor="planner-capture-title" className="font-mono text-xs font-bold text-stone-700 uppercase block">
+                Study Topic / Title (Optional):
+              </label>
+              <input
+                id="planner-capture-title"
+                type="text"
+                value={customTitle}
+                onChange={(e) => setCustomTitle(e.target.value)}
+                placeholder="e.g. Physics Thermodynamics Homework & Diagrams"
+                className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-2xl text-sm font-sans focus:outline-none focus:ring-2 focus:ring-[#D92B8A] transition-all placeholder:text-stone-400"
+              />
+            </div>
+
+            <input
+              type="file"
+              ref={cameraFileInputRef}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                  const dataUrl = (ev.target?.result as string) || '';
+                  handlePhotoCaptured(file, dataUrl, file.name || 'study-camera-photo.jpg');
+                };
+                reader.readAsDataURL(file);
+              }}
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              id="planner-camera-file-input"
+            />
+
+            {!capturedImage ? (
+              <div className="border-2 border-dashed border-stone-300 hover:border-[#D92B8A] bg-stone-50/70 hover:bg-pink-50/30 rounded-3xl p-6 sm:p-8 text-center transition-all flex flex-col items-center justify-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-pink-100 text-[#D92B8A] flex items-center justify-center">
+                  <Camera className="w-6 h-6" />
+                </div>
+                <div className="space-y-1 max-w-md">
+                  <p className="font-display font-black text-sm text-stone-900 uppercase">
+                    PHOTOGRAPH HOMEWORK, TEXTBOOK, EQUATIONS OR WORKSHEETS
+                  </p>
+                  <p className="text-xs text-stone-500 font-mono">
+                    Point your device camera at study pages, handwritten notes, science diagrams, or problem sets
+                  </p>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-center gap-3 pt-2 w-full sm:w-auto">
+                  <button
+                    type="button"
+                    id="open-camera-viewfinder-btn"
+                    onClick={() => setIsCameraModalOpen(true)}
+                    className="w-full sm:w-auto py-3 px-6 rounded-full bg-[#E63956] hover:bg-[#D32F4C] text-white font-display font-black text-xs uppercase tracking-wider transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <Camera className="w-4 h-4" />
+                    <span>Open Device Camera</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => cameraFileInputRef.current?.click()}
+                    className="w-full sm:w-auto py-3 px-5 rounded-full border border-stone-300 hover:bg-stone-100 text-stone-700 font-display font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <span>Choose / Upload Photo</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="p-4 sm:p-5 bg-pink-50/50 border border-pink-200 rounded-3xl space-y-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-pink-200/60 pb-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <img
+                      src={capturedImage}
+                      alt="Captured study photo"
+                      className="w-14 h-14 rounded-2xl object-cover border border-pink-200 shadow-xs shrink-0"
+                    />
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 rounded-full bg-[#E63956] text-white font-mono text-[10px] font-bold uppercase tracking-wider">
+                          CAMERA CAPTURED
+                        </span>
+                        {isProcessingPhoto && (
+                          <span className="flex items-center gap-1 font-mono text-xs text-[#E63956] font-bold">
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                            Transcribing...
+                          </span>
+                        )}
+                      </div>
+                      <h4 className="font-display font-bold text-sm text-stone-900 truncate mt-0.5">
+                        {capturedFileName || 'Study Photograph'}
+                      </h4>
+                      <p className="font-mono text-[11px] text-stone-600">
+                        {capturedText ? `${capturedText.split(/\s+/).filter(Boolean).length} words digitized • Ready for study synthesis` : 'Processing optical transcription...'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 self-end sm:self-center">
+                    <button
+                      type="button"
+                      onClick={() => setIsCameraModalOpen(true)}
+                      className="py-1.5 px-3 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 font-mono text-xs font-bold text-stone-800 transition-colors cursor-pointer"
+                    >
+                      Retake Photo
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleClearCapturedPhoto}
+                      className="p-2 text-stone-500 hover:text-red-600 transition-colors cursor-pointer"
+                      title="Remove captured photo"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Transcribed Study Content Preview */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs font-mono text-stone-600">
+                    <span className="font-bold uppercase">Transcribed Content & Formulas:</span>
+                    <span>{capturedText.length} characters</span>
+                  </div>
+                  <textarea
+                    rows={4}
+                    value={capturedText}
+                    onChange={(e) => setCapturedText(e.target.value)}
+                    placeholder="Transcribed notes, homework questions, equations, or diagrams will appear here. You can also edit or add context..."
+                    className="w-full p-3.5 bg-white border border-pink-200 rounded-2xl text-xs sm:text-sm font-sans focus:outline-none focus:ring-2 focus:ring-[#D92B8A] transition-all leading-relaxed"
+                  />
+                </div>
+              </div>
+            )}
+
+            {cameraPhotoError && (
+              <div className="p-3 bg-red-50 text-red-700 text-xs font-mono rounded-xl border border-red-200 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{cameraPhotoError}</span>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Generate / Transform Custom Plan Trigger if custom text or file provided */}
         {hasCustomInputPending && (
           <div className="pt-2">
@@ -851,7 +1078,7 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
               ) : (
                 <>
                   <Sparkles className="w-4 h-4 text-[#D92B8A]" />
-                  <span>Curate Study Plan for this Specific {inputMethod === 'type' ? 'Topic' : inputMethod === 'paste' ? 'Notes' : 'Document'} →</span>
+                  <span>Curate Study Plan for this Specific {inputMethod === 'type' ? 'Topic' : inputMethod === 'paste' ? 'Notes' : inputMethod === 'upload' ? 'Document' : 'Captured Material'} →</span>
                 </>
               )}
             </button>
@@ -874,6 +1101,8 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
                 ? `Source: Pasted Notes (${pastedNotes.trim().split(/\s+/).filter(Boolean).length} words)` 
                 : inputMethod === 'upload' 
                 ? `Source: ${uploadedDoc ? uploadedDoc.name : 'No file uploaded'}` 
+                : inputMethod === 'capture'
+                ? `Source: Camera Photo (${capturedFileName || 'Captured Material'})`
                 : typedTopic 
                 ? `Strict Topic: "${typedTopic}"` 
                 : `Subject: ${selectedSubject}`}
@@ -1286,6 +1515,13 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Camera Live Capture Modal */}
+      <CameraCaptureModal
+        isOpen={isCameraModalOpen}
+        onClose={() => setIsCameraModalOpen(false)}
+        onPhotoCaptured={handlePhotoCaptured}
+      />
     </div>
   );
 };

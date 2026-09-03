@@ -37,12 +37,16 @@ export const StudyCourseGenerator: React.FC<StudyCourseGeneratorProps> = ({
   const [topic, setTopic] = useState<string>(existingResource?.topic || existingResource?.title || '');
   const [category, setCategory] = useState<string>(existingResource?.subject || 'AFRICAN HISTORY');
   const [gradeLevel, setGradeLevel] = useState<string>('Undergraduate / Professional');
-  const [sourceMaterial, setSourceMaterial] = useState<string>('');
-  const [sourceFileName, setSourceFileName] = useState<string>('');
+  const [sourceMaterial, setSourceMaterial] = useState<string>(existingResource?.sourceSnippet || '');
+  const [sourceFileName, setSourceFileName] = useState<string>(existingResource?.documentName || '');
 
   // Course generation state
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
-  const [course, setCourse] = useState<CourseResult | null>(existingResource || null);
+  const [course, setCourse] = useState<CourseResult | null>(
+    existingResource && Array.isArray(existingResource.modules) && existingResource.modules.length > 0
+      ? existingResource
+      : null
+  );
   const [activeModuleIdx, setActiveModuleIdx] = useState<number>(0);
   const [saved, setSaved] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
@@ -157,7 +161,7 @@ export const StudyCourseGenerator: React.FC<StudyCourseGeneratorProps> = ({
           </div>
         </div>
 
-        {course && (
+        {course && Array.isArray(course.modules) && course.modules.length > 0 && (
           <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
             <button
               type="button"

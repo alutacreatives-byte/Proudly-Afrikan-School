@@ -38,12 +38,16 @@ export const StudyQuizGenerator: React.FC<StudyQuizGeneratorProps> = ({
   const [category, setCategory] = useState<string>(existingResource?.subject || 'AFRICAN HISTORY');
   const [difficulty, setDifficulty] = useState<'Easy' | 'Medium' | 'Hard'>((existingResource?.difficulty as any) || 'Medium');
   const [count, setCount] = useState<number>(existingResource?.questions?.length || 5);
-  const [sourceMaterial, setSourceMaterial] = useState<string>('');
-  const [sourceFileName, setSourceFileName] = useState<string>('');
+  const [sourceMaterial, setSourceMaterial] = useState<string>(existingResource?.sourceSnippet || '');
+  const [sourceFileName, setSourceFileName] = useState<string>(existingResource?.documentName || '');
 
   // Execution state
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
-  const [quiz, setQuiz] = useState<QuizResult | null>(existingResource || null);
+  const [quiz, setQuiz] = useState<QuizResult | null>(
+    existingResource && Array.isArray(existingResource.questions) && existingResource.questions.length > 0
+      ? existingResource
+      : null
+  );
   const [userAnswers, setUserAnswers] = useState<Record<number, number>>({});
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
   const [saved, setSaved] = useState<boolean>(false);
@@ -188,7 +192,7 @@ export const StudyQuizGenerator: React.FC<StudyQuizGeneratorProps> = ({
           </div>
         </div>
 
-        {quiz && (
+        {quiz && Array.isArray(quiz.questions) && quiz.questions.length > 0 && (
           <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
             <button
               type="button"

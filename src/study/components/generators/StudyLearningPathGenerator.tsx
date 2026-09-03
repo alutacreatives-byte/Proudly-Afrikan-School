@@ -37,12 +37,16 @@ export const StudyLearningPathGenerator: React.FC<StudyLearningPathGeneratorProp
   const [category, setCategory] = useState<string>(existingResource?.subject || 'AFRICAN HISTORY');
   const [targetGoal, setTargetGoal] = useState<string>(existingResource?.targetGoal || 'Comprehensive Academic Fluency');
   const [startingLevel, setStartingLevel] = useState<string>('Beginner / Intermediate');
-  const [sourceMaterial, setSourceMaterial] = useState<string>('');
-  const [sourceFileName, setSourceFileName] = useState<string>('');
+  const [sourceMaterial, setSourceMaterial] = useState<string>(existingResource?.sourceSnippet || '');
+  const [sourceFileName, setSourceFileName] = useState<string>(existingResource?.documentName || '');
 
   // Path Generation State
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
-  const [path, setPath] = useState<LearningPathResult | null>(existingResource || null);
+  const [path, setPath] = useState<LearningPathResult | null>(
+    existingResource && Array.isArray(existingResource.stages) && existingResource.stages.length > 0
+      ? existingResource
+      : null
+  );
   const [completedStages, setCompletedStages] = useState<Record<number, boolean>>({});
   const [saved, setSaved] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
@@ -155,7 +159,7 @@ export const StudyLearningPathGenerator: React.FC<StudyLearningPathGeneratorProp
           </div>
         </div>
 
-        {path && (
+        {path && Array.isArray(path.stages) && path.stages.length > 0 && (
           <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
             <button
               type="button"
@@ -283,7 +287,7 @@ export const StudyLearningPathGenerator: React.FC<StudyLearningPathGeneratorProp
 
         {/* Right Active Roadmap Preview */}
         <div className="lg:col-span-8">
-          {path ? (
+          {path && Array.isArray(path.stages) && path.stages.length > 0 ? (
             <div className="p-8 sm:p-10 rounded-[2rem] bg-white border border-stone-200/90 shadow-[0_10px_30px_rgba(0,0,0,0.05)] space-y-8">
               {/* Header */}
               <div className="space-y-3 pb-6 border-b border-stone-100">
@@ -306,7 +310,7 @@ export const StudyLearningPathGenerator: React.FC<StudyLearningPathGeneratorProp
               {/* Step-by-Step Stages */}
               <div className="space-y-6">
                 <h3 className="font-display font-black text-lg uppercase text-[#161616] tracking-tight">
-                  Milestone Stages & Competencies ({path.stages.length} Stages)
+                  Milestone Stages & Competencies ({(path.stages || []).length} Stages)
                 </h3>
 
                 <div className="space-y-6 relative before:absolute before:left-5 before:top-4 before:bottom-4 before:w-0.5 before:bg-stone-200">

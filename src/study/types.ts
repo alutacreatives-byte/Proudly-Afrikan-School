@@ -337,6 +337,9 @@ export interface FlashcardResult {
   subject?: string;
   topic?: string;
   description?: string;
+  sourceSnippet?: string;
+  documentName?: string;
+  capturedPhotoUrl?: string;
   cards: FlashcardCard[];
   toolType?: 'flashcards';
   createdAt?: string;
@@ -358,6 +361,9 @@ export interface QuizResult {
   subject?: string;
   topic?: string;
   description?: string;
+  sourceSnippet?: string;
+  documentName?: string;
+  capturedPhotoUrl?: string;
   difficulty?: string;
   timeLimitMinutes?: number;
   questions: QuizQuestion[];

@@ -37,12 +37,16 @@ export const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({
   const [category, setCategory] = useState<string>(existingResource?.subject || 'AFRICAN HISTORY');
   const [gradeLevel, setGradeLevel] = useState<string>('Secondary / High School');
   const [count, setCount] = useState<number>(existingResource?.cards?.length || 8);
-  const [sourceMaterial, setSourceMaterial] = useState<string>('');
-  const [sourceFileName, setSourceFileName] = useState<string>('');
+  const [sourceMaterial, setSourceMaterial] = useState<string>(existingResource?.sourceSnippet || '');
+  const [sourceFileName, setSourceFileName] = useState<string>(existingResource?.documentName || '');
 
   // Generation & Active Play State
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
-  const [flashcards, setFlashcards] = useState<FlashcardResult | null>(existingResource || null);
+  const [flashcards, setFlashcards] = useState<FlashcardResult | null>(
+    existingResource && Array.isArray(existingResource.cards) && existingResource.cards.length > 0
+      ? existingResource
+      : null
+  );
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [isFlipped, setIsFlipped] = useState<boolean>(false);
   const [showHint, setShowHint] = useState<boolean>(false);
@@ -149,7 +153,7 @@ export const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({
     URL.revokeObjectURL(url);
   };
 
-  const currentCard = flashcards?.cards[currentIndex];
+  const currentCard = flashcards?.cards?.[currentIndex];
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
@@ -175,7 +179,7 @@ export const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({
           </div>
         </div>
 
-        {flashcards && (
+        {flashcards && Array.isArray(flashcards.cards) && flashcards.cards.length > 0 && (
           <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
             <button
               type="button"

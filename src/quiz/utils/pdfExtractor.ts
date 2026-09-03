@@ -56,11 +56,46 @@ export async function extractTextFromFile(file: File): Promise<{ text: string; p
     }
   }
 
+  // If image / photo file (OCR via Gemini endpoint)
+  if (file.type.startsWith('image/') || /\.(jpe?g|png|webp|heic|bmp|gif)$/i.test(fileName)) {
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const res = (reader.result as string) || '';
+          resolve(res.replace(/^data:[^;]+;base64,/, '').trim());
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      const response = await fetch('/api/parse-document', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fileName: file.name,
+          base64,
+          fileType: file.type || 'image/jpeg',
+          mimeType: file.type || 'image/jpeg',
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data && typeof data.text === 'string' && data.text.trim()) {
+          return { text: data.text.trim(), pageCount: 1 };
+        }
+      }
+    } catch (ocrErr) {
+      console.warn('Image OCR extraction fallback:', ocrErr);
+    }
+  }
+
   // Fallback for other file types
   try {
     const text = await file.text();
     return { text };
   } catch {
-    throw new Error(`Unsupported file type: ${file.name}. Please upload a PDF or text file.`);
+    throw new Error(`Unsupported file type: ${file.name}. Please upload a PDF, image, or text document.`);
   }
 }

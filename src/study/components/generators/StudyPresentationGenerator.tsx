@@ -37,12 +37,16 @@ export const StudyPresentationGenerator: React.FC<StudyPresentationGeneratorProp
   const [category, setCategory] = useState<string>(existingResource?.subject || 'AFRICAN HISTORY');
   const [gradeLevel, setGradeLevel] = useState<string>('Secondary / High School');
   const [count, setCount] = useState<number>(existingResource?.slides?.length || 6);
-  const [sourceMaterial, setSourceMaterial] = useState<string>('');
-  const [sourceFileName, setSourceFileName] = useState<string>('');
+  const [sourceMaterial, setSourceMaterial] = useState<string>(existingResource?.sourceSnippet || '');
+  const [sourceFileName, setSourceFileName] = useState<string>(existingResource?.documentName || '');
 
   // Generation & Active Deck State
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
-  const [presentation, setPresentation] = useState<PresentationResult | null>(existingResource || null);
+  const [presentation, setPresentation] = useState<PresentationResult | null>(
+    existingResource && Array.isArray(existingResource.slides) && existingResource.slides.length > 0
+      ? existingResource
+      : null
+  );
   const [activeSlideIndex, setActiveSlideIndex] = useState<number>(0);
   const [showSpeakerNotes, setShowSpeakerNotes] = useState<boolean>(true);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
@@ -139,7 +143,7 @@ export const StudyPresentationGenerator: React.FC<StudyPresentationGeneratorProp
     URL.revokeObjectURL(url);
   };
 
-  const currentSlide = presentation?.slides[activeSlideIndex];
+  const currentSlide = presentation?.slides?.[activeSlideIndex];
 
   return (
     <div className={`w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8 ${isFullscreen ? 'fixed inset-0 z-50 bg-[#161616] p-8 max-w-none overflow-y-auto' : ''}`}>
@@ -167,7 +171,7 @@ export const StudyPresentationGenerator: React.FC<StudyPresentationGeneratorProp
           </div>
         </div>
 
-        {presentation && (
+        {presentation && Array.isArray(presentation.slides) && presentation.slides.length > 0 && (
           <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
             <button
               type="button"

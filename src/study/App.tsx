@@ -68,8 +68,25 @@ export default function StudyApp({
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [activeTool]);
 
-  const handleSelectTool = (toolId: StudyToolType, prefillTopic?: string, prefillCategory?: string) => {
-    if (prefillTopic) {
+  const handleSelectTool = (
+    toolId: StudyToolType, 
+    prefillTopic?: string, 
+    prefillCategory?: string,
+    initialData?: { sourceSnippet?: string; documentName?: string; capturedPhotoUrl?: string; [key: string]: any }
+  ) => {
+    if (initialData) {
+      setActiveResource({
+        id: `temp-${Date.now()}`,
+        title: prefillTopic || initialData.documentName || 'Study Material',
+        topic: prefillTopic || initialData.documentName || 'Study Material',
+        subject: prefillCategory || 'GENERAL STUDIES',
+        sourceSnippet: initialData.sourceSnippet || '',
+        documentName: initialData.documentName || '',
+        createdAt: new Date().toISOString(),
+        toolType: toolId,
+        ...initialData,
+      });
+    } else if (prefillTopic) {
       setActiveResource({
         id: `temp-${Date.now()}`,
         title: prefillTopic,
