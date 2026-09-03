@@ -12,10 +12,27 @@ import { LearningPathBuilder } from './components/generators/LearningPathBuilder
 import { MyResources } from './components/MyResources';
 import { getSavedResources } from './utils/storage';
 
-export const BuildApp: React.FC = () => {
-  const [activeTool, setActiveTool] = useState<BuildToolType | 'my-resources' | null>(null);
-  const [activeResource, setActiveResource] = useState<SavedResource | null>(null);
+interface BuildAppProps {
+  initialResource?: SavedResource | null;
+  onGoHome?: () => void;
+}
+
+export const BuildApp: React.FC<BuildAppProps> = ({
+  initialResource,
+  onGoHome,
+}) => {
+  const [activeTool, setActiveTool] = useState<BuildToolType | 'my-resources' | null>(
+    initialResource ? (initialResource.toolType as BuildToolType) : null
+  );
+  const [activeResource, setActiveResource] = useState<SavedResource | null>(initialResource || null);
   const [savedCount, setSavedCount] = useState<number>(getSavedResources().length);
+
+  useEffect(() => {
+    if (initialResource) {
+      setActiveResource(initialResource);
+      setActiveTool(initialResource.toolType as BuildToolType);
+    }
+  }, [initialResource]);
 
   const refreshSavedCount = () => {
     setSavedCount(getSavedResources().length);
@@ -60,6 +77,7 @@ export const BuildApp: React.FC = () => {
     return (
       <MyResources
         onBack={handleBackToGrid}
+        onGoHome={onGoHome || handleBackToGrid}
         onOpenResource={handleOpenSavedResource}
       />
     );
@@ -69,6 +87,7 @@ export const BuildApp: React.FC = () => {
     return (
       <ExamGenerator
         onBack={handleBackToGrid}
+        onGoHome={onGoHome || handleBackToGrid}
         onSaved={refreshSavedCount}
         existingResource={activeResource?.toolType === 'exam' ? (activeResource as ExamPaper) : undefined}
       />
@@ -79,6 +98,7 @@ export const BuildApp: React.FC = () => {
     return (
       <WorksheetGenerator
         onBack={handleBackToGrid}
+        onGoHome={onGoHome || handleBackToGrid}
         onSaved={refreshSavedCount}
         existingResource={activeResource?.toolType === 'worksheet' ? (activeResource as WorksheetResource) : undefined}
       />
@@ -89,6 +109,7 @@ export const BuildApp: React.FC = () => {
     return (
       <MindMapGenerator
         onBack={handleBackToGrid}
+        onGoHome={onGoHome || handleBackToGrid}
         onSaved={refreshSavedCount}
         existingResource={activeResource?.toolType === 'mind-map' ? (activeResource as MindMapResource) : undefined}
       />
@@ -99,6 +120,7 @@ export const BuildApp: React.FC = () => {
     return (
       <PdfStudyPackGenerator
         onBack={handleBackToGrid}
+        onGoHome={onGoHome || handleBackToGrid}
         onSaved={refreshSavedCount}
         existingResource={activeResource?.toolType === 'pdf-studypack' ? (activeResource as StudyPackResource) : undefined}
       />
@@ -109,6 +131,7 @@ export const BuildApp: React.FC = () => {
     return (
       <LessonPlanGenerator
         onBack={handleBackToGrid}
+        onGoHome={onGoHome || handleBackToGrid}
         onSaved={refreshSavedCount}
         existingResource={activeResource?.toolType === 'lesson-plan' ? (activeResource as LessonPlanResource) : undefined}
       />
@@ -119,6 +142,7 @@ export const BuildApp: React.FC = () => {
     return (
       <PresentationGenerator
         onBack={handleBackToGrid}
+        onGoHome={onGoHome || handleBackToGrid}
         onSaved={refreshSavedCount}
         existingResource={activeResource?.toolType === 'presentation' ? (activeResource as PresentationResource) : undefined}
       />
@@ -129,6 +153,7 @@ export const BuildApp: React.FC = () => {
     return (
       <CourseBuilder
         onBack={handleBackToGrid}
+        onGoHome={onGoHome || handleBackToGrid}
         onSaved={refreshSavedCount}
         existingResource={(activeResource?.toolType === 'course-builder' || activeResource?.toolType === 'course') ? (activeResource as CourseResource) : undefined}
       />
@@ -139,6 +164,7 @@ export const BuildApp: React.FC = () => {
     return (
       <LearningPathBuilder
         onBack={handleBackToGrid}
+        onGoHome={onGoHome || handleBackToGrid}
         onSaved={refreshSavedCount}
         existingResource={activeResource?.toolType === 'learning-path' ? (activeResource as LearningPathResource) : undefined}
       />

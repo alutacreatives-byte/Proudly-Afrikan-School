@@ -161,7 +161,7 @@ export const StudyGuideGenerator: React.FC<StudyGuideGeneratorProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <span className="font-mono text-xs font-bold text-[#E63956] uppercase tracking-wider">
-                STUDY TOOL 01
+                STUDY TOOL 02
               </span>
             </div>
             <h1 className="font-display font-black text-2xl sm:text-3xl text-[#161616] uppercase tracking-tight">

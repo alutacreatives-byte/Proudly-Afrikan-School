@@ -13,7 +13,7 @@ export const BuildHero: React.FC<BuildHeroProps> = ({
   onUploadPdfClick,
 }) => {
   const inspirationTopics: { label: string; topic: string; category: string; tool: BuildToolType }[] = [
-    { label: '👑 Kingdom of Mali', topic: 'The Kingdom of Mali & Mansa Musa', category: 'History & Geography', tool: 'exam' },
+    { label: '👑 Kingdom of Mali', topic: 'The Kingdom of Mali & Mansa Musa', category: 'History & Geography', tool: 'course-builder' },
     { label: '🌍 Great Rift Valley', topic: 'The Great Rift Valley Geography & Ecology', category: 'History & Geography', tool: 'worksheet' },
     { label: '📚 African Literature', topic: 'African Literature: Chinua Achebe & Things Fall Apart', category: 'Languages & Literature', tool: 'lesson-plan' },
     { label: '⚙️ Solar In Africa', topic: 'Solar Energy Revolution & Geothermal Power in Africa', category: 'Sciences & STEM', tool: 'presentation' },
@@ -100,7 +100,7 @@ export const BuildHero: React.FC<BuildHeroProps> = ({
           <div className="grid grid-cols-3 gap-2 bg-white border border-stone-200/90 py-3.5 px-4 rounded-[1.5rem] shadow-xs">
             <div className="text-center border-r border-stone-200 pr-2">
               <div className="font-display text-lg sm:text-2xl font-black text-[#E63956]">
-                8
+                7
               </div>
               <div className="font-mono text-[10px] sm:text-xs font-bold text-stone-600 uppercase tracking-wider">
                 GENERATORS

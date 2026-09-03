@@ -146,11 +146,11 @@ export const StudyLearningPathGenerator: React.FC<StudyLearningPathGeneratorProp
           <div>
             <div className="flex items-center gap-2">
               <span className="font-mono text-xs font-bold text-[#E63956] uppercase tracking-wider">
-                STUDY TOOL 07
+                STUDY TOOL 01
               </span>
             </div>
             <h1 className="font-display font-black text-2xl sm:text-3xl text-[#161616] uppercase tracking-tight">
-              LEARNING PATHWAY GENERATOR
+              LEARNING ROADMAP BUILDER
             </h1>
           </div>
         </div>

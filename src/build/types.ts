@@ -155,13 +155,21 @@ export interface PresentationResource {
 }
 
 // 6. Course Builder Types
+export interface CourseLessonItem {
+  lessonTitle: string;
+  learningObjective?: string;
+  recommendedActivity?: string;
+}
+
 export interface CourseModule {
   moduleNumber: number;
   title: string;
   description: string;
+  estimatedHours?: number;
   learningOutcomes: string[];
   keyTopics: string[];
   practicalProjectOrTask?: string;
+  lessons?: CourseLessonItem[];
 }
 
 export interface CourseResource {
@@ -172,6 +180,8 @@ export interface CourseResource {
   targetAudience: string;
   courseOverview: string;
   totalWeeksOrHours: string;
+  pedagogicalStyle?: string;
+  assessmentStrategy?: string;
   modules: CourseModule[];
   prerequisites?: string[];
   capstoneProject?: string;

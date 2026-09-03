@@ -179,7 +179,7 @@ export const StudyQuizGenerator: React.FC<StudyQuizGeneratorProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <span className="font-mono text-xs font-bold text-[#E63956] uppercase tracking-wider">
-                STUDY TOOL 03
+                STUDY TOOL 04
               </span>
             </div>
             <h1 className="font-display font-black text-2xl sm:text-3xl text-[#161616] uppercase tracking-tight">

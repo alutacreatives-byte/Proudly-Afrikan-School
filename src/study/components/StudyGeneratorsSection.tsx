@@ -5,7 +5,6 @@ import {
   CheckSquare, 
   FileCheck2, 
   Presentation, 
-  GraduationCap, 
   GitBranch, 
   ArrowUpRight
 } from 'lucide-react';
@@ -23,8 +22,17 @@ interface ToolItem {
 
 const STUDY_TOOLS: ToolItem[] = [
   {
-    id: 'study-guide',
+    id: 'learning-path',
     toolNumber: '01',
+    tag: 'PROGRESSIVE ROADMAP',
+    title: 'LEARNING ROADMAP BUILDER',
+    subtitle: 'Construct step-by-step competency milestones and skill progression roadmaps tailored to your goals.',
+    icon: GitBranch,
+    btnText: 'CREATE ROADMAP →',
+  },
+  {
+    id: 'study-guide',
+    toolNumber: '02',
     tag: 'STRUCTURED REVIEW',
     title: 'STUDY GUIDE GENERATOR',
     subtitle: 'Generate comprehensive revision notes with core principles, vocabulary breakdowns, and high-yield takeaways.',
@@ -33,7 +41,7 @@ const STUDY_TOOLS: ToolItem[] = [
   },
   {
     id: 'flashcards',
-    toolNumber: '02',
+    toolNumber: '03',
     tag: 'ACTIVE RECALL',
     title: 'FLASHCARD GENERATOR',
     subtitle: 'Build interactive active-recall flashcard decks with instant flip animations, spaced hints, and shuffle drills.',
@@ -42,7 +50,7 @@ const STUDY_TOOLS: ToolItem[] = [
   },
   {
     id: 'quiz',
-    toolNumber: '03',
+    toolNumber: '04',
     tag: 'MASTERY CHECK',
     title: 'PRACTICE QUIZ GENERATOR',
     subtitle: 'Generate interactive multiple-choice practice tests with instant scoring, timer feedback, and deep explanations.',
@@ -51,7 +59,7 @@ const STUDY_TOOLS: ToolItem[] = [
   },
   {
     id: 'pdf-quiz',
-    toolNumber: '04',
+    toolNumber: '05',
     tag: 'DOCUMENT GROUNDED',
     title: 'PDF & DOCUMENT QUIZ',
     subtitle: 'Upload any reading PDF or syllabus to generate a diagnostic quiz grounded directly in your uploaded text.',
@@ -60,30 +68,12 @@ const STUDY_TOOLS: ToolItem[] = [
   },
   {
     id: 'presentation',
-    toolNumber: '05',
+    toolNumber: '06',
     tag: 'SLIDES & LECTURE',
     title: 'PRESENTATION GENERATOR',
     subtitle: 'Generate structured slide decks with presenter notes, visual prompts, and interactive discussion starters.',
     icon: Presentation,
     btnText: 'CREATE SLIDE DECK →',
-  },
-  {
-    id: 'course',
-    toolNumber: '06',
-    tag: 'CURRICULUM & SYLLABUS',
-    title: 'COURSE SYLLABUS BUILDER',
-    subtitle: 'Design multi-week academic course modules with specific learning outcomes and capstone projects.',
-    icon: GraduationCap,
-    btnText: 'CREATE COURSE →',
-  },
-  {
-    id: 'learning-path',
-    toolNumber: '07',
-    tag: 'PROGRESSIVE ROADMAP',
-    title: 'LEARNING PATHWAY BUILDER',
-    subtitle: 'Construct step-by-step competency milestones and skill progression roadmaps tailored to your goals.',
-    icon: GitBranch,
-    btnText: 'CREATE ROADMAP →',
   },
 ];
 
@@ -102,7 +92,7 @@ export const StudyGeneratorsSection: React.FC<StudyGeneratorsSectionProps> = ({
             LEARNING & STUDY SUITE
           </span>
           <h2 className="font-display font-black text-3xl sm:text-5xl lg:text-6xl text-[#161616] tracking-tighter uppercase leading-[0.92]">
-            ALL 7 STUDY TOOLS.
+            ALL 6 STUDY TOOLS.
           </h2>
         </div>
         <span className="text-xs sm:text-sm font-mono font-bold text-stone-500 uppercase tracking-wider">
@@ -110,8 +100,8 @@ export const StudyGeneratorsSection: React.FC<StudyGeneratorsSectionProps> = ({
         </span>
       </div>
 
-      {/* 7 Generator Cards in responsive grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
+      {/* 6 Generator Cards in responsive grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
         {STUDY_TOOLS.map((gen) => {
           const Icon = gen.icon;
           return (

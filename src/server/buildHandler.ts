@@ -493,66 +493,90 @@ Return a valid JSON object matching this schema:
 app.post('/api/generate/course', async (req, res) => {
   const {
     title = '',
-    subject,
-    gradeLevel = 'Tertiary / Undergraduate',
-    description = '',
+    topic = '',
+    subject = 'General Education',
+    gradeLevel = 'Senior Secondary / High School (Grades 9-12)',
     targetAudience = '',
+    description = '',
     courseObjectives = [],
-    modulesCount = 3,
+    modulesCount,
+    moduleCount = 4,
+    courseDuration = '8 Weeks (Standard)',
+    pedagogicalStyle = 'Project-Based & Practical',
+    assessmentStrategy = 'Capstone Project + Quizzes',
+    prerequisites = '',
+    customFocus = '',
     sourceMaterial = '',
   } = req.body;
 
+  const actualTopic = topic || title || subject;
+  const actualModuleCount = Number(modulesCount || moduleCount) || 4;
+  const actualAudience = targetAudience || gradeLevel;
+
   try {
-    const prompt = `You are an academic dean and curriculum architect on Proudly Afrikan Build.
-Design a complete, modular, sequenced Course Curriculum structure.
+    const prompt = `You are an academic dean and master curriculum architect on Proudly Afrikan Build.
+Design a complete, modular, deeply structured Course Syllabus and Curriculum.
+
 Subject: ${subject}
-Course Title / Topic: ${title || subject}
-Grade / Learning Level: ${gradeLevel}
-Target Audience: ${targetAudience || 'Students and professionals'}
-Course Description: ${description || 'Comprehensive curriculum'}
-Objectives: ${Array.isArray(courseObjectives) ? courseObjectives.join('; ') : courseObjectives}
-Desired Modules Count: ${modulesCount || 3}
-Source Material Provided: ${sourceMaterial ? sourceMaterial.slice(0, 12000) : 'None (synthesize from mastery curriculum knowledge)'}
+Course Title / Topic: ${actualTopic}
+Target Audience / Grade Level: ${actualAudience}
+Course Duration & Format: ${courseDuration}
+Pedagogical Methodology: ${pedagogicalStyle}
+Assessment Strategy: ${assessmentStrategy}
+Prerequisites: ${prerequisites || 'Basic foundational knowledge'}
+Specific Pedagogical Focus / African Context: ${customFocus || 'Highlight relevant African case studies, local contexts, and applied practical outcomes where appropriate.'}
+Desired Number of Modules: ${actualModuleCount}
+Source Notes / Curriculum Base: ${sourceMaterial ? sourceMaterial.slice(0, 12000) : 'Synthesize from comprehensive academic curriculum standards'}
 
 Return a valid JSON object matching this schema:
 {
   "id": "course-${Date.now()}",
-  "title": "${title || 'Curriculum Course'}",
+  "title": "${actualTopic}",
   "subject": "${subject}",
-  "gradeLevel": "${gradeLevel}",
-  "durationWeeks": 12,
-  "description": "Thorough course synopsis...",
-  "targetAudience": "${targetAudience || gradeLevel}",
-  "learningOutcomes": ["Course Objective 1", "Course Objective 2", "Course Objective 3"],
+  "targetAudience": "${actualAudience}",
+  "courseOverview": "A comprehensive 2-3 paragraph academic overview of this course, its purpose, and its transformational learning journey...",
+  "totalWeeksOrHours": "${courseDuration}",
+  "pedagogicalStyle": "${pedagogicalStyle}",
+  "assessmentStrategy": "${assessmentStrategy}",
+  "prerequisites": ["Prerequisite 1", "Prerequisite 2"],
+  "learningOutcomes": [
+    "High-level competency 1",
+    "High-level competency 2",
+    "High-level competency 3",
+    "High-level competency 4"
+  ],
   "modules": [
     {
-      "id": "mod-1",
       "moduleNumber": 1,
-      "title": "Module 1: Title",
-      "estimatedHours": 12,
+      "title": "Module 1 Title",
+      "description": "Comprehensive module description and core themes...",
+      "estimatedHours": 10,
+      "keyTopics": ["Topic 1.1", "Topic 1.2", "Topic 1.3"],
+      "learningOutcomes": ["Outcome 1", "Outcome 2"],
+      "practicalProjectOrTask": "Hands-on application exercise or lab for this module",
       "lessons": [
         {
-          "id": "l1-1",
-          "lessonTitle": "Lesson 1.1: Lesson Title",
-          "learningObjective": "Core lesson objective and mechanism",
-          "recommendedActivity": "Guided analytical problem set"
+          "lessonTitle": "Lesson 1: Specific Topic",
+          "learningObjective": "Clear behavioral objective",
+          "recommendedActivity": "Interactive guided seminar or coding/analysis challenge"
         }
       ]
     }
   ],
+  "capstoneProject": "Comprehensive final project or integrative capstone requiring student synthesis across all modules.",
   "createdAt": "${new Date().toISOString()}"
 }`;
 
     const parsed = await generateJsonWithGemini(prompt, 0.4);
     if (parsed) {
-      const normalized = normalizeCourse(parsed, subject, title, gradeLevel);
+      const normalized = normalizeCourse(parsed, subject, actualTopic, actualAudience);
       return res.json({ success: true, data: normalized });
     }
     throw new Error('Gemini returned empty response');
   } catch (error: any) {
     console.error('Error generating course (using fallback):', error?.message || error);
-    const fallback = generateFallbackCourse(title, subject, gradeLevel, description);
-    const normalized = normalizeCourse(fallback, subject, title, gradeLevel);
+    const fallback = generateFallbackCourse(actualTopic, subject, actualAudience, description);
+    const normalized = normalizeCourse(fallback, subject, actualTopic, actualAudience);
     return res.json({
       success: true,
       fallbackUsed: true,
@@ -818,6 +842,10 @@ function normalizeCourse(data: any, subject: string, title: string, gradeLevel: 
     durationWeeks,
     totalWeeksOrHours: data.totalWeeksOrHours || `${durationWeeks} Weeks (${data.totalEstimatedHours || durationWeeks * 3} Hours)`,
     totalEstimatedHours: Number(data.totalEstimatedHours) || durationWeeks * 3,
+    pedagogicalStyle: data.pedagogicalStyle || 'Project-Based & Practical',
+    assessmentStrategy: data.assessmentStrategy || 'Capstone Project + Quizzes',
+    prerequisites: Array.isArray(data.prerequisites) ? data.prerequisites : (data.prerequisites ? [data.prerequisites] : ['Foundational introductory literacy']),
+    capstoneProject: data.capstoneProject || `Capstone defense and practical application portfolio for ${title || subject}.`,
     learningOutcomes,
     courseObjectives: learningOutcomes,
     modules,

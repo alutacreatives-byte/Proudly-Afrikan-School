@@ -6,8 +6,6 @@ import {
   BookOpen, 
   Presentation, 
   GraduationCap, 
-  Compass, 
-  Sparkles,
   ArrowUpRight
 } from 'lucide-react';
 import { BuildToolType } from '../types';
@@ -24,8 +22,17 @@ interface ToolItem {
 
 const TOOLS: ToolItem[] = [
   {
-    id: 'exam',
+    id: 'course-builder',
     toolNumber: '01',
+    tag: 'CURRICULUM & MODULES',
+    title: 'COURSE SYLLABUS BUILDER',
+    subtitle: 'Design multi-week academic course modules with learning outcomes, pacing, and capstone projects.',
+    icon: GraduationCap,
+    btnText: 'CREATE COURSE →',
+  },
+  {
+    id: 'exam',
+    toolNumber: '02',
     tag: 'ASSESSMENT & TESTING',
     title: 'EXAM & QUIZ GENERATOR',
     subtitle: 'Build structured exams with multiple choice, essays, mark breakdowns, and teacher answer keys.',
@@ -34,7 +41,7 @@ const TOOLS: ToolItem[] = [
   },
   {
     id: 'worksheet',
-    toolNumber: '02',
+    toolNumber: '03',
     tag: 'PRACTICE & EXERCISES',
     title: 'WORKSHEET GENERATOR',
     subtitle: 'Create engaging classroom worksheets with matching activities, fill-in-blanks, and full answer solutions.',
@@ -43,7 +50,7 @@ const TOOLS: ToolItem[] = [
   },
   {
     id: 'mind-map',
-    toolNumber: '03',
+    toolNumber: '04',
     tag: 'VISUAL HIERARCHY',
     title: 'MIND MAP GENERATOR',
     subtitle: 'Transform topics, notes, or uploaded documents into interactive, editable visual mind maps with branching concepts.',
@@ -52,7 +59,7 @@ const TOOLS: ToolItem[] = [
   },
   {
     id: 'lesson-plan',
-    toolNumber: '04',
+    toolNumber: '05',
     tag: 'TEACHING & PEDAGOGY',
     title: 'LESSON PLAN GENERATOR',
     subtitle: "Create pedagogical lesson plans with timed phases, Bloom's taxonomy objectives, and assessment checks.",
@@ -61,7 +68,7 @@ const TOOLS: ToolItem[] = [
   },
   {
     id: 'pdf-studypack',
-    toolNumber: '05',
+    toolNumber: '06',
     tag: 'DOCUMENT ANALYSIS',
     title: 'PDF TO STUDY PACK',
     subtitle: 'Upload course PDFs or textbook chapters to produce executive summaries, core pillars, and flashpoints.',
@@ -70,30 +77,12 @@ const TOOLS: ToolItem[] = [
   },
   {
     id: 'presentation',
-    toolNumber: '06',
+    toolNumber: '07',
     tag: 'SLIDES & LECTURE',
     title: 'PRESENTATION GENERATOR',
     subtitle: 'Generate structured slide outlines with presenter notes, discussion prompts, and visual cues.',
     icon: Presentation,
     btnText: 'CREATE SLIDES →',
-  },
-  {
-    id: 'course-builder',
-    toolNumber: '07',
-    tag: 'CURRICULUM & MODULES',
-    title: 'COURSE MODULE BUILDER',
-    subtitle: 'Design sequential multi-week curriculum modules with learning objectives and outcomes.',
-    icon: GraduationCap,
-    btnText: 'CREATE COURSE →',
-  },
-  {
-    id: 'learning-path',
-    toolNumber: '08',
-    tag: 'STUDENT JOURNEY',
-    title: 'LEARNING ROADMAP BUILDER',
-    subtitle: 'Construct personalized step-by-step learning pathways tailored to mastery level.',
-    icon: Compass,
-    btnText: 'CREATE ROADMAP →',
   },
 ];
 
@@ -112,7 +101,7 @@ export const AllGeneratorsSection: React.FC<AllGeneratorsSectionProps> = ({
             RESOURCE GENERATOR SUITE
           </span>
           <h2 className="font-display font-black text-3xl sm:text-5xl lg:text-6xl text-[#161616] tracking-tighter uppercase leading-[0.92]">
-            ALL 8 GENERATORS.
+            ALL 7 GENERATORS.
           </h2>
         </div>
         <span className="text-xs sm:text-sm font-mono font-bold text-stone-500 uppercase tracking-wider">
@@ -120,7 +109,7 @@ export const AllGeneratorsSection: React.FC<AllGeneratorsSectionProps> = ({
         </span>
       </div>
 
-      {/* 8 Generator Cards in 4-column responsive grid */}
+      {/* 7 Generator Cards in responsive grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
         {TOOLS.map((gen) => {
           const Icon = gen.icon;

@@ -158,7 +158,7 @@ export const StudyPresentationGenerator: React.FC<StudyPresentationGeneratorProp
           <div>
             <div className="flex items-center gap-2">
               <span className="font-mono text-xs font-bold text-[#E63956] uppercase tracking-wider">
-                STUDY TOOL 05
+                STUDY TOOL 06
               </span>
             </div>
             <h1 className={`font-display font-black text-2xl sm:text-3xl uppercase tracking-tight ${isFullscreen ? 'text-white' : 'text-[#161616]'}`}>

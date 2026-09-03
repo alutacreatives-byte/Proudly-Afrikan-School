@@ -17,7 +17,7 @@ export const StudyHero: React.FC<StudyHeroProps> = ({
     { label: '🌍 Great Rift Valley Ecosystems', topic: 'The Great Rift Valley Geography, Tectonics & Biodiversity', category: 'GEOGRAPHY & ENVIRONMENT', tool: 'flashcards' },
     { label: '📚 African Oral Epics & Sundiata', topic: 'The Epic of Sundiata & West African Griot Traditions', category: 'LITERATURE & ARTS', tool: 'quiz' },
     { label: '⚙️ Renewable Energy in Africa', topic: 'Solar Innovation & Geothermal Microgrids across Africa', category: 'SCIENCES & STEM', tool: 'presentation' },
-    { label: '🏛️ Swahili Maritime City-States', topic: 'Swahili Coast Trade Networks, Kilwa Kisiwani & Coral Architecture', category: 'AFRICAN HISTORY', tool: 'course' },
+    { label: '🏛️ Swahili Maritime City-States', topic: 'Swahili Coast Trade Networks, Kilwa Kisiwani & Coral Architecture', category: 'AFRICAN HISTORY', tool: 'study-guide' },
     { label: '🌾 Indigenous Agriculture & Crops', topic: 'Indigenous African Crops: Teff, Sorghum, Millet & Climate Resilience', category: 'SCIENCES & STEM', tool: 'learning-path' },
   ];
 
@@ -100,7 +100,7 @@ export const StudyHero: React.FC<StudyHeroProps> = ({
           <div className="grid grid-cols-3 gap-2 bg-white border border-stone-200/90 py-3.5 px-4 rounded-[1.5rem] shadow-xs">
             <div className="text-center border-r border-stone-200 pr-2">
               <div className="font-display text-lg sm:text-2xl font-black text-[#E63956]">
-                7
+                6
               </div>
               <div className="font-mono text-[10px] sm:text-xs font-bold text-stone-600 uppercase tracking-wider">
                 STUDY TOOLS

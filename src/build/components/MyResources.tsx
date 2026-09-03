@@ -16,14 +16,17 @@ import {
 } from 'lucide-react';
 import { SavedResource, BuildToolType } from '../types';
 import { getSavedResources, deleteResourceFromStorage } from '../utils/storage';
+import { GlobalNavigationButtons } from '../../components/GlobalNavigationButtons';
 
 interface MyResourcesProps {
   onBack: () => void;
+  onGoHome?: () => void;
   onOpenResource: (resource: SavedResource) => void;
 }
 
 export const MyResources: React.FC<MyResourcesProps> = ({
   onBack,
+  onGoHome,
   onOpenResource,
 }) => {
   const [resources, setResources] = useState<SavedResource[]>(getSavedResources());
@@ -60,19 +63,13 @@ export const MyResources: React.FC<MyResourcesProps> = ({
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-5 border-b border-stone-200">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={onBack}
-            className="p-2.5 rounded-full bg-white hover:bg-stone-100 border border-stone-200 text-stone-700 transition-colors cursor-pointer"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </button>
+        <div className="flex items-center gap-4">
+          <GlobalNavigationButtons onBack={onBack} onGoHome={onGoHome} />
           <div>
             <h1 className="font-display font-black text-2xl sm:text-3xl uppercase tracking-tight text-[#161616]">
               My Saved Builds ({resources.length})
             </h1>
-            <p className="font-sans text-xs sm:text-sm text-stone-500">
+            <p className="font-sans text-sm text-stone-500">
               Access and manage all saved exams, worksheets, lesson plans, mind maps, and study packs.
             </p>
           </div>
@@ -80,13 +77,13 @@ export const MyResources: React.FC<MyResourcesProps> = ({
 
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <div className="relative flex-1 sm:w-64">
-            <Search className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <Search className="w-5 h-5 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search saved builds..."
-              className="w-full pl-9 pr-4 py-2 bg-white border border-stone-200 rounded-full font-mono text-xs text-stone-800 focus:outline-none focus:border-[#E63956]"
+              className="w-full pl-10 pr-4 py-2.5 bg-white border border-stone-200 rounded-full font-mono text-base text-stone-800 focus:outline-none focus:border-[#E63956]"
             />
           </div>
         </div>

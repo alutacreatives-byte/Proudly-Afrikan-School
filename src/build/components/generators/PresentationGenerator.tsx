@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Presentation, 
   Sparkles, 
@@ -6,24 +6,26 @@ import {
   Copy, 
   Bookmark, 
   Check, 
-  ArrowLeft,
-  Layers,
-  MonitorPlay
+  Layers, 
+  MonitorPlay 
 } from 'lucide-react';
 import { PresentationResource } from '../../types';
 import { SUBJECT_CATEGORIES, GRADE_LEVELS } from '../../data/subjects';
 import { SourceMaterialUpload } from '../SourceMaterialUpload';
 import { saveResourceToStorage } from '../../utils/storage';
 import { useAuthCredit } from '../../../context/AuthCreditContext';
+import { GlobalNavigationButtons } from '../../../components/GlobalNavigationButtons';
 
 interface PresentationGeneratorProps {
   onBack: () => void;
+  onGoHome?: () => void;
   onSaved?: () => void;
   existingResource?: PresentationResource;
 }
 
 export const PresentationGenerator: React.FC<PresentationGeneratorProps> = ({
   onBack,
+  onGoHome,
   onSaved,
   existingResource,
 }) => {
@@ -43,6 +45,19 @@ export const PresentationGenerator: React.FC<PresentationGeneratorProps> = ({
   const [copied, setCopied] = useState<boolean>(false);
   const [saved, setSaved] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (existingResource) {
+      setPresentation(existingResource);
+      if (existingResource.subject) setSubject(existingResource.subject);
+      if (existingResource.topic) setTopic(existingResource.topic);
+      if (existingResource.audienceLevel) setAudienceLevel(existingResource.audienceLevel);
+      if (existingResource.sourceDocName) setSourceFileName(existingResource.sourceDocName);
+      if (existingResource.slides && existingResource.slides.length > 0) {
+        setSlidesCount(existingResource.slides.length);
+      }
+    }
+  }, [existingResource]);
 
   const handleGenerate = async () => {
     if (!topic.trim()) {
@@ -84,6 +99,8 @@ export const PresentationGenerator: React.FC<PresentationGeneratorProps> = ({
           toolType: 'presentation',
         };
         setPresentation(generated);
+        saveResourceToStorage(generated);
+        if (onSaved) onSaved();
         await consumeCredits('PRESENTATION', `Generated Presentation: ${topic}`);
       } else {
         throw new Error(resData.error || 'Server returned invalid presentation format.');
@@ -106,33 +123,33 @@ export const PresentationGenerator: React.FC<PresentationGeneratorProps> = ({
 
   const handleCopy = () => {
     if (!presentation) return;
-    const text = `# ${presentation.title}\nSubject: ${presentation.subject} | Level: ${presentation.audienceLevel}\n\n` +
-      presentation.slides.map(s => 
-        `## Slide ${s.slideNumber}: ${s.title}\n${s.bullets.map(b => `- ${b}`).join('\n')}\n` +
-        (s.speakerNotes ? `\n> Speaker Notes: ${s.speakerNotes}` : '')
-      ).join('\n\n---\n\n');
-
-    navigator.clipboard.writeText(text);
+    let fullText = `${presentation.title.toUpperCase()}\n`;
+    fullText += `Subject: ${presentation.subject} | Audience: ${presentation.audienceLevel}\n\n`;
+    presentation.slides.forEach((slide) => {
+      fullText += `--- SLIDE ${slide.slideNumber}: ${slide.title.toUpperCase()} ---\n`;
+      slide.bullets.forEach((b) => {
+        fullText += `• ${b}\n`;
+      });
+      if (slide.speakerNotes) {
+        fullText += `Speaker Notes: ${slide.speakerNotes}\n`;
+      }
+      fullText += '\n';
+    });
+    navigator.clipboard.writeText(fullText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
-      {/* Header */}
+      {/* Top Header & Navigation */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-5 border-b border-stone-200">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={onBack}
-            className="p-2.5 rounded-full bg-white hover:bg-stone-100 border border-stone-200 text-stone-700 transition-colors cursor-pointer"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </button>
+        <div className="flex items-center gap-4">
+          <GlobalNavigationButtons onBack={onBack} onGoHome={onGoHome} />
           <div>
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-[#E63956]"></span>
-              <span className="font-mono text-xs font-bold uppercase tracking-wider text-[#E63956]">
+              <span className="font-mono text-base font-bold uppercase tracking-wider text-[#E63956]">
                 GENERATOR 05 • PRESENTATION & SLIDE DECKS
               </span>
             </div>
@@ -146,77 +163,83 @@ export const PresentationGenerator: React.FC<PresentationGeneratorProps> = ({
           <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={handleCopy}
-              className="px-3.5 py-2 rounded-full bg-white hover:bg-stone-50 border border-stone-200 font-mono text-xs font-bold text-stone-700 flex items-center gap-1.5 cursor-pointer shadow-xs"
+              className="px-4 py-2 rounded-full bg-white hover:bg-stone-50 border border-stone-200 font-mono text-base font-bold text-stone-700 flex items-center gap-1.5 cursor-pointer shadow-xs"
             >
-              {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+              {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
               <span>{copied ? 'Copied' : 'Copy'}</span>
             </button>
             <button
               onClick={() => window.print()}
-              className="px-3.5 py-2 rounded-full bg-white hover:bg-stone-50 border border-stone-200 font-mono text-xs font-bold text-stone-700 flex items-center gap-1.5 cursor-pointer shadow-xs"
+              className="px-4 py-2 rounded-full bg-white hover:bg-stone-50 border border-stone-200 font-mono text-base font-bold text-stone-700 flex items-center gap-1.5 cursor-pointer shadow-xs"
             >
-              <Printer className="w-3.5 h-3.5" />
+              <Printer className="w-4 h-4" />
               <span>Print / PDF</span>
             </button>
             <button
               onClick={handleSave}
-              className="px-4 py-2 rounded-full bg-[#161616] hover:bg-stone-800 text-white font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shadow-xs"
+              className="px-5 py-2 rounded-full bg-[#161616] hover:bg-stone-800 text-white font-mono text-base font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shadow-xs"
             >
-              {saved ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Bookmark className="w-3.5 h-3.5 text-[#E63956]" />}
+              {saved ? <Check className="w-4 h-4 text-emerald-400" /> : <Bookmark className="w-4 h-4 text-[#E63956]" />}
               <span>{saved ? 'Saved!' : 'Save Build'}</span>
             </button>
           </div>
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Form Controls */}
-        <div className="lg:col-span-5 space-y-6">
-          <div className="bg-white border border-stone-200/90 rounded-[2rem] p-6 sm:p-7 shadow-xs space-y-5">
-            <h2 className="font-display font-black text-lg uppercase tracking-tight text-[#161616] flex items-center gap-2">
-              <Presentation className="w-5 h-5 text-[#E63956]" />
-              <span>Deck Parameters</span>
+      {/* STACKED LAYOUT: TOOL OPTIONS on top, GENERATED RESULT directly underneath */}
+      <div className="flex flex-col gap-10 w-full">
+        {/* Section 1: TOOL OPTIONS */}
+        <div className="w-full space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b-2 border-stone-800">
+            <h2 className="font-mono text-base sm:text-lg font-bold uppercase tracking-wider text-stone-900 flex items-center gap-2">
+              <span className="w-3 h-3 rounded-full bg-[#E63956]"></span>
+              TOOL OPTIONS
             </h2>
+            <span className="font-mono text-base text-stone-500">Presentation Deck Specifications</span>
+          </div>
 
-            <div className="space-y-1.5">
-              <label className="font-mono text-xs font-bold uppercase tracking-wider text-stone-700">
-                Subject Domain
-              </label>
-              <select
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl font-mono text-xs text-stone-800 focus:outline-none focus:border-[#E63956]"
-              >
-                {SUBJECT_CATEGORIES.map((cat) => (
-                  <option key={cat.id} value={cat.name}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
+          <div className="bg-white border border-stone-200/90 rounded-[2rem] p-6 sm:p-8 shadow-xs space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="font-mono text-base font-bold uppercase tracking-wider text-stone-700">
+                  Subject Domain
+                </label>
+                <select
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl font-mono text-base text-stone-800 focus:outline-none focus:border-[#E63956]"
+                >
+                  {SUBJECT_CATEGORIES.map((cat) => (
+                    <option key={cat.id} value={cat.name}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="font-mono text-base font-bold uppercase tracking-wider text-stone-700">
+                  Presentation Topic *
+                </label>
+                <input
+                  type="text"
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                  placeholder="e.g. Clean Energy Transition, Great Zimbabwe Architecture"
+                  className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl font-sans text-base text-stone-900 focus:outline-none focus:border-[#E63956]"
+                />
+              </div>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="font-mono text-xs font-bold uppercase tracking-wider text-stone-700">
-                Presentation Topic *
-              </label>
-              <input
-                type="text"
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
-                placeholder="e.g. Clean Energy Transition, Great Zimbabwe Architecture"
-                className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl font-sans text-sm text-stone-900 focus:outline-none focus:border-[#E63956]"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <label className="font-mono text-xs font-bold uppercase tracking-wider text-stone-700">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="font-mono text-base font-bold uppercase tracking-wider text-stone-700">
                   Target Audience
                 </label>
                 <select
                   value={audienceLevel}
                   onChange={(e) => setAudienceLevel(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl font-mono text-xs text-stone-800 focus:outline-none focus:border-[#E63956]"
+                  className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl font-mono text-base text-stone-800 focus:outline-none focus:border-[#E63956]"
                 >
                   {GRADE_LEVELS.map((gl) => (
                     <option key={gl} value={gl}>
@@ -226,8 +249,8 @@ export const PresentationGenerator: React.FC<PresentationGeneratorProps> = ({
                 </select>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="font-mono text-xs font-bold uppercase tracking-wider text-stone-700">
+              <div className="space-y-2">
+                <label className="font-mono text-base font-bold uppercase tracking-wider text-stone-700">
                   Slide Count
                 </label>
                 <input
@@ -236,13 +259,13 @@ export const PresentationGenerator: React.FC<PresentationGeneratorProps> = ({
                   max={15}
                   value={slidesCount}
                   onChange={(e) => setSlidesCount(Number(e.target.value) || 6)}
-                  className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl font-mono text-xs text-stone-900 focus:outline-none focus:border-[#E63956]"
+                  className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl font-mono text-base text-stone-900 focus:outline-none focus:border-[#E63956]"
                 />
               </div>
             </div>
 
-            <div className="space-y-1.5 pt-1 border-t border-stone-100">
-              <label className="font-mono text-xs font-bold uppercase tracking-wider text-stone-700 block">
+            <div className="space-y-2 pt-2 border-t border-stone-100">
+              <label className="font-mono text-base font-bold uppercase tracking-wider text-stone-700 block">
                 Attach Notes / Document (Optional)
               </label>
               <SourceMaterialUpload
@@ -259,7 +282,7 @@ export const PresentationGenerator: React.FC<PresentationGeneratorProps> = ({
             </div>
 
             {error && (
-              <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl font-mono text-xs text-rose-700">
+              <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl font-mono text-base text-rose-700">
                 {error}
               </div>
             )}
@@ -268,20 +291,32 @@ export const PresentationGenerator: React.FC<PresentationGeneratorProps> = ({
               type="button"
               disabled={isGenerating}
               onClick={handleGenerate}
-              className="w-full py-4 rounded-full bg-gradient-to-r from-[#D92B8A] via-[#E03A6A] to-[#E63956] hover:opacity-95 text-white font-display text-sm font-black uppercase tracking-wider shadow-[0_6px_20px_rgba(230,57,86,0.3)] transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 disabled:opacity-50"
+              className="w-full py-4 rounded-full bg-gradient-to-r from-[#D92B8A] via-[#E03A6A] to-[#E63956] hover:opacity-95 text-white font-display text-base font-black uppercase tracking-wider shadow-[0_6px_20px_rgba(230,57,86,0.3)] transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 disabled:opacity-50"
             >
-              <Sparkles className="w-4 h-4" />
+              <Sparkles className="w-5 h-5" />
               <span>{isGenerating ? 'Drafting Slides...' : 'Generate Slide Deck'}</span>
             </button>
           </div>
         </div>
 
-        {/* Output Column */}
-        <div className="lg:col-span-7">
+        {/* Section 2: GENERATED RESULT */}
+        <div className="w-full space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b-2 border-stone-800">
+            <h2 className="font-mono text-base sm:text-lg font-bold uppercase tracking-wider text-stone-900 flex items-center gap-2">
+              <span className="w-3 h-3 rounded-full bg-emerald-600"></span>
+              GENERATED RESULT
+            </h2>
+            {presentation && (
+              <span className="font-mono text-base text-emerald-700 font-bold">
+                Slide Deck Ready
+              </span>
+            )}
+          </div>
+
           {presentation ? (
             <div className="bg-white border border-stone-200/90 rounded-[2rem] p-6 sm:p-10 shadow-sm space-y-8 print:border-none print:shadow-none print:p-0">
               <div className="border-b-2 border-stone-800 pb-5 space-y-2">
-                <div className="font-mono text-xs font-bold text-stone-500 uppercase">
+                <div className="font-mono text-sm font-bold text-stone-500 uppercase">
                   SLIDE DECK: {presentation.slides.length} SLIDES
                 </div>
                 <h2 className="font-display font-black text-2xl sm:text-3xl uppercase tracking-tight text-[#161616]">
@@ -291,25 +326,25 @@ export const PresentationGenerator: React.FC<PresentationGeneratorProps> = ({
 
               <div className="space-y-6">
                 {presentation.slides.map((slide) => (
-                  <div key={slide.slideNumber} className="p-5 bg-[#FAF8F5] border border-stone-200 rounded-2xl space-y-3">
-                    <div className="flex items-center justify-between border-b border-stone-200/80 pb-2">
-                      <span className="font-mono text-xs font-bold text-[#E63956]">
+                  <div key={slide.slideNumber} className="p-6 bg-[#FAF8F5] border border-stone-200 rounded-2xl space-y-4">
+                    <div className="flex items-center justify-between border-b border-stone-200/80 pb-3">
+                      <span className="font-mono text-sm font-bold text-[#E63956]">
                         SLIDE {slide.slideNumber}
                       </span>
-                      <h3 className="font-display font-black text-base sm:text-lg uppercase text-[#161616]">
+                      <h3 className="font-display font-black text-lg sm:text-xl uppercase text-[#161616]">
                         {slide.title}
                       </h3>
                     </div>
 
-                    <ul className="list-disc list-inside space-y-1.5 font-sans text-xs sm:text-sm text-stone-800">
+                    <ul className="list-disc list-inside space-y-2 font-sans text-base text-stone-800">
                       {slide.bullets.map((b, bIdx) => (
                         <li key={bIdx} className="leading-relaxed">{b}</li>
                       ))}
                     </ul>
 
                     {slide.speakerNotes && (
-                      <div className="mt-2 p-3 bg-stone-100 rounded-xl font-mono text-xs text-stone-600">
-                        <span className="font-bold text-stone-800 uppercase mr-1">Speaker Notes:</span>
+                      <div className="mt-3 p-4 bg-stone-100 rounded-xl font-mono text-sm text-stone-600">
+                        <span className="font-bold text-stone-800 uppercase mr-1.5">Speaker Notes:</span>
                         {slide.speakerNotes}
                       </div>
                     )}
@@ -318,16 +353,16 @@ export const PresentationGenerator: React.FC<PresentationGeneratorProps> = ({
               </div>
             </div>
           ) : (
-            <div className="bg-white border border-[#E5E0D8] rounded-3xl p-12 text-center flex flex-col items-center justify-center space-y-4 shadow-sm min-h-[500px]">
+            <div className="bg-white border border-[#E5E0D8] rounded-3xl p-12 text-center flex flex-col items-center justify-center space-y-4 shadow-sm min-h-[350px]">
               <div className="w-16 h-16 rounded-2xl bg-stone-100 border border-stone-200 text-stone-400 flex items-center justify-center">
                 <MonitorPlay className="w-8 h-8" />
               </div>
-              <div className="max-w-md space-y-1.5">
-                <h3 className="font-display font-black text-lg text-[#161616] uppercase">
+              <div className="max-w-md space-y-2">
+                <h3 className="font-display font-black text-xl text-[#161616] uppercase">
                   Presentation Deck Preview
                 </h3>
-                <p className="font-sans text-xs text-stone-500 leading-relaxed">
-                  Enter your topic on the left and click <strong>Generate Slide Deck</strong> to synthesize slide outlines, bullet points, and speaker talking notes.
+                <p className="font-sans text-base text-stone-500 leading-relaxed">
+                  Enter your topic above and click <strong>Generate Slide Deck</strong> to synthesize slide outlines, bullet points, and speaker talking notes.
                 </p>
               </div>
             </div>

@@ -24,8 +24,8 @@ function AppContent() {
   // Cross-Platform Active Content State
   const [selectedStudySet, setSelectedStudySet] = useState<StudySet | null>(null);
   const [studyInitialView, setStudyInitialView] = useState<StudyAppView>('home');
-  
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
+  const [selectedBuildResource, setSelectedBuildResource] = useState<SavedResource | null>(null);
 
   // Global AI Tutor Modal
   const [isTutorOpen, setIsTutorOpen] = useState<boolean>(false);
@@ -87,7 +87,8 @@ function AppContent() {
     setActiveTab('QUIZ');
   };
 
-  const handleOpenBuildResourceFromAnywhere = (_res: SavedResource) => {
+  const handleOpenBuildResourceFromAnywhere = (res: SavedResource) => {
+    setSelectedBuildResource(res);
     setActiveTab('BUILD');
   };
 
@@ -124,7 +125,11 @@ function AppContent() {
         )}
 
         {activeTab === 'BUILD' && (
-          <BuildApp key="build-main" />
+          <BuildApp
+            key={selectedBuildResource ? `build-${selectedBuildResource.id}` : 'build-main'}
+            initialResource={selectedBuildResource}
+            onGoHome={() => handleSelectTab('STUDY')}
+          />
         )}
 
         {activeTab === 'MY SETS' && (
