@@ -315,6 +315,9 @@ export interface StudyGuideResult {
   subject?: string;
   topic?: string;
   overview: string;
+  sourceSnippet?: string;
+  documentName?: string;
+  capturedPhotoUrl?: string;
   sections: StudyGuideSection[];
   keyTerms?: { term: string; definition: string }[];
   importantTakeaways?: string[];
@@ -376,6 +379,7 @@ export interface PdfQuizResult {
   title: string;
   documentName?: string;
   sourceSnippet?: string;
+  capturedPhotoUrl?: string;
   questions: QuizQuestion[];
   toolType?: 'pdf-quiz';
   createdAt?: string;
@@ -398,6 +402,9 @@ export interface PresentationResult {
   subject?: string;
   topic?: string;
   audienceLevel?: string;
+  sourceSnippet?: string;
+  documentName?: string;
+  capturedPhotoUrl?: string;
   slides: PresentationSlide[];
   toolType?: 'presentation';
   createdAt?: string;
@@ -428,6 +435,9 @@ export interface CourseResult {
   subject?: string;
   topic?: string;
   courseOverview: string;
+  sourceSnippet?: string;
+  documentName?: string;
+  capturedPhotoUrl?: string;
   durationWeeks: number;
   learningOutcomes: string[];
   modules: CourseModule[];
@@ -452,6 +462,9 @@ export interface LearningPathResult {
   subject?: string;
   topic?: string;
   targetGoal: string;
+  sourceSnippet?: string;
+  documentName?: string;
+  capturedPhotoUrl?: string;
   totalEstimatedWeeks: number;
   stages: LearningStage[];
   recommendations: string[];

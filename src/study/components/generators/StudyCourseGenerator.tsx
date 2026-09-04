@@ -295,7 +295,7 @@ export const StudyCourseGenerator: React.FC<StudyCourseGeneratorProps> = ({
 
         {/* Right Active Course Syllabus Preview */}
         <div className="lg:col-span-8">
-          {course ? (
+          {course && Array.isArray(course.modules) && course.modules.length > 0 ? (
             <div className="p-8 sm:p-10 rounded-[2rem] bg-white border border-stone-200/90 shadow-[0_10px_30px_rgba(0,0,0,0.05)] space-y-8">
               {/* Header */}
               <div className="space-y-3 pb-6 border-b border-stone-100">

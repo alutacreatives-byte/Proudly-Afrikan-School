@@ -92,12 +92,12 @@ export const StudyPresentationGenerator: React.FC<StudyPresentationGeneratorProp
   };
 
   const handleNextSlide = () => {
-    if (!presentation) return;
+    if (!presentation || !Array.isArray(presentation.slides) || presentation.slides.length === 0) return;
     setActiveSlideIndex((prev) => (prev + 1) % presentation.slides.length);
   };
 
   const handlePrevSlide = () => {
-    if (!presentation) return;
+    if (!presentation || !Array.isArray(presentation.slides) || presentation.slides.length === 0) return;
     setActiveSlideIndex((prev) => (prev - 1 + presentation.slides.length) % presentation.slides.length);
   };
 
@@ -118,7 +118,7 @@ export const StudyPresentationGenerator: React.FC<StudyPresentationGeneratorProp
   };
 
   const handleCopy = () => {
-    if (!presentation) return;
+    if (!presentation || !Array.isArray(presentation.slides)) return;
     let text = `# ${presentation.title}\nSubtitle: ${presentation.subtitle || ''}\nSubject: ${presentation.subject || category}\n\n`;
     presentation.slides.forEach((s, idx) => {
       text += `## Slide ${idx + 1}: ${s.title}\n`;
@@ -339,7 +339,7 @@ export const StudyPresentationGenerator: React.FC<StudyPresentationGeneratorProp
 
         {/* Right Active Slide Stage */}
         <div className={isFullscreen ? 'w-full max-w-5xl mx-auto' : 'lg:col-span-8'}>
-          {presentation && currentSlide ? (
+          {presentation && currentSlide && Array.isArray(presentation.slides) && presentation.slides.length > 0 ? (
             <div className="space-y-6">
               {/* Slide Meta Bar */}
               <div className="flex items-center justify-between">

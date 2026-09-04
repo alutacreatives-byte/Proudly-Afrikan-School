@@ -37,8 +37,8 @@ export const StudyGuideGenerator: React.FC<StudyGuideGeneratorProps> = ({
   const [topic, setTopic] = useState<string>(existingResource?.topic || existingResource?.title || '');
   const [category, setCategory] = useState<string>(existingResource?.subject || 'AFRICAN HISTORY');
   const [gradeLevel, setGradeLevel] = useState<string>('Secondary / High School');
-  const [sourceMaterial, setSourceMaterial] = useState<string>('');
-  const [sourceFileName, setSourceFileName] = useState<string>('');
+  const [sourceMaterial, setSourceMaterial] = useState<string>(existingResource?.sourceSnippet || '');
+  const [sourceFileName, setSourceFileName] = useState<string>(existingResource?.documentName || '');
 
   // Output States
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
@@ -174,7 +174,7 @@ export const StudyGuideGenerator: React.FC<StudyGuideGeneratorProps> = ({
           </div>
         </div>
 
-        {guide && (
+        {guide && Array.isArray(guide.sections) && guide.sections.length > 0 && (
           <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
             <button
               type="button"
@@ -308,7 +308,7 @@ export const StudyGuideGenerator: React.FC<StudyGuideGeneratorProps> = ({
 
         {/* Right Preview Column */}
         <div className="lg:col-span-8">
-          {guide ? (
+          {guide && Array.isArray(guide.sections) && guide.sections.length > 0 ? (
             <div className="p-8 sm:p-10 rounded-[2rem] bg-white border border-stone-200/90 shadow-[0_10px_30px_rgba(0,0,0,0.05)] space-y-8">
               {/* Header */}
               <div className="space-y-3 pb-6 border-b border-stone-100">

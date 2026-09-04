@@ -108,7 +108,7 @@ export const StudyQuizGenerator: React.FC<StudyQuizGeneratorProps> = ({
   };
 
   const calculateScore = () => {
-    if (!quiz) return { correct: 0, total: 0, percent: 0 };
+    if (!quiz || !Array.isArray(quiz.questions) || quiz.questions.length === 0) return { correct: 0, total: 0, percent: 0 };
     let correct = 0;
     quiz.questions.forEach((q, idx) => {
       if (userAnswers[idx] === q.correctAnswer) {
@@ -139,7 +139,7 @@ export const StudyQuizGenerator: React.FC<StudyQuizGeneratorProps> = ({
   };
 
   const handleCopy = () => {
-    if (!quiz) return;
+    if (!quiz || !Array.isArray(quiz.questions)) return;
     let text = `# ${quiz.title}\nSubject: ${quiz.subject || category}\n\n`;
     quiz.questions.forEach((q, idx) => {
       text += `Question ${idx + 1}: ${q.prompt}\n`;
@@ -347,7 +347,7 @@ export const StudyQuizGenerator: React.FC<StudyQuizGeneratorProps> = ({
 
         {/* Right Active Quiz Player */}
         <div className="lg:col-span-8">
-          {quiz ? (
+          {quiz && Array.isArray(quiz.questions) && quiz.questions.length > 0 ? (
             <div className="p-8 sm:p-10 rounded-[2rem] bg-white border border-stone-200/90 shadow-[0_10px_30px_rgba(0,0,0,0.05)] space-y-8">
               {/* Quiz Header & Status */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-stone-100">

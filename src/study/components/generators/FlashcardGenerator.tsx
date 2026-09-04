@@ -94,21 +94,21 @@ export const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({
   };
 
   const handleNext = () => {
-    if (!flashcards) return;
+    if (!flashcards || !Array.isArray(flashcards.cards) || flashcards.cards.length === 0) return;
     setIsFlipped(false);
     setShowHint(false);
     setCurrentIndex((prev) => (prev + 1) % flashcards.cards.length);
   };
 
   const handlePrev = () => {
-    if (!flashcards) return;
+    if (!flashcards || !Array.isArray(flashcards.cards) || flashcards.cards.length === 0) return;
     setIsFlipped(false);
     setShowHint(false);
     setCurrentIndex((prev) => (prev - 1 + flashcards.cards.length) % flashcards.cards.length);
   };
 
   const handleShuffle = () => {
-    if (!flashcards) return;
+    if (!flashcards || !Array.isArray(flashcards.cards) || flashcards.cards.length === 0) return;
     const shuffled = [...flashcards.cards].sort(() => Math.random() - 0.5);
     setFlashcards({ ...flashcards, cards: shuffled });
     setCurrentIndex(0);
@@ -133,7 +133,7 @@ export const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({
   };
 
   const handleCopy = () => {
-    if (!flashcards) return;
+    if (!flashcards || !Array.isArray(flashcards.cards)) return;
     const text = flashcards.cards
       .map((c, i) => `Card ${i + 1}\nFront: ${c.front}\nBack: ${c.back}\n${c.hint ? `Hint: ${c.hint}\n` : ''}`)
       .join('\n---\n\n');
@@ -321,7 +321,7 @@ export const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({
 
         {/* Right Active Flashcard Player */}
         <div className="lg:col-span-8">
-          {flashcards && currentCard ? (
+          {flashcards && currentCard && Array.isArray(flashcards.cards) && flashcards.cards.length > 0 ? (
             <div className="space-y-6">
               {/* Card Meta Bar */}
               <div className="flex items-center justify-between">
