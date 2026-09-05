@@ -80,6 +80,7 @@ export const StudyFaqSection: React.FC = () => {
             >
               <button
                 type="button"
+                id={`faq-toggle-${faq.id}`}
                 onClick={() => toggleFaq(faq.id)}
                 className="w-full px-6 sm:px-8 py-5 sm:py-6 flex items-center justify-between text-left gap-4 cursor-pointer"
                 aria-expanded={isOpen}

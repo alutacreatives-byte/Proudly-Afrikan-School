@@ -16,18 +16,21 @@ import {
 } from 'lucide-react';
 import { QuizResult, StudyToolInput } from '../../types';
 import { generateStudyTool } from '../../services/aiService';
-import { SourceMaterialUpload } from '../../../build/components/SourceMaterialUpload';
-import { saveResourceToStorage } from '../../../build/utils/storage';
+import { SourceMaterialUpload } from '../SourceMaterialUpload';
+import { saveResourceToStorage } from '../../utils/storage';
 import { useAuthCredit } from '../../../context/AuthCreditContext';
+import { GlobalNavigationButtons } from '../../../components/GlobalNavigationButtons';
 
 interface StudyQuizGeneratorProps {
   onBack: () => void;
+  onGoHome?: () => void;
   onSaved?: () => void;
   existingResource?: QuizResult;
 }
 
 export const StudyQuizGenerator: React.FC<StudyQuizGeneratorProps> = ({
   onBack,
+  onGoHome,
   onSaved,
   existingResource,
 }) => {
@@ -141,12 +144,13 @@ export const StudyQuizGenerator: React.FC<StudyQuizGeneratorProps> = ({
   const handleCopy = () => {
     if (!quiz || !Array.isArray(quiz.questions)) return;
     let text = `# ${quiz.title}\nSubject: ${quiz.subject || category}\n\n`;
-    quiz.questions.forEach((q, idx) => {
+    (quiz.questions || []).forEach((q, idx) => {
       text += `Question ${idx + 1}: ${q.prompt}\n`;
-      q.options.forEach((opt, oIdx) => {
+      (q.options || []).forEach((opt, oIdx) => {
         text += `  ${String.fromCharCode(65 + oIdx)}. ${opt}\n`;
       });
-      text += `Correct Answer: ${String.fromCharCode(65 + (Number(q.correctAnswer) || 0))} - ${q.options[Number(q.correctAnswer) || 0]}\n`;
+      const correctIdx = Number(q.correctAnswer) || 0;
+      text += `Correct Answer: ${String.fromCharCode(65 + correctIdx)} - ${(q.options || [])[correctIdx] || ''}\n`;
       if (q.explanation) text += `Explanation: ${q.explanation}\n`;
       text += '\n';
     });
@@ -169,27 +173,23 @@ export const StudyQuizGenerator: React.FC<StudyQuizGeneratorProps> = ({
   const score = calculateScore();
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+    <div id="active-study-tool-stage" className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      {/* Top Navigation: [BACK] [HOME] */}
+      <div className="flex items-center justify-between">
+        <GlobalNavigationButtons onBack={onBack} onGoHome={onGoHome} />
+      </div>
+
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-5 border-b border-stone-200">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={onBack}
-            className="p-2.5 rounded-full bg-white hover:bg-stone-100 border border-stone-200 text-stone-700 transition-colors cursor-pointer"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </button>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-xs font-bold text-[#E63956] uppercase tracking-wider">
-                STUDY TOOL 04
-              </span>
-            </div>
-            <h1 className="font-display font-black text-2xl sm:text-3xl text-[#161616] uppercase tracking-tight">
-              PRACTICE QUIZ GENERATOR
-            </h1>
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-xs font-bold text-[#E63956] uppercase tracking-wider">
+              STUDY TOOL 04
+            </span>
           </div>
+          <h1 className="font-display font-black text-2xl sm:text-3xl text-[#161616] uppercase tracking-tight">
+            PRACTICE QUIZ GENERATOR
+          </h1>
         </div>
 
         {quiz && Array.isArray(quiz.questions) && quiz.questions.length > 0 && (
@@ -407,7 +407,7 @@ export const StudyQuizGenerator: React.FC<StudyQuizGeneratorProps> = ({
 
                       {/* Options Grid */}
                       <div className="grid grid-cols-1 gap-2.5">
-                        {q.options.map((opt, oIdx) => {
+                        {(q.options || []).map((opt, oIdx) => {
                           const isOptionSelected = selectedOpt === oIdx;
                           const isRightOption = q.correctAnswer === oIdx;
 

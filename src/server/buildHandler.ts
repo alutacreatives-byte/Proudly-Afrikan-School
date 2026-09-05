@@ -639,6 +639,131 @@ Return a valid JSON object matching this schema:
     });
   }
 });
+
+// 9. Mind Map Generator Endpoint
+app.post(['/api/generate-mind-map', '/api/generate/mind-map'], async (req, res) => {
+  const {
+    topic = '',
+    subject = '',
+    gradeLevel = '',
+    sourceMaterial = '',
+  } = req.body;
+
+  try {
+    const prompt = `You are an expert curriculum designer and mind-map architect for Proudly Afrikan Build.
+Create an in-depth hierarchical mind map for the topic: "${topic}".
+Subject Category: ${subject}
+Target Grade / Level: ${gradeLevel}
+Source Material (if provided): ${sourceMaterial ? sourceMaterial.slice(0, 12000) : 'None'}
+
+Return a JSON object with this exact structure:
+{
+  "summary": "Brief 1-2 sentence executive overview of the conceptual scope",
+  "rootNode": {
+    "id": "root-1",
+    "label": "${topic}",
+    "notes": "Foundational central concept",
+    "children": [
+      {
+        "id": "sub-1",
+        "label": "First major conceptual branch",
+        "notes": "Contextual description of this pillar",
+        "children": [
+          { "id": "leaf-1", "label": "Key detail or subtopic", "notes": "Specific detail" },
+          { "id": "leaf-2", "label": "Key detail or subtopic", "notes": "Specific detail" }
+        ]
+      },
+      {
+        "id": "sub-2",
+        "label": "Second major conceptual branch",
+        "notes": "Contextual description of this pillar",
+        "children": [
+          { "id": "leaf-3", "label": "Key detail or subtopic" },
+          { "id": "leaf-4", "label": "Key detail or subtopic" }
+        ]
+      },
+      {
+        "id": "sub-3",
+        "label": "Third major conceptual branch",
+        "notes": "Contextual description of this pillar",
+        "children": [
+          { "id": "leaf-5", "label": "Key detail or subtopic" },
+          { "id": "leaf-6", "label": "Key detail or subtopic" }
+        ]
+      },
+      {
+        "id": "sub-4",
+        "label": "Applications & Real-World Context",
+        "notes": "Practical implications and relevance",
+        "children": [
+          { "id": "leaf-7", "label": "Case study or application" },
+          { "id": "leaf-8", "label": "Future horizons or synthesis" }
+        ]
+      }
+    ]
+  }
+}`;
+
+    const parsed = await generateJsonWithGemini(prompt, 0.4);
+    if (parsed && parsed.rootNode) {
+      return res.json({
+        success: true,
+        summary: parsed.summary || `Mind map breakdown of ${topic}`,
+        rootNode: parsed.rootNode,
+      });
+    }
+    throw new Error('Gemini returned empty or invalid mind map');
+  } catch (error: any) {
+    console.error('Error generating mind map (using fallback):', error?.message || error);
+    return res.json({
+      success: true,
+      summary: `Mind map breakdown of ${topic}`,
+      rootNode: {
+        id: 'root-1',
+        label: topic || 'Core Topic',
+        notes: `Core structured conceptual domain for ${topic || 'subject'}`,
+        children: [
+          {
+            id: 'branch-1',
+            label: 'Fundamental Principles',
+            notes: 'Core theoretical and foundational concepts.',
+            children: [
+              { id: 'leaf-1a', label: 'Key Definitions & Terminology' },
+              { id: 'leaf-1b', label: 'Historical Context & Evolution' },
+            ],
+          },
+          {
+            id: 'branch-2',
+            label: 'Core Mechanics & Dynamics',
+            notes: 'Active processes, formulas, and operational models.',
+            children: [
+              { id: 'leaf-2a', label: 'Primary Mechanisms' },
+              { id: 'leaf-2b', label: 'System Interactions' },
+            ],
+          },
+          {
+            id: 'branch-3',
+            label: 'Real-World Applications',
+            notes: 'Practical implementations and impact.',
+            children: [
+              { id: 'leaf-3a', label: 'Industry & Continental Case Studies' },
+              { id: 'leaf-3b', label: 'Problem Solving & Analysis' },
+            ],
+          },
+          {
+            id: 'branch-4',
+            label: 'Evaluation & Future Horizons',
+            notes: 'Critical assessments and emerging trends.',
+            children: [
+              { id: 'leaf-4a', label: 'Strategic Opportunities & Challenges' },
+              { id: 'leaf-4b', label: 'Next Generation Innovations' },
+            ],
+          },
+        ],
+      },
+    });
+  }
+});
 }
 
 // Normalizer Functions

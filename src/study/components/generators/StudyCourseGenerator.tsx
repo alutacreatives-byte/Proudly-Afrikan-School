@@ -16,18 +16,21 @@ import {
 } from 'lucide-react';
 import { CourseResult, StudyToolInput } from '../../types';
 import { generateStudyTool } from '../../services/aiService';
-import { SourceMaterialUpload } from '../../../build/components/SourceMaterialUpload';
-import { saveResourceToStorage } from '../../../build/utils/storage';
+import { SourceMaterialUpload } from '../SourceMaterialUpload';
+import { saveResourceToStorage } from '../../utils/storage';
 import { useAuthCredit } from '../../../context/AuthCreditContext';
+import { GlobalNavigationButtons } from '../../../components/GlobalNavigationButtons';
 
 interface StudyCourseGeneratorProps {
   onBack: () => void;
+  onGoHome?: () => void;
   onSaved?: () => void;
   existingResource?: CourseResult;
 }
 
 export const StudyCourseGenerator: React.FC<StudyCourseGeneratorProps> = ({
   onBack,
+  onGoHome,
   onSaved,
   existingResource,
 }) => {
@@ -107,16 +110,16 @@ export const StudyCourseGenerator: React.FC<StudyCourseGeneratorProps> = ({
   const handleCopy = () => {
     if (!course) return;
     let text = `# ${course.title}\nSubject: ${course.subject || category}\nDuration: ${course.durationWeeks || 6} Weeks\n\n`;
-    text += `## Course Overview\n${course.courseOverview}\n\n`;
-    if (course.learningOutcomes) {
+    text += `## Course Overview\n${course.courseOverview || ''}\n\n`;
+    if (course.learningOutcomes && course.learningOutcomes.length > 0) {
       text += '## Learning Outcomes\n' + course.learningOutcomes.map((lo) => `- ${lo}`).join('\n') + '\n\n';
     }
-    course.modules.forEach((mod) => {
-      text += `### Module ${mod.moduleNumber}: ${mod.title}\n${mod.description}\n`;
-      if (mod.keyTopics) text += 'Key Topics: ' + mod.keyTopics.join(', ') + '\n';
+    (course.modules || []).forEach((mod) => {
+      text += `### Module ${mod.moduleNumber}: ${mod.title}\n${mod.description || ''}\n`;
+      if (mod.keyTopics && mod.keyTopics.length > 0) text += 'Key Topics: ' + mod.keyTopics.join(', ') + '\n';
       if (mod.practicalProjectOrTask) text += `Practical Capstone: ${mod.practicalProjectOrTask}\n`;
       text += '\nLessons:\n';
-      mod.lessons.forEach((l) => {
+      (mod.lessons || []).forEach((l) => {
         text += `- ${l.lessonTitle} (${l.estimatedMinutes || 45} mins): ${l.summary || l.learningObjective}\n`;
       });
       text += '\n---\n\n';
@@ -138,27 +141,23 @@ export const StudyCourseGenerator: React.FC<StudyCourseGeneratorProps> = ({
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+    <div id="active-study-tool-stage" className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      {/* Top Navigation: [BACK] [HOME] */}
+      <div className="flex items-center justify-between">
+        <GlobalNavigationButtons onBack={onBack} onGoHome={onGoHome} />
+      </div>
+
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-5 border-b border-stone-200">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={onBack}
-            className="p-2.5 rounded-full bg-white hover:bg-stone-100 border border-stone-200 text-stone-700 transition-colors cursor-pointer"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </button>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-xs font-bold text-[#E63956] uppercase tracking-wider">
-                STUDY TOOL 06
-              </span>
-            </div>
-            <h1 className="font-display font-black text-2xl sm:text-3xl text-[#161616] uppercase tracking-tight">
-              COURSE CURRICULUM GENERATOR
-            </h1>
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-xs font-bold text-[#E63956] uppercase tracking-wider">
+              STUDY TOOL 07
+            </span>
           </div>
+          <h1 className="font-display font-black text-2xl sm:text-3xl text-[#161616] uppercase tracking-tight">
+            COURSE CURRICULUM GENERATOR
+          </h1>
         </div>
 
         {course && Array.isArray(course.modules) && course.modules.length > 0 && (
@@ -380,7 +379,7 @@ export const StudyCourseGenerator: React.FC<StudyCourseGeneratorProps> = ({
                         <span className="font-mono text-[11px] font-bold text-stone-500 uppercase block">
                           Lessons & Units:
                         </span>
-                        {mod.lessons.map((lesson, lIdx) => (
+                        {(mod.lessons || []).map((lesson, lIdx) => (
                           <div
                             key={lIdx}
                             className="p-3 bg-white border border-stone-200/90 rounded-xl space-y-1"

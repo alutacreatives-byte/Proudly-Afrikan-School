@@ -15,15 +15,18 @@ import {
   Download
 } from 'lucide-react';
 import { StudyToolType } from '../types';
-import { getSavedResources, deleteResourceFromStorage } from '../../build/utils/storage';
+import { getSavedResources, deleteResourceFromStorage } from '../utils/storage';
+import { GlobalNavigationButtons } from '../../components/GlobalNavigationButtons';
 
 interface StudyMyResourcesProps {
   onBack: () => void;
+  onGoHome?: () => void;
   onOpenResource: (resource: any) => void;
 }
 
 export const StudyMyResources: React.FC<StudyMyResourcesProps> = ({
   onBack,
+  onGoHome,
   onOpenResource,
 }) => {
   const [resources, setResources] = useState<any[]>(getSavedResources());
@@ -59,25 +62,21 @@ export const StudyMyResources: React.FC<StudyMyResourcesProps> = ({
   });
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div id="active-study-tool-stage" className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+      {/* Top Navigation: [BACK] [HOME] */}
+      <div className="flex items-center justify-between">
+        <GlobalNavigationButtons onBack={onBack} onGoHome={onGoHome} />
+      </div>
+
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-5 border-b border-stone-200">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={onBack}
-            className="p-2.5 rounded-full bg-white hover:bg-stone-100 border border-stone-200 text-stone-700 transition-colors cursor-pointer"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </button>
-          <div>
-            <h1 className="font-display font-black text-2xl sm:text-3xl uppercase tracking-tight text-[#161616]">
-              My Study Library ({resources.length})
-            </h1>
-            <p className="font-sans text-xs sm:text-sm text-stone-500">
-              Access and review your saved study guides, flashcard sets, quizzes, slide decks, and roadmaps.
-            </p>
-          </div>
+        <div>
+          <h1 className="font-display font-black text-2xl sm:text-3xl uppercase tracking-tight text-[#161616]">
+            My Study Library ({resources.length})
+          </h1>
+          <p className="font-sans text-xs sm:text-sm text-stone-500">
+            Access and review your saved study guides, flashcard sets, quizzes, slide decks, and roadmaps.
+          </p>
         </div>
 
         <div className="flex items-center gap-3 w-full sm:w-auto">

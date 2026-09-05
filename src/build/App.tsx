@@ -1,184 +1,209 @@
 import React, { useState, useEffect } from 'react';
-import { BuildToolType, SavedResource, ExamPaper, WorksheetResource, MindMapResource, StudyPackResource, LessonPlanResource, PresentationResource, CourseResource, LearningPathResource } from './types';
+import { BuildToolType } from './types';
 import { BuildHome } from './components/BuildHome';
 import { ExamGenerator } from './components/generators/ExamGenerator';
 import { WorksheetGenerator } from './components/generators/WorksheetGenerator';
-import { MindMapGenerator } from './components/generators/MindMapGenerator';
-import { PdfStudyPackGenerator } from './components/generators/PdfStudyPackGenerator';
 import { LessonPlanGenerator } from './components/generators/LessonPlanGenerator';
-import { PresentationGenerator } from './components/generators/PresentationGenerator';
-import { CourseBuilder } from './components/generators/CourseBuilder';
-import { LearningPathBuilder } from './components/generators/LearningPathBuilder';
-import { MyResources } from './components/MyResources';
+import { PresentationDeckGenerator } from './components/generators/PresentationDeckGenerator';
+import { CourseBuilderGenerator } from './components/generators/CourseBuilderGenerator';
+import { LearningPathGenerator } from './components/generators/LearningPathGenerator';
+import { PdfQuizBuildGenerator } from './components/generators/PdfQuizBuildGenerator';
+import { PdfStudyPackGenerator } from './components/generators/PdfStudyPackGenerator';
+import { BuildMyResources } from './components/BuildMyResources';
 import { getSavedResources } from './utils/storage';
 
 interface BuildAppProps {
-  initialResource?: SavedResource | null;
   onGoHome?: () => void;
+  onNavigateToStudy?: () => void;
+  initialResource?: any;
+  initialTool?: BuildToolType;
 }
 
 export const BuildApp: React.FC<BuildAppProps> = ({
-  initialResource,
   onGoHome,
+  onNavigateToStudy,
+  initialResource,
+  initialTool,
 }) => {
-  const [activeTool, setActiveTool] = useState<BuildToolType | 'my-resources' | null>(
-    initialResource ? (initialResource.toolType as BuildToolType) : null
-  );
-  const [activeResource, setActiveResource] = useState<SavedResource | null>(initialResource || null);
+  const [activeView, setActiveView] = useState<BuildToolType | 'home' | 'my-resources'>('home');
+  const [activeResource, setActiveResource] = useState<any | null>(null);
   const [savedCount, setSavedCount] = useState<number>(getSavedResources().length);
 
+  // Sync initial resource or tool on mount or changes
   useEffect(() => {
     if (initialResource) {
-      setActiveResource(initialResource);
-      setActiveTool(initialResource.toolType as BuildToolType);
+      const toolType = initialResource.toolType;
+      setActiveResource(initialResource.data || initialResource);
+      if (
+        toolType === 'exam' ||
+        toolType === 'worksheet' ||
+        toolType === 'lesson-plan' ||
+        toolType === 'presentation' ||
+        toolType === 'course' ||
+        toolType === 'learning-path' ||
+        toolType === 'pdf-quiz' ||
+        toolType === 'pdf-studypack'
+      ) {
+        setActiveView(toolType);
+      }
+    } else if (initialTool) {
+      setActiveView(initialTool);
     }
-  }, [initialResource]);
+  }, [initialResource, initialTool]);
 
   const refreshSavedCount = () => {
     setSavedCount(getSavedResources().length);
   };
 
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [activeTool]);
-
-  const handleSelectTool = (toolId: BuildToolType, prefillTopic?: string, prefillCategory?: string) => {
-    if (prefillTopic) {
+  const handleSelectTool = (
+    toolId: BuildToolType,
+    prefillTopic?: string,
+    prefillSubject?: string,
+    sourceMaterial?: string,
+    sourceFileName?: string
+  ) => {
+    if (prefillTopic || prefillSubject || sourceMaterial) {
       setActiveResource({
-        id: `temp-${Date.now()}`,
         title: prefillTopic,
         topic: prefillTopic,
-        subject: prefillCategory,
-        createdAt: new Date().toISOString(),
-        toolType: toolId,
-      } as any);
+        subject: prefillSubject,
+        sourceSnippet: sourceMaterial,
+        documentName: sourceFileName,
+      });
     } else {
       setActiveResource(null);
     }
-    setActiveTool(toolId);
+    setActiveView(toolId);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleOpenSavedResource = (resource: SavedResource) => {
-    setActiveResource(resource);
-    setActiveTool(resource.toolType);
+  const handleOpenSavedResource = (res: any) => {
+    const data = res.data || res;
+    setActiveResource(data);
+    const toolType = res.toolType;
+    if (
+      toolType === 'exam' ||
+      toolType === 'worksheet' ||
+      toolType === 'lesson-plan' ||
+      toolType === 'presentation' ||
+      toolType === 'course' ||
+      toolType === 'learning-path' ||
+      toolType === 'pdf-quiz' ||
+      toolType === 'pdf-studypack'
+    ) {
+      setActiveView(toolType);
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleBackToGrid = () => {
-    setActiveTool(null);
+  const handleBackToHome = () => {
+    setActiveView('home');
     setActiveResource(null);
     refreshSavedCount();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Render sub-view
-  if (activeTool === 'my-resources') {
-    return (
-      <MyResources
-        onBack={handleBackToGrid}
-        onGoHome={onGoHome || handleBackToGrid}
-        onOpenResource={handleOpenSavedResource}
-      />
-    );
-  }
+  // Render view based on activeView
+  switch (activeView) {
+    case 'exam':
+      return (
+        <ExamGenerator
+          onBack={handleBackToHome}
+          onGoHome={onGoHome}
+          onSaved={refreshSavedCount}
+          existingResource={activeResource}
+        />
+      );
 
-  if (activeTool === 'exam') {
-    return (
-      <ExamGenerator
-        onBack={handleBackToGrid}
-        onGoHome={onGoHome || handleBackToGrid}
-        onSaved={refreshSavedCount}
-        existingResource={activeResource?.toolType === 'exam' ? (activeResource as ExamPaper) : undefined}
-      />
-    );
-  }
+    case 'worksheet':
+      return (
+        <WorksheetGenerator
+          onBack={handleBackToHome}
+          onGoHome={onGoHome}
+          onSaved={refreshSavedCount}
+          existingResource={activeResource}
+        />
+      );
 
-  if (activeTool === 'worksheet') {
-    return (
-      <WorksheetGenerator
-        onBack={handleBackToGrid}
-        onGoHome={onGoHome || handleBackToGrid}
-        onSaved={refreshSavedCount}
-        existingResource={activeResource?.toolType === 'worksheet' ? (activeResource as WorksheetResource) : undefined}
-      />
-    );
-  }
+    case 'lesson-plan':
+      return (
+        <LessonPlanGenerator
+          onBack={handleBackToHome}
+          onGoHome={onGoHome}
+          onSaved={refreshSavedCount}
+          existingResource={activeResource}
+        />
+      );
 
-  if (activeTool === 'mind-map') {
-    return (
-      <MindMapGenerator
-        onBack={handleBackToGrid}
-        onGoHome={onGoHome || handleBackToGrid}
-        onSaved={refreshSavedCount}
-        existingResource={activeResource?.toolType === 'mind-map' ? (activeResource as MindMapResource) : undefined}
-      />
-    );
-  }
+    case 'presentation':
+      return (
+        <PresentationDeckGenerator
+          onBack={handleBackToHome}
+          onGoHome={onGoHome}
+          onSaved={refreshSavedCount}
+          existingResource={activeResource}
+        />
+      );
 
-  if (activeTool === 'pdf-studypack') {
-    return (
-      <PdfStudyPackGenerator
-        onBack={handleBackToGrid}
-        onGoHome={onGoHome || handleBackToGrid}
-        onSaved={refreshSavedCount}
-        existingResource={activeResource?.toolType === 'pdf-studypack' ? (activeResource as StudyPackResource) : undefined}
-      />
-    );
-  }
+    case 'course':
+      return (
+        <CourseBuilderGenerator
+          onBack={handleBackToHome}
+          onGoHome={onGoHome}
+          onSaved={refreshSavedCount}
+          existingResource={activeResource}
+        />
+      );
 
-  if (activeTool === 'lesson-plan') {
-    return (
-      <LessonPlanGenerator
-        onBack={handleBackToGrid}
-        onGoHome={onGoHome || handleBackToGrid}
-        onSaved={refreshSavedCount}
-        existingResource={activeResource?.toolType === 'lesson-plan' ? (activeResource as LessonPlanResource) : undefined}
-      />
-    );
-  }
+    case 'learning-path':
+      return (
+        <LearningPathGenerator
+          onBack={handleBackToHome}
+          onGoHome={onGoHome}
+          onSaved={refreshSavedCount}
+          existingResource={activeResource}
+        />
+      );
 
-  if (activeTool === 'presentation') {
-    return (
-      <PresentationGenerator
-        onBack={handleBackToGrid}
-        onGoHome={onGoHome || handleBackToGrid}
-        onSaved={refreshSavedCount}
-        existingResource={activeResource?.toolType === 'presentation' ? (activeResource as PresentationResource) : undefined}
-      />
-    );
-  }
+    case 'pdf-quiz':
+      return (
+        <PdfQuizBuildGenerator
+          onBack={handleBackToHome}
+          onGoHome={onGoHome}
+          onSaved={refreshSavedCount}
+          existingResource={activeResource}
+        />
+      );
 
-  if (activeTool === 'course-builder' || activeTool === 'course') {
-    return (
-      <CourseBuilder
-        onBack={handleBackToGrid}
-        onGoHome={onGoHome || handleBackToGrid}
-        onSaved={refreshSavedCount}
-        existingResource={(activeResource?.toolType === 'course-builder' || activeResource?.toolType === 'course') ? (activeResource as CourseResource) : undefined}
-      />
-    );
-  }
+    case 'pdf-studypack':
+      return (
+        <PdfStudyPackGenerator
+          onBack={handleBackToHome}
+          onGoHome={onGoHome}
+          onSaved={refreshSavedCount}
+          existingResource={activeResource}
+        />
+      );
 
-  if (activeTool === 'learning-path') {
-    return (
-      <LearningPathBuilder
-        onBack={handleBackToGrid}
-        onGoHome={onGoHome || handleBackToGrid}
-        onSaved={refreshSavedCount}
-        existingResource={activeResource?.toolType === 'learning-path' ? (activeResource as LearningPathResource) : undefined}
-      />
-    );
-  }
+    case 'my-resources':
+      return (
+        <BuildMyResources
+          onBack={handleBackToHome}
+          onGoHome={onGoHome}
+          onOpenResource={handleOpenSavedResource}
+        />
+      );
 
-  return (
-    <BuildHome
-      onSelectTool={handleSelectTool}
-      onOpenMyResources={() => setActiveTool('my-resources')}
-      savedCount={savedCount}
-    />
-  );
+    case 'home':
+    default:
+      return (
+        <BuildHome
+          onSelectTool={handleSelectTool}
+          onOpenMyResources={() => setActiveView('my-resources')}
+          savedCount={savedCount}
+        />
+      );
+  }
 };
 
 export default BuildApp;
-

@@ -1,79 +1,98 @@
 import React, { useState, useRef } from 'react';
-import { FileUp, FileText, X, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
-import { extractTextFromFile } from '../../quiz/utils/pdfExtractor';
+import { UploadCloud, FileText, X, Loader2, CheckCircle2, FileType, AlignLeft } from 'lucide-react';
+import { AIService } from '../../study/services/aiService';
 
-interface SourceMaterialUploadProps {
-  onContentExtracted?: (text: string, fileName: string) => void;
-  onTextExtracted?: (text: string, fileName: string) => void;
-  onClear: () => void;
+export interface SourceMaterialUploadProps {
+  sourceMaterial?: string;
+  sourceFileName?: string;
   currentFileName?: string;
+  onTextExtracted: (text: string, fileName: string) => void;
+  onClear: () => void;
   className?: string;
 }
 
 export const SourceMaterialUpload: React.FC<SourceMaterialUploadProps> = ({
-  onContentExtracted,
+  sourceMaterial,
+  sourceFileName,
+  currentFileName,
   onTextExtracted,
   onClear,
-  currentFileName,
   className = '',
 }) => {
   const [isDragging, setIsDragging] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isManualMode, setIsManualMode] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFile = async (file: File) => {
-    setErrorMessage(null);
-    setIsProcessing(true);
+  const activeFileName = sourceFileName || currentFileName;
+  const hasContent = Boolean(activeFileName || (sourceMaterial && sourceMaterial.trim().length > 0));
+
+  const processFile = async (file: File) => {
+    setIsLoading(true);
+    setError(null);
     try {
-      const result = await extractTextFromFile(file);
-      if (onContentExtracted) onContentExtracted(result.text, file.name);
-      if (onTextExtracted) onTextExtracted(result.text, file.name);
+      const parsed = await AIService.parseDocument(file);
+      if (parsed && parsed.text) {
+        onTextExtracted(parsed.text, file.name);
+      } else {
+        const text = await file.text();
+        if (text && text.trim().length > 0) {
+          onTextExtracted(text, file.name);
+        } else {
+          setError('Could not extract readable text from this file. Please try another file.');
+        }
+      }
     } catch (err: any) {
-      setErrorMessage(err.message || 'Failed to extract text from file.');
+      console.warn('[SourceMaterialUpload] file parse issue:', err);
+      setError('Unable to parse file. Try uploading as plain text or PDF.');
     } finally {
-      setIsProcessing(false);
+      setIsLoading(false);
     }
   };
 
-  const onDragOver = (e: React.DragEvent) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      processFile(file);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(true);
   };
 
-  const onDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
+  const handleDragLeave = () => {
     setIsDragging(false);
   };
 
-  const onDrop = (e: React.DragEvent) => {
+  const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      handleFile(e.dataTransfer.files[0]);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      processFile(file);
     }
   };
 
-  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      handleFile(e.target.files[0]);
-    }
-  };
-
-  if (currentFileName) {
+  if (hasContent) {
     return (
-      <div className={`flex items-center justify-between p-3.5 bg-emerald-50/70 border border-emerald-200 rounded-2xl ${className}`}>
-        <div className="flex items-center gap-2.5 overflow-hidden">
-          <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0">
-            <CheckCircle2 className="w-4 h-4" />
+      <div className={`p-4 rounded-2xl bg-amber-50/60 border border-amber-200 flex items-center justify-between gap-3 ${className}`}>
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-8 h-8 rounded-xl bg-[#18181B] text-white flex items-center justify-center shrink-0">
+            <FileText className="w-4 h-4 text-[#E05A2B]" />
           </div>
           <div className="truncate">
-            <div className="font-mono text-xs font-bold text-emerald-900 truncate">
-              {currentFileName}
-            </div>
-            <div className="font-mono text-[10px] text-emerald-600">
-              Attached source document
-            </div>
+            <p className="font-mono text-xs font-bold text-stone-900 truncate">
+              {activeFileName || 'Pasted Study Material / Curriculum Notes'}
+            </p>
+            <p className="font-mono text-[10px] text-stone-500 flex items-center gap-1.5 mt-0.5">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+              <span>
+                {sourceMaterial ? `${sourceMaterial.length.toLocaleString()} characters attached` : 'Document Attached'}
+              </span>
+            </p>
           </div>
         </div>
         <button
@@ -82,8 +101,8 @@ export const SourceMaterialUpload: React.FC<SourceMaterialUploadProps> = ({
             onClear();
             if (fileInputRef.current) fileInputRef.current.value = '';
           }}
-          className="p-1.5 hover:bg-emerald-200/50 rounded-full text-emerald-700 transition-colors"
-          title="Remove document"
+          className="p-2 rounded-xl hover:bg-amber-100 text-stone-500 hover:text-stone-800 transition-colors cursor-pointer shrink-0"
+          title="Remove attached material"
         >
           <X className="w-4 h-4" />
         </button>
@@ -92,51 +111,81 @@ export const SourceMaterialUpload: React.FC<SourceMaterialUploadProps> = ({
   }
 
   return (
-    <div className={className}>
+    <div className={`space-y-3 ${className}`}>
       <input
         ref={fileInputRef}
         type="file"
-        accept=".pdf,.txt,.md,.csv,.doc,.docx"
-        onChange={onFileChange}
+        accept=".pdf,.doc,.docx,.txt,.md,image/*"
+        onChange={handleFileChange}
         className="hidden"
       />
-      <div
-        onDragOver={onDragOver}
-        onDragLeave={onDragLeave}
-        onDrop={onDrop}
-        onClick={() => fileInputRef.current?.click()}
-        className={`border-2 border-dashed rounded-2xl p-4 sm:p-5 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-2 ${
-          isDragging
-            ? 'border-[#E63956] bg-pink-50/60 scale-[0.99]'
-            : 'border-stone-200 hover:border-[#E63956]/60 hover:bg-stone-50/60 bg-white'
-        }`}
-      >
-        {isProcessing ? (
-          <div className="flex flex-col items-center gap-2 py-2">
-            <Loader2 className="w-6 h-6 text-[#E63956] animate-spin" />
-            <span className="font-mono text-xs font-bold text-stone-600">
-              Extracting document text...
+
+      {!isManualMode ? (
+        <div
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          onClick={() => !isLoading && fileInputRef.current?.click()}
+          className={`p-6 rounded-2xl border-2 border-dashed transition-all cursor-pointer text-center ${
+            isDragging
+              ? 'border-[#E05A2B] bg-orange-50/50'
+              : 'border-stone-300 hover:border-stone-400 bg-stone-50/70 hover:bg-stone-50'
+          }`}
+        >
+          <div className="flex flex-col items-center justify-center gap-2">
+            {isLoading ? (
+              <Loader2 className="w-6 h-6 text-[#E05A2B] animate-spin" />
+            ) : (
+              <UploadCloud className="w-6 h-6 text-[#E05A2B]" />
+            )}
+            <span className="font-mono text-xs font-bold text-stone-800 uppercase">
+              {isLoading ? 'Extracting text from document...' : 'Upload Syllabus, Curriculum PDF or Notes'}
             </span>
+            <span className="font-mono text-[11px] text-stone-500">
+              PDF, DOCX, TXT, Markdown, or image notes (up to 20MB)
+            </span>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsManualMode(true);
+              }}
+              className="mt-1 inline-flex items-center gap-1.5 font-mono text-[11px] font-bold text-[#E05A2B] hover:underline"
+            >
+              <AlignLeft className="w-3.5 h-3.5" />
+              <span>Or click here to paste text directly</span>
+            </button>
           </div>
-        ) : (
-          <>
-            <div className="w-10 h-10 rounded-full bg-stone-100 text-stone-600 flex items-center justify-center">
-              <FileUp className="w-5 h-5" />
-            </div>
-            <div className="font-mono text-xs font-bold text-stone-800">
-              Drop PDF / DOC or click to browse
-            </div>
-            <div className="font-mono text-[11px] text-stone-500">
-              PDF, TXT, DOCX up to 25 pages
-            </div>
-          </>
-        )}
-      </div>
-      {errorMessage && (
-        <div className="mt-2 flex items-center gap-1.5 text-xs text-rose-600 font-mono">
-          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-          <span>{errorMessage}</span>
         </div>
+      ) : (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="font-mono text-xs font-bold text-stone-700 uppercase">
+              Paste Curriculum or Study Text:
+            </span>
+            <button
+              type="button"
+              onClick={() => setIsManualMode(false)}
+              className="font-mono text-[11px] text-stone-500 hover:text-stone-800 uppercase"
+            >
+              Switch to File Upload
+            </button>
+          </div>
+          <textarea
+            rows={4}
+            placeholder="Paste syllabus guidelines, textbook excerpts, lecture notes, or standard competencies here..."
+            onChange={(e) => {
+              if (e.target.value.trim()) {
+                onTextExtracted(e.target.value, 'Pasted_Notes.txt');
+              }
+            }}
+            className="w-full p-3 rounded-xl border border-stone-300 bg-[#FAF8F5] text-xs font-mono text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#E05A2B]"
+          />
+        </div>
+      )}
+
+      {error && (
+        <p className="text-xs font-mono text-rose-600 px-1">{error}</p>
       )}
     </div>
   );

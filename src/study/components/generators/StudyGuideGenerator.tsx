@@ -16,18 +16,21 @@ import {
 } from 'lucide-react';
 import { StudyGuideResult, StudyToolInput } from '../../types';
 import { generateStudyTool } from '../../services/aiService';
-import { SourceMaterialUpload } from '../../../build/components/SourceMaterialUpload';
-import { saveResourceToStorage } from '../../../build/utils/storage';
+import { SourceMaterialUpload } from '../SourceMaterialUpload';
+import { saveResourceToStorage } from '../../utils/storage';
 import { useAuthCredit } from '../../../context/AuthCreditContext';
+import { GlobalNavigationButtons } from '../../../components/GlobalNavigationButtons';
 
 interface StudyGuideGeneratorProps {
   onBack: () => void;
+  onGoHome?: () => void;
   onSaved?: () => void;
   existingResource?: StudyGuideResult;
 }
 
 export const StudyGuideGenerator: React.FC<StudyGuideGeneratorProps> = ({
   onBack,
+  onGoHome,
   onSaved,
   existingResource,
 }) => {
@@ -105,10 +108,10 @@ export const StudyGuideGenerator: React.FC<StudyGuideGeneratorProps> = ({
 
   const handleCopy = () => {
     if (!guide) return;
-    let text = `# ${guide.title}\nSubject: ${guide.subject || category}\n\n`;
-    text += `## Executive Overview\n${guide.overview}\n\n`;
-    guide.sections.forEach((sec) => {
-      text += `### ${sec.heading}\n${sec.content}\n`;
+    let text = `# ${guide.title || 'Study Guide'}\nSubject: ${guide.subject || category}\n\n`;
+    text += `## Executive Overview\n${guide.overview || ''}\n\n`;
+    (guide.sections || []).forEach((sec) => {
+      text += `### ${sec.heading || 'Section'}\n${sec.content || ''}\n`;
       if (sec.bulletPoints && sec.bulletPoints.length > 0) {
         text += sec.bulletPoints.map((b) => `- ${b}`).join('\n') + '\n';
       }
@@ -126,9 +129,13 @@ export const StudyGuideGenerator: React.FC<StudyGuideGeneratorProps> = ({
       text += '## Review Questions\n' + guide.reviewQuestions.map((q, i) => `${i + 1}. ${q.question}\nAnswer: ${q.answer}`).join('\n\n');
     }
 
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (e) {
+      console.warn('Clipboard write failed:', e);
+    }
   };
 
   const handlePrint = () => {
@@ -151,27 +158,23 @@ export const StudyGuideGenerator: React.FC<StudyGuideGeneratorProps> = ({
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+    <div id="active-study-tool-stage" className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      {/* Top Navigation: [BACK] [HOME] */}
+      <div className="flex items-center justify-between">
+        <GlobalNavigationButtons onBack={onBack} onGoHome={onGoHome} />
+      </div>
+
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-5 border-b border-stone-200">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={onBack}
-            className="p-2.5 rounded-full bg-white hover:bg-stone-100 border border-stone-200 text-stone-700 transition-colors cursor-pointer"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </button>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-xs font-bold text-[#E63956] uppercase tracking-wider">
-                STUDY TOOL 02
-              </span>
-            </div>
-            <h1 className="font-display font-black text-2xl sm:text-3xl text-[#161616] uppercase tracking-tight">
-              STUDY GUIDE GENERATOR
-            </h1>
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-xs font-bold text-[#E63956] uppercase tracking-wider">
+              STUDY TOOL 02
+            </span>
           </div>
+          <h1 className="font-display font-black text-2xl sm:text-3xl text-[#161616] uppercase tracking-tight">
+            STUDY GUIDE GENERATOR
+          </h1>
         </div>
 
         {guide && Array.isArray(guide.sections) && guide.sections.length > 0 && (

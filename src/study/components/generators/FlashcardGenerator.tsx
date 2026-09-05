@@ -15,18 +15,21 @@ import {
 } from 'lucide-react';
 import { FlashcardResult, StudyToolInput } from '../../types';
 import { generateStudyTool } from '../../services/aiService';
-import { SourceMaterialUpload } from '../../../build/components/SourceMaterialUpload';
-import { saveResourceToStorage } from '../../../build/utils/storage';
+import { SourceMaterialUpload } from '../SourceMaterialUpload';
+import { saveResourceToStorage } from '../../utils/storage';
 import { useAuthCredit } from '../../../context/AuthCreditContext';
+import { GlobalNavigationButtons } from '../../../components/GlobalNavigationButtons';
 
 interface FlashcardGeneratorProps {
   onBack: () => void;
+  onGoHome?: () => void;
   onSaved?: () => void;
   existingResource?: FlashcardResult;
 }
 
 export const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({
   onBack,
+  onGoHome,
   onSaved,
   existingResource,
 }) => {
@@ -156,27 +159,23 @@ export const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({
   const currentCard = flashcards?.cards?.[currentIndex];
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+    <div id="active-study-tool-stage" className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      {/* Top Navigation: [BACK] [HOME] */}
+      <div className="flex items-center justify-between">
+        <GlobalNavigationButtons onBack={onBack} onGoHome={onGoHome} />
+      </div>
+
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-5 border-b border-stone-200">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={onBack}
-            className="p-2.5 rounded-full bg-white hover:bg-stone-100 border border-stone-200 text-stone-700 transition-colors cursor-pointer"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </button>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-xs font-bold text-[#E63956] uppercase tracking-wider">
-                STUDY TOOL 03
-              </span>
-            </div>
-            <h1 className="font-display font-black text-2xl sm:text-3xl text-[#161616] uppercase tracking-tight">
-              FLASHCARD GENERATOR
-            </h1>
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-xs font-bold text-[#E63956] uppercase tracking-wider">
+              STUDY TOOL 03
+            </span>
           </div>
+          <h1 className="font-display font-black text-2xl sm:text-3xl text-[#161616] uppercase tracking-tight">
+            FLASHCARD GENERATOR
+          </h1>
         </div>
 
         {flashcards && Array.isArray(flashcards.cards) && flashcards.cards.length > 0 && (

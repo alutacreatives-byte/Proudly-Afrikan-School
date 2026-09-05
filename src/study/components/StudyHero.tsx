@@ -1,16 +1,21 @@
 import React from 'react';
+import { FolderOpen } from 'lucide-react';
 import { StudyToolType } from '../types';
 
 interface StudyHeroProps {
   onStartClick: () => void;
   onSelectSample: (sampleTopic: string, category: string, suggestedTool?: StudyToolType) => void;
   onUploadPdfClick?: () => void;
+  onOpenMyResources?: () => void;
+  savedCount?: number;
 }
 
 export const StudyHero: React.FC<StudyHeroProps> = ({ 
   onStartClick, 
   onSelectSample,
   onUploadPdfClick,
+  onOpenMyResources,
+  savedCount = 0,
 }) => {
   const inspirationTopics: { label: string; topic: string; category: string; tool: StudyToolType }[] = [
     { label: '👑 Kingdom of Kush & Meroë', topic: 'The Kingdom of Kush & Iron Metallurgy at Meroë', category: 'AFRICAN HISTORY', tool: 'study-guide' },
@@ -47,6 +52,7 @@ export const StudyHero: React.FC<StudyHeroProps> = ({
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
             <button
+              id="hero-explore-tools-btn"
               onClick={onStartClick}
               className="px-7 sm:px-8 py-4 bg-gradient-to-r from-[#D92B8A] via-[#E03A6A] to-[#E63956] hover:opacity-95 text-white font-display text-xs sm:text-sm font-black uppercase tracking-wider rounded-full shadow-[0_6px_20px_rgba(230,57,86,0.35)] transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 whitespace-nowrap"
             >
@@ -54,11 +60,24 @@ export const StudyHero: React.FC<StudyHeroProps> = ({
             </button>
 
             <button
+              id="hero-upload-doc-btn"
               onClick={onUploadPdfClick || onStartClick}
               className="px-7 sm:px-8 py-4 bg-[#161616] hover:bg-stone-800 text-white font-display text-xs sm:text-sm font-black uppercase tracking-wider rounded-full shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 whitespace-nowrap"
             >
               <span>UPLOAD PDF / DOC</span>
             </button>
+
+            {onOpenMyResources && (
+              <button
+                type="button"
+                id="hero-my-library-btn"
+                onClick={onOpenMyResources}
+                className="px-6 py-4 bg-white hover:bg-stone-100 text-stone-900 font-display text-xs sm:text-sm font-black uppercase tracking-wider rounded-full border border-stone-300 shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 whitespace-nowrap"
+              >
+                <FolderOpen className="w-4 h-4 text-[#D92B8A]" />
+                <span>MY LIBRARY ({savedCount})</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -100,7 +119,7 @@ export const StudyHero: React.FC<StudyHeroProps> = ({
           <div className="grid grid-cols-3 gap-2 bg-white border border-stone-200/90 py-3.5 px-4 rounded-[1.5rem] shadow-xs">
             <div className="text-center border-r border-stone-200 pr-2">
               <div className="font-display text-lg sm:text-2xl font-black text-[#E63956]">
-                6
+                7
               </div>
               <div className="font-mono text-[10px] sm:text-xs font-bold text-stone-600 uppercase tracking-wider">
                 STUDY TOOLS

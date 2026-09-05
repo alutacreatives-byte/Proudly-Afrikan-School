@@ -21,6 +21,7 @@ import {
   FileQuestion,
   Presentation,
   Compass,
+  GraduationCap,
   ArrowRight,
   ShieldAlert,
   Image as ImageIcon,
@@ -207,6 +208,8 @@ export const StudyHome: React.FC<StudyHomeProps> = ({
         onStartClick={handleStartClick}
         onSelectSample={handleSelectSample}
         onUploadPdfClick={handleUploadPdfClick}
+        onOpenMyResources={onOpenMyResources}
+        savedCount={savedCount}
       />
 
       {/* 2. 4 Ways to Study Section (TYPE IT · PASTE IT · UPLOAD IT · CAPTURE IT) */}
@@ -558,7 +561,7 @@ export const StudyHome: React.FC<StudyHomeProps> = ({
             )}
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2.5">
             <button
               type="button"
               id="action-create-study-guide"
@@ -626,6 +629,19 @@ export const StudyHome: React.FC<StudyHomeProps> = ({
 
             <button
               type="button"
+              id="action-create-course"
+              onClick={() => handleLaunchTool('course')}
+              className="p-3 bg-stone-50 hover:bg-stone-900 hover:text-white border border-stone-200 rounded-2xl text-left transition-all group cursor-pointer flex flex-col justify-between min-h-[90px]"
+            >
+              <GraduationCap className="w-4 h-4 text-[#D92B8A] mb-2" />
+              <div>
+                <span className="font-display font-black text-xs uppercase block">Curriculum</span>
+                <span className="text-[10px] font-mono text-stone-500 group-hover:text-stone-300">Course syllabus</span>
+              </div>
+            </button>
+
+            <button
+              type="button"
               id="action-create-roadmap"
               onClick={() => handleLaunchTool('learning-path')}
               className="p-3 bg-stone-50 hover:bg-stone-900 hover:text-white border border-stone-200 rounded-2xl text-left transition-all group cursor-pointer flex flex-col justify-between min-h-[90px]"
@@ -640,7 +656,7 @@ export const StudyHome: React.FC<StudyHomeProps> = ({
         </div>
       </section>
 
-      {/* 4. All 6 Study Tools Section */}
+      {/* 4. All 7 Study Tools Section */}
       <StudyGeneratorsSection
         onSelectTool={(toolId) => handleLaunchTool(toolId)}
       />

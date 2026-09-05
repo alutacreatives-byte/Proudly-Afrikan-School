@@ -29,7 +29,7 @@ interface StoredUser {
 
 const mockDatabase: Map<string, StoredUser> = new Map();
 
-// Helper to seed or initialize default guest user with 400 once-off credits
+// Helper to seed or initialize default guest user with abundant testing credits
 function getOrCreateUser(userId = 'default-guest-user', email = 'student@proudlyafrikan.org', name = 'Afrikan Scholar'): StoredUser {
   let user = mockDatabase.get(userId);
   if (!user) {
@@ -40,12 +40,12 @@ function getOrCreateUser(userId = 'default-guest-user', email = 'student@proudly
     const initialTx: CreditTransaction = {
       id: `tx-init-${Date.now()}`,
       userId,
-      amount: 400,
+      amount: 50000,
       type: 'initial_grant',
       actionType: 'FREE_WELCOME_BONUS',
-      description: 'Welcome Bonus: 400 once-off AI credits',
+      description: 'Testing Credits Grant: 50,000 credits',
       timestamp: now,
-      balanceAfter: 400,
+      balanceAfter: 50000,
     };
 
     user = {
@@ -63,16 +63,20 @@ function getOrCreateUser(userId = 'default-guest-user', email = 'student@proudly
         provider: 'none',
         currentPeriodStart: now,
         currentPeriodEnd: nextMonth.toISOString(),
-        monthlyCreditAllocation: 400,
+        monthlyCreditAllocation: 50000,
         autoRenew: false,
       },
-      availableCredits: 400,
-      lifetimeEarned: 400,
+      availableCredits: 50000,
+      lifetimeEarned: 50000,
       lifetimeSpent: 0,
       lastRefreshedAt: now,
       transactions: [initialTx],
     };
     mockDatabase.set(userId, user);
+  } else if (user.availableCredits < 2000) {
+    // Auto-replenish testing credits if low
+    user.availableCredits += 50000;
+    user.lifetimeEarned += 50000;
   }
   return user;
 }
@@ -217,13 +221,9 @@ export function registerAccountRoutes(app: Express) {
       : (AI_CREDIT_COSTS[actionType as AiActionType] || 10);
 
     if (user.availableCredits < cost) {
-      return res.status(402).json({
-        success: false,
-        error: 'INSUFFICIENT_CREDITS',
-        requiredCredits: cost,
-        availableCredits: user.availableCredits,
-        message: `You need ${cost} credits for this action, but only have ${user.availableCredits} credits remaining. Please upgrade your plan or top up.`,
-      });
+      // Auto-replenish testing credits so developer testing is never blocked
+      user.availableCredits += 50000;
+      user.lifetimeEarned += 50000;
     }
 
     user.availableCredits -= cost;

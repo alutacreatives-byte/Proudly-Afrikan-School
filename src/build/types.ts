@@ -1,19 +1,20 @@
+export * from '../study/types';
+export * from '../study/utils/storage';
+
 export type BuildToolType =
   | 'exam'
   | 'worksheet'
   | 'lesson-plan'
-  | 'mind-map'
+  | 'pdf-quiz'
+  | 'pdf-studypack'
   | 'presentation'
   | 'course'
-  | 'course-builder'
-  | 'learning-path'
-  | 'pdf-studypack';
+  | 'learning-path';
 
-// 1. Exam Generator Types
 export interface ExamQuestion {
   id: string;
   questionNumber: number;
-  type: 'multiple-choice' | 'short-answer' | 'essay' | 'problem-solving' | 'true-false';
+  type: string;
   prompt: string;
   marks: number;
   options?: string[];
@@ -30,7 +31,7 @@ export interface ExamSection {
   questions: ExamQuestion[];
 }
 
-export interface ExamPaper {
+export interface ExamResult {
   id: string;
   title: string;
   institutionHeader?: string;
@@ -43,19 +44,16 @@ export interface ExamPaper {
   generalInstructions: string[];
   sections: ExamSection[];
   overallMarkingNotes?: string;
-  sourceDocName?: string;
-  createdAt: string;
   toolType: 'exam';
+  createdAt: string;
+  sourceSnippet?: string;
+  documentName?: string;
 }
 
-// 2. Worksheet Generator Types
 export interface WorksheetItem {
   id: string;
   prompt: string;
-  expectedAnswer?: string;
-  options?: string[];
-  blankCount?: number;
-  pairingPairs?: { left: string; right: string }[];
+  expectedAnswer: string;
 }
 
 export interface WorksheetSection {
@@ -66,7 +64,7 @@ export interface WorksheetSection {
   items: WorksheetItem[];
 }
 
-export interface WorksheetResource {
+export interface WorksheetResult {
   id: string;
   title: string;
   subject: string;
@@ -78,20 +76,20 @@ export interface WorksheetResource {
   instructions: string;
   teacherNotes?: string;
   sections: WorksheetSection[];
-  sourceDocName?: string;
-  createdAt: string;
   toolType: 'worksheet';
+  createdAt: string;
+  sourceSnippet?: string;
+  documentName?: string;
 }
 
-// 3. Lesson Plan Types
-export interface LessonPhase {
+export interface LessonPlanPhase {
   phase: string;
   durationMinutes: number;
   teacherActivity: string;
   studentActivity: string;
 }
 
-export interface LessonPlanResource {
+export interface LessonPlanResult {
   id: string;
   title: string;
   subject: string;
@@ -100,158 +98,166 @@ export interface LessonPlanResource {
   durationMinutes: number;
   objectives: string[];
   materialsNeeded: string[];
-  phases: LessonPhase[];
+  phases: LessonPlanPhase[];
   assessmentStrategy: string;
-  differentiation?: {
+  differentiation: {
     support: string;
     extension: string;
   };
-  sourceDocName?: string;
-  createdAt: string;
   toolType: 'lesson-plan';
-}
-
-// 4. Mind Map Types
-export interface MindMapNode {
-  id: string;
-  label: string;
-  notes?: string;
-  children?: MindMapNode[];
-}
-
-export interface MindMapResource {
-  id: string;
-  title: string;
-  subject: string;
-  topic: string;
-  gradeLevel: string;
-  rootNode: MindMapNode;
-  summary?: string;
-  sourceDocName?: string;
   createdAt: string;
-  toolType: 'mind-map';
+  sourceSnippet?: string;
+  documentName?: string;
 }
 
-// 5. Presentation / Slide Deck Types
-export interface PresentationSlide {
-  slideNumber: number;
-  title: string;
-  bullets: string[];
-  speakerNotes?: string;
-  visualCue?: string;
-}
-
-export interface PresentationResource {
+export interface PdfQuizBuildQuestion {
   id: string;
-  title: string;
-  subject: string;
-  topic: string;
-  audienceLevel: string;
-  slides: PresentationSlide[];
-  summary?: string;
-  sourceDocName?: string;
-  createdAt: string;
-  toolType: 'presentation';
-}
-
-// 6. Course Builder Types
-export interface CourseLessonItem {
-  lessonTitle: string;
-  learningObjective?: string;
-  recommendedActivity?: string;
-}
-
-export interface CourseModule {
-  moduleNumber: number;
-  title: string;
-  description: string;
-  estimatedHours?: number;
-  learningOutcomes: string[];
-  keyTopics: string[];
-  practicalProjectOrTask?: string;
-  lessons?: CourseLessonItem[];
-}
-
-export interface CourseResource {
-  id: string;
-  title: string;
-  subject: string;
-  topic: string;
-  targetAudience: string;
-  courseOverview: string;
-  totalWeeksOrHours: string;
-  pedagogicalStyle?: string;
-  assessmentStrategy?: string;
-  modules: CourseModule[];
-  prerequisites?: string[];
-  capstoneProject?: string;
-  sourceDocName?: string;
-  createdAt: string;
-  toolType: 'course' | 'course-builder';
-}
-
-// 7. Learning Path Builder Types
-export interface LearningPathMilestone {
-  stepNumber: number;
-  title: string;
-  description: string;
-  estimatedHours: number;
-  skillsAcquired: string[];
-  suggestedActivities: string[];
-  checkpointAssessment: string;
-}
-
-export interface LearningPathResource {
-  id: string;
-  title: string;
-  subject: string;
-  targetGoal: string;
-  startingLevel: string;
-  targetLevel: string;
-  totalEstimatedWeeks: number;
-  milestones: LearningPathMilestone[];
-  recommendations: string[];
-  sourceDocName?: string;
-  createdAt: string;
-  toolType: 'learning-path';
-}
-
-// 8. PDF Study Pack Types
-export interface GlossaryTerm {
-  term: string;
-  definition: string;
-  context?: string;
-}
-
-export interface SelfCheckQuestion {
+  number: number;
   question: string;
-  answer: string;
-  hint?: string;
+  type: string;
+  options: string[];
+  correctAnswer: string;
+  explanation: string;
+  sourceReferenceQuote?: string;
 }
 
-export interface StudyPackResource {
+export interface PdfQuizBuildResult {
   id: string;
   title: string;
-  sourceDocumentName: string;
+  sourceDocumentName?: string;
+  sourceDocName?: string;
+  gradeLevel: string;
+  difficulty: string;
+  totalQuestions: number;
+  questions: PdfQuizBuildQuestion[];
+  toolType: 'pdf-quiz';
+  createdAt: string;
+  sourceSnippet?: string;
+  documentName?: string;
+}
+
+export interface PdfStudyPackResult {
+  id: string;
+  title: string;
+  sourceDocumentName?: string;
   sourceDocName?: string;
   overview: string;
   documentOverview?: string;
   gradeLevel: string;
   highYieldTakeaways: string[];
   highYieldRevisionPoints?: string[];
-  essentialGlossary: GlossaryTerm[];
-  selfCheckQuestions: SelfCheckQuestion[];
-  createdAt: string;
+  essentialGlossary: Array<{
+    term: string;
+    definition: string;
+    context?: string;
+  }>;
+  selfCheckQuestions: Array<{
+    question: string;
+    answer: string;
+    hint?: string;
+  }>;
   toolType: 'pdf-studypack';
+  createdAt: string;
+  sourceSnippet?: string;
+  documentName?: string;
 }
 
-// Generic Union for Saved Resources
-export type SavedResource =
-  | ExamPaper
-  | WorksheetResource
-  | LessonPlanResource
-  | MindMapResource
-  | PresentationResource
-  | CourseResource
-  | LearningPathResource
-  | StudyPackResource;
+export interface PresentationBuildSlide {
+  id: string;
+  slideNumber: number;
+  title: string;
+  subtitle?: string;
+  bulletPoints: string[];
+  speakerNotes: string;
+  suggestedVisualOrDiagram?: string;
+  discussionOrEngagementPrompt?: string;
+}
+
+export interface PresentationBuildResult {
+  id: string;
+  title: string;
+  subtitle?: string;
+  subject: string;
+  topic: string;
+  targetAudience: string;
+  gradeLevel?: string;
+  themeOrColorMood?: string;
+  slidesCount: number;
+  slides: PresentationBuildSlide[];
+  toolType: 'presentation';
+  createdAt: string;
+  sourceSnippet?: string;
+  documentName?: string;
+}
+
+export interface CourseBuildLesson {
+  lessonTitle: string;
+  learningObjective: string;
+  recommendedActivity: string;
+}
+
+export interface CourseBuildModule {
+  moduleNumber: number;
+  title: string;
+  description: string;
+  estimatedHours: number;
+  keyTopics: string[];
+  learningOutcomes: string[];
+  practicalProjectOrTask: string;
+  lessons: CourseBuildLesson[];
+}
+
+export interface CourseBuildResult {
+  id: string;
+  title: string;
+  subject: string;
+  targetAudience: string;
+  courseOverview: string;
+  totalWeeksOrHours: string;
+  pedagogicalStyle: string;
+  assessmentStrategy: string;
+  prerequisites: string[];
+  learningOutcomes: string[];
+  modules: CourseBuildModule[];
+  capstoneProject: string;
+  toolType: 'course';
+  createdAt: string;
+  sourceSnippet?: string;
+  documentName?: string;
+}
+
+export interface LearningPathBuildStage {
+  stageNumber: number;
+  stageTitle: string;
+  estimatedWeeksOrHours: string;
+  description: string;
+  coreCompetencies: string[];
+  suggestedMilestoneProject: string;
+  certificationOrExitCriteria: string;
+}
+
+export interface LearningPathBuildResult {
+  id: string;
+  title: string;
+  subject: string;
+  targetGoal: string;
+  estimatedWeeks: number;
+  overview: string;
+  stages: LearningPathBuildStage[];
+  recommendedResources: string[];
+  toolType: 'learning-path';
+  createdAt: string;
+  sourceSnippet?: string;
+  documentName?: string;
+}
+
+export type AnyBuildResult =
+  | ExamResult
+  | WorksheetResult
+  | LessonPlanResult
+  | PdfQuizBuildResult
+  | PdfStudyPackResult
+  | PresentationBuildResult
+  | CourseBuildResult
+  | LearningPathBuildResult;
+

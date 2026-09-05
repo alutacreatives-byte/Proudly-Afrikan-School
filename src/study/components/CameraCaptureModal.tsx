@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Camera, X, RefreshCw, Check, AlertCircle, FlipHorizontal, Image as ImageIcon, ShieldAlert, Sparkles } from 'lucide-react';
+import { Camera, X, RefreshCw, Check, AlertCircle, FlipHorizontal, ShieldAlert, Image as ImageIcon } from 'lucide-react';
 
 interface CameraCaptureModalProps {
   isOpen: boolean;
@@ -13,32 +13,41 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
   isOpen,
   onClose,
   onPhotoCaptured,
-  title = 'Photograph Study Material',
-  subtitle = 'Textbook pages, homework, handwritten work, equations, diagrams, worksheets',
+  title = 'Capture Study Material',
+  subtitle = 'Position textbook, homework, handwritten notes, equations or diagrams in frame',
 }) => {
   const [stream, setStream] = useState<MediaStream | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const [capturedDataUrl, setCapturedDataUrl] = useState<string | null>(null);
   const [capturedBlob, setCapturedBlob] = useState<Blob | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [isPermissionDenied, setIsPermissionDenied] = useState<boolean>(false);
+  const [isInitializing, setIsInitializing] = useState<boolean>(false);
   const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
   const [hasMultipleCameras, setHasMultipleCameras] = useState<boolean>(false);
-  const [isInitializing, setIsInitializing] = useState<boolean>(false);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Stop media tracks cleanly
+  // Stop active media stream tracks cleanly
   const stopStream = useCallback(() => {
-    if (stream) {
-      stream.getTracks().forEach((track) => {
-        try {
+    if (streamRef.current) {
+      try {
+        streamRef.current.getTracks().forEach((track) => {
           track.stop();
-        } catch (e) {}
-      });
-      setStream(null);
+        });
+      } catch (e) {
+        console.warn('Error stopping stream tracks:', e);
+      }
+      streamRef.current = null;
     }
-  }, [stream]);
+    if (videoRef.current) {
+      try {
+        videoRef.current.srcObject = null;
+      } catch (e) {}
+    }
+    setStream(null);
+  }, []);
 
   // Request camera stream and permission on demand
   const startCamera = useCallback(async (desiredFacing: 'environment' | 'user') => {
@@ -48,48 +57,72 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
     stopStream();
 
     if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== 'function') {
-      setCameraError('Camera access is not directly supported by this browser. You can still snap or select a photo of your study material using the button below.');
+      setCameraError('Camera access is not directly supported by this browser. You can take or choose a photo of your study material using the button below.');
       setIsInitializing(false);
       return;
     }
 
     try {
-      let newStream: MediaStream;
+      let newStream: MediaStream | null = null;
 
+      // 1. Mobile & tablet resilient constraints (flexible width/height)
       try {
-        // First attempt with preferred orientation and high resolution
         newStream = await navigator.mediaDevices.getUserMedia({
           video: {
-            facingMode: { ideal: desiredFacing },
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
+            facingMode: desiredFacing ? { ideal: desiredFacing } : 'environment',
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
           },
           audio: false,
         });
       } catch (specErr: any) {
-        // If permission was denied, do not retry constraints, bubble to catch
+        // Permission denied shouldn't retry constraints
         if (specErr.name === 'NotAllowedError' || specErr.name === 'PermissionDeniedError') {
           throw specErr;
         }
 
-        // Otherwise fallback to basic video constraints for broader hardware compatibility
-        newStream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-          audio: false,
-        });
+        // Fallback constraint attempt 2: facing mode only
+        try {
+          newStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: desiredFacing },
+            audio: false,
+          });
+        } catch (facingErr: any) {
+          if (facingErr.name === 'NotAllowedError' || facingErr.name === 'PermissionDeniedError') {
+            throw facingErr;
+          }
+
+          // Fallback constraint attempt 3: standard video true
+          newStream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: false,
+          });
+        }
       }
 
+      if (!newStream) {
+        throw new Error('Could not establish camera video stream.');
+      }
+
+      streamRef.current = newStream;
       setStream(newStream);
       setIsPermissionDenied(false);
       setCameraError(null);
 
-      // Immediately connect to video element if already mounted
+      // Connect to video element with iOS / tablet playsInline safeguards
       if (videoRef.current) {
-        videoRef.current.srcObject = newStream;
-        videoRef.current.play().catch(() => {});
+        const video = videoRef.current;
+        video.setAttribute('playsinline', 'true');
+        video.setAttribute('webkit-playsinline', 'true');
+        video.srcObject = newStream;
+        video.onloadedmetadata = () => {
+          video.play().catch((playErr) => {
+            console.warn('Video playback notice:', playErr);
+          });
+        };
       }
 
-      // Check for multiple cameras now that permission is granted
+      // Check for multiple camera devices (front/back)
       if (navigator.mediaDevices.enumerateDevices) {
         navigator.mediaDevices.enumerateDevices()
           .then((devices) => {
@@ -102,32 +135,35 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
       console.warn('Camera getUserMedia error:', err);
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
         setIsPermissionDenied(true);
-        setCameraError('Camera access is required for CAPTURE IT to photograph your study materials. Please enable camera permission in your browser and try again.');
+        setCameraError('Camera access was not granted. Please allow camera permissions in your browser address bar or device settings, or tap "Take or Select Photo" below.');
       } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
         setIsPermissionDenied(false);
-        setCameraError('No active camera was detected on this device. You can choose or upload a photo of your study material below.');
+        setCameraError('No active camera hardware was detected on this device. You can snap or select a photo of your study material using the button below.');
       } else {
         setIsPermissionDenied(false);
-        setCameraError(err.message || 'Unable to open camera stream. You can try again or use the device photo selector below.');
+        setCameraError(err.message || 'Unable to open camera stream on this device. You can tap "Take or Select Photo" below.');
       }
     } finally {
       setIsInitializing(false);
     }
   }, [stopStream]);
 
-  // Ensure video element receives the stream as soon as either is ready
+  // Connect stream whenever videoRef and stream are present
   useEffect(() => {
     if (videoRef.current && stream) {
-      if (videoRef.current.srcObject !== stream) {
-        videoRef.current.srcObject = stream;
+      const video = videoRef.current;
+      if (video.srcObject !== stream) {
+        video.setAttribute('playsinline', 'true');
+        video.setAttribute('webkit-playsinline', 'true');
+        video.srcObject = stream;
+        video.onloadedmetadata = () => {
+          video.play().catch(() => {});
+        };
       }
-      videoRef.current.play().catch((err) => {
-        console.warn('Video playback notice:', err);
-      });
     }
   }, [stream]);
 
-  // Start camera ONLY when modal is opened by user interaction
+  // Start camera when modal opens
   useEffect(() => {
     if (isOpen) {
       setCapturedDataUrl(null);
@@ -153,19 +189,22 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
     startCamera(nextFacing);
   };
 
-  // Capture current video frame
+  // Capture current video frame into canvas and produce Blob + DataURL
   const handleSnapPhoto = () => {
     if (!videoRef.current) return;
     const video = videoRef.current;
 
+    const width = video.videoWidth || 1280;
+    const height = video.videoHeight || 720;
+
     const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth || 1280;
-    canvas.height = video.videoHeight || 720;
+    canvas.width = width;
+    canvas.height = height;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     // Draw video frame to canvas
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    ctx.drawImage(video, 0, 0, width, height);
 
     const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
     setCapturedDataUrl(dataUrl);
@@ -180,7 +219,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
       0.92
     );
 
-    // Stop active camera stream while user reviews the snapshot
+    // Stop active camera stream while reviewing
     stopStream();
   };
 
@@ -200,7 +239,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
     onClose();
   };
 
-  // Fallback upload / native camera shutter
+  // Direct native mobile camera shutter / file upload
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -208,7 +247,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
     const reader = new FileReader();
     reader.onload = (event) => {
       const dataUrl = (event.target?.result as string) || '';
-      onPhotoCaptured(file, dataUrl, file.name || 'study-camera-photo.jpg');
+      onPhotoCaptured(file, dataUrl, file.name || `study-capture-${Date.now()}.jpg`);
       onClose();
     };
     reader.readAsDataURL(file);
@@ -223,7 +262,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
     >
       <div 
         id="camera-capture-modal-content"
-        className="bg-white rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl border border-stone-200 flex flex-col my-auto"
+        className="bg-white rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl border border-stone-200 flex flex-col my-auto max-h-[92vh]"
       >
         {/* Modal Header */}
         <div className="p-4 sm:p-5 border-b border-stone-200 flex items-center justify-between bg-[#FAF8F5]">
@@ -255,16 +294,16 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
         </div>
 
         {/* Viewfinder / Preview Canvas */}
-        <div className="p-4 sm:p-6 space-y-4 bg-stone-900 flex-1 flex flex-col items-center justify-center min-h-[360px] sm:min-h-[420px] relative overflow-hidden">
+        <div className="p-4 sm:p-6 space-y-4 bg-stone-950 flex-1 flex flex-col items-center justify-center min-h-[300px] sm:min-h-[380px] relative overflow-hidden">
           {capturedDataUrl ? (
             // 1. REVIEW SNAPSHOT
             <div className="relative w-full h-full flex flex-col items-center justify-center">
               <img
                 src={capturedDataUrl}
                 alt="Captured study material"
-                className="max-h-[380px] w-auto max-w-full rounded-2xl object-contain shadow-lg border border-stone-700"
+                className="max-h-[360px] w-auto max-w-full rounded-2xl object-contain shadow-lg border border-stone-700"
               />
-              <div className="absolute top-3 left-3 bg-emerald-600/90 text-white text-xs font-mono font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-md backdrop-blur-xs">
+              <div className="absolute top-3 left-3 bg-emerald-600/95 text-white text-xs font-mono font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-md backdrop-blur-xs">
                 <Check className="w-3.5 h-3.5" />
                 <span>PHOTO READY FOR STUDY</span>
               </div>
@@ -273,26 +312,20 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
             // 2. LIVE CAMERA VIEW
             <div className="relative w-full flex items-center justify-center overflow-hidden rounded-2xl bg-black">
               <video
-                ref={(el) => {
-                  videoRef.current = el;
-                  if (el && stream && el.srcObject !== stream) {
-                    el.srcObject = stream;
-                    el.play().catch(() => {});
-                  }
-                }}
+                ref={videoRef}
                 autoPlay
                 playsInline
                 muted
-                className="w-full max-h-[400px] object-cover rounded-2xl"
+                className="w-full max-h-[380px] object-contain rounded-2xl bg-black"
               />
 
               {/* Document Alignment Frame Overlay */}
-              <div className="absolute inset-4 sm:inset-6 border-2 border-dashed border-white/60 rounded-2xl pointer-events-none flex flex-col justify-between p-3">
-                <div className="flex justify-between text-white/80 font-mono text-[10px] tracking-wider uppercase bg-black/60 px-2.5 py-1 rounded-md self-start">
-                  <span>Frame Study Page, Equations or Diagrams</span>
+              <div className="absolute inset-3 sm:inset-5 border-2 border-dashed border-white/60 rounded-2xl pointer-events-none flex flex-col justify-between p-3">
+                <div className="flex justify-between text-white/90 font-mono text-[10px] tracking-wider uppercase bg-black/70 px-2.5 py-1 rounded-md self-start">
+                  <span>Frame Textbook, Notes or Diagrams</span>
                 </div>
-                <div className="flex justify-end text-white/80 font-mono text-[10px] tracking-wider uppercase bg-black/60 px-2.5 py-1 rounded-md self-end">
-                  <span>Good Lighting • Clear Handwriting</span>
+                <div className="flex justify-end text-white/90 font-mono text-[10px] tracking-wider uppercase bg-black/70 px-2.5 py-1 rounded-md self-end">
+                  <span>Good Lighting • Clear View</span>
                 </div>
               </div>
 
@@ -301,16 +334,17 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
                 <button
                   type="button"
                   onClick={handleToggleFacingMode}
-                  className="absolute top-4 right-4 p-2.5 rounded-full bg-black/70 hover:bg-black text-white border border-white/30 transition-all cursor-pointer shadow-md backdrop-blur-xs"
-                  title="Flip camera"
+                  className="absolute top-4 right-4 p-2.5 rounded-full bg-black/70 hover:bg-black text-white border border-white/30 transition-all cursor-pointer shadow-md backdrop-blur-xs flex items-center gap-1.5 text-xs font-mono"
+                  title="Switch Camera (Front / Back)"
                 >
                   <FlipHorizontal className="w-4 h-4" />
+                  <span className="hidden sm:inline">Flip</span>
                 </button>
               )}
             </div>
           ) : (
             // 3. INITIALIZING, PERMISSION DENIED, OR ERROR STATE
-            <div className="text-center p-6 space-y-4 max-w-md">
+            <div className="text-center p-4 sm:p-6 space-y-4 max-w-md">
               {isInitializing ? (
                 <div className="flex flex-col items-center gap-3 text-stone-300">
                   <RefreshCw className="w-8 h-8 text-[#D92B8A] animate-spin" />
@@ -319,20 +353,19 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
                   </p>
                 </div>
               ) : isPermissionDenied ? (
-                // CLEAR PERMISSION DENIED MESSAGE WITH RETRY (Requirement 5)
                 <div className="space-y-4">
                   <div className="w-14 h-14 rounded-full bg-rose-950/80 text-rose-400 border border-rose-700/60 flex items-center justify-center mx-auto shadow-sm">
                     <ShieldAlert className="w-7 h-7" />
                   </div>
                   <div className="space-y-1.5 text-stone-200">
                     <h3 className="font-display font-black text-lg uppercase text-rose-300">
-                      Camera Access Required
+                      Camera Access Needed
                     </h3>
                     <p className="text-xs sm:text-sm text-stone-300 leading-relaxed">
-                      Camera access is required for <strong>CAPTURE IT</strong> so you can photograph your homework, textbook pages, handwritten notes, equations, diagrams, or worksheets.
+                      Camera access is needed for <strong>CAPTURE IT</strong> to photograph textbook pages, handwritten homework, diagrams or worksheets.
                     </p>
                     <p className="text-xs font-mono text-stone-400 pt-1">
-                      Please allow camera permission in your browser or address bar settings, then click Try Again below.
+                      You can retry browser permission or use your device camera shutter directly below:
                     </p>
                   </div>
 
@@ -349,10 +382,10 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="px-5 py-3.5 rounded-full bg-stone-800 hover:bg-stone-700 text-stone-200 font-display font-bold text-xs uppercase tracking-wider transition-all border border-stone-700 flex items-center justify-center gap-2 cursor-pointer"
+                      className="px-5 py-3.5 rounded-full bg-stone-800 hover:bg-stone-700 text-stone-100 font-display font-bold text-xs uppercase tracking-wider transition-all border border-stone-700 flex items-center justify-center gap-2 cursor-pointer"
                     >
-                      <ImageIcon className="w-4 h-4" />
-                      <span>Choose Photo Instead</span>
+                      <Camera className="w-4 h-4 text-[#D92B8A]" />
+                      <span>Device Camera Shutter / File</span>
                     </button>
                   </div>
                 </div>
@@ -385,7 +418,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
                       className="px-5 py-3.5 rounded-full bg-stone-800 hover:bg-stone-700 text-white font-display font-bold text-xs uppercase tracking-wider transition-all border border-stone-700 flex items-center justify-center gap-2 cursor-pointer"
                     >
                       <ImageIcon className="w-4 h-4" />
-                      <span>Select Photo</span>
+                      <span>Select or Snap Photo</span>
                     </button>
                   </div>
                 </div>
@@ -394,7 +427,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
           )}
         </div>
 
-        {/* Hidden Native File/Camera Input */}
+        {/* Hidden Native File/Camera Input with capture="environment" for instant mobile shutter */}
         <input
           ref={fileInputRef}
           type="file"
@@ -409,7 +442,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
         <div className="px-5 py-2.5 bg-stone-100 border-t border-stone-200 flex items-center justify-between text-xs font-mono text-stone-600">
           <span className="truncate">{subtitle}</span>
           <span className="shrink-0 font-bold text-stone-800 uppercase hidden sm:inline">
-            Automatic OCR & Transcribe
+            Smart OCR & Handwriting Transcription
           </span>
         </div>
 
@@ -448,7 +481,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
                 className="py-3 px-4 rounded-xl border border-stone-300 hover:bg-stone-50 text-stone-700 font-display font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-colors"
               >
                 <ImageIcon className="w-4 h-4 text-stone-500" />
-                <span>Choose or Upload Photo</span>
+                <span>Device Camera Shutter / File</span>
               </button>
 
               {stream && (

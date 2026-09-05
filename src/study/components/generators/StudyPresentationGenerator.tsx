@@ -15,18 +15,21 @@ import {
 } from 'lucide-react';
 import { PresentationResult, StudyToolInput } from '../../types';
 import { generateStudyTool } from '../../services/aiService';
-import { SourceMaterialUpload } from '../../../build/components/SourceMaterialUpload';
-import { saveResourceToStorage } from '../../../build/utils/storage';
+import { SourceMaterialUpload } from '../SourceMaterialUpload';
+import { saveResourceToStorage } from '../../utils/storage';
 import { useAuthCredit } from '../../../context/AuthCreditContext';
+import { GlobalNavigationButtons } from '../../../components/GlobalNavigationButtons';
 
 interface StudyPresentationGeneratorProps {
   onBack: () => void;
+  onGoHome?: () => void;
   onSaved?: () => void;
   existingResource?: PresentationResult;
 }
 
 export const StudyPresentationGenerator: React.FC<StudyPresentationGeneratorProps> = ({
   onBack,
+  onGoHome,
   onSaved,
   existingResource,
 }) => {
@@ -122,7 +125,7 @@ export const StudyPresentationGenerator: React.FC<StudyPresentationGeneratorProp
     let text = `# ${presentation.title}\nSubtitle: ${presentation.subtitle || ''}\nSubject: ${presentation.subject || category}\n\n`;
     presentation.slides.forEach((s, idx) => {
       text += `## Slide ${idx + 1}: ${s.title}\n`;
-      s.bullets.forEach((b) => (text += `- ${b}\n`));
+      (s.bullets || []).forEach((b) => (text += `- ${b}\n`));
       if (s.speakerNotes) text += `\nSpeaker Notes: ${s.speakerNotes}\n`;
       if (s.discussionPrompt) text += `Discussion Prompt: ${s.discussionPrompt}\n`;
       text += '\n---\n\n';
@@ -146,29 +149,25 @@ export const StudyPresentationGenerator: React.FC<StudyPresentationGeneratorProp
   const currentSlide = presentation?.slides?.[activeSlideIndex];
 
   return (
-    <div className={`w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8 ${isFullscreen ? 'fixed inset-0 z-50 bg-[#161616] p-8 max-w-none overflow-y-auto' : ''}`}>
+    <div id="active-study-tool-stage" className={`w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 ${isFullscreen ? 'fixed inset-0 z-50 bg-[#161616] p-8 max-w-none overflow-y-auto' : ''}`}>
+      {/* Top Navigation: [BACK] [HOME] */}
+      {!isFullscreen && (
+        <div className="flex items-center justify-between">
+          <GlobalNavigationButtons onBack={onBack} onGoHome={onGoHome} />
+        </div>
+      )}
+
       {/* Top Header */}
       <div className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-5 border-b ${isFullscreen ? 'border-stone-800' : 'border-stone-200'}`}>
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={onBack}
-            className={`p-2.5 rounded-full border transition-colors cursor-pointer ${
-              isFullscreen ? 'bg-stone-900 border-stone-800 text-white hover:bg-stone-800' : 'bg-white hover:bg-stone-100 border-stone-200 text-stone-700'
-            }`}
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </button>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-xs font-bold text-[#E63956] uppercase tracking-wider">
-                STUDY TOOL 06
-              </span>
-            </div>
-            <h1 className={`font-display font-black text-2xl sm:text-3xl uppercase tracking-tight ${isFullscreen ? 'text-white' : 'text-[#161616]'}`}>
-              PRESENTATION SLIDE GENERATOR
-            </h1>
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-xs font-bold text-[#E63956] uppercase tracking-wider">
+              STUDY TOOL 06
+            </span>
           </div>
+          <h1 className={`font-display font-black text-2xl sm:text-3xl uppercase tracking-tight ${isFullscreen ? 'text-white' : 'text-[#161616]'}`}>
+            PRESENTATION SLIDE GENERATOR
+          </h1>
         </div>
 
         {presentation && Array.isArray(presentation.slides) && presentation.slides.length > 0 && (
@@ -369,7 +368,7 @@ export const StudyPresentationGenerator: React.FC<StudyPresentationGeneratorProp
 
                 {/* Bullets */}
                 <div className="space-y-4 my-auto py-4">
-                  {currentSlide.bullets.map((bullet, bIdx) => (
+                  {(currentSlide.bullets || []).map((bullet, bIdx) => (
                     <div key={bIdx} className="flex items-start gap-3">
                       <span className="w-2 h-2 rounded-full bg-[#E63956] mt-2.5 shrink-0" />
                       <p className={`text-base sm:text-xl font-normal leading-relaxed ${isFullscreen ? 'text-stone-200' : 'text-stone-700'}`}>

@@ -94,6 +94,7 @@ export const StudyThreeWaysSection: React.FC<StudyThreeWaysSectionProps> = ({
             return (
               <div
                 key={card.id}
+                id={`method-card-${card.id}`}
                 onClick={() => handleCardClick(card.id)}
                 className={`bg-white rounded-[2rem] border transition-all p-6 sm:p-7 flex flex-col justify-between cursor-pointer group ${
                   isSelected

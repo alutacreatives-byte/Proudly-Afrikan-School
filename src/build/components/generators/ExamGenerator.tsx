@@ -1,20 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  FileCheck, 
-  Sparkles, 
-  Printer, 
-  Copy, 
-  Bookmark, 
-  Check, 
-  ChevronDown,
+import React, { useState } from 'react';
+import {
+  FileQuestion,
+  Sparkles,
+  Printer,
+  Copy,
+  Bookmark,
+  Check,
+  ArrowLeft,
+  BookOpen,
   Clock,
   Award,
-  Layers,
+  Download,
+  Eye,
+  EyeOff,
   CheckCircle2,
-  FileDown
+  Layers,
+  AlertCircle
 } from 'lucide-react';
-import { ExamPaper, ExamSection, ExamQuestion } from '../../types';
-import { SUBJECT_CATEGORIES, GRADE_LEVELS, DIFFICULTY_LEVELS } from '../../data/subjects';
+import { ExamResult } from '../../types';
+import { generateExam } from '../../services/buildService';
 import { SourceMaterialUpload } from '../SourceMaterialUpload';
 import { saveResourceToStorage } from '../../utils/storage';
 import { useAuthCredit } from '../../../context/AuthCreditContext';
@@ -24,7 +28,7 @@ interface ExamGeneratorProps {
   onBack: () => void;
   onGoHome?: () => void;
   onSaved?: () => void;
-  existingResource?: ExamPaper;
+  existingResource?: ExamResult;
 }
 
 export const ExamGenerator: React.FC<ExamGeneratorProps> = ({
@@ -36,48 +40,37 @@ export const ExamGenerator: React.FC<ExamGeneratorProps> = ({
   const { canAfford, consumeCredits, openAuthModal } = useAuthCredit();
 
   // Form State
-  const [subject, setSubject] = useState<string>(existingResource?.subject || 'Sciences & STEM');
-  const [topic, setTopic] = useState<string>(existingResource?.topic || '');
+  const [subject, setSubject] = useState<string>(existingResource?.subject || 'AFRICAN HISTORY');
+  const [topic, setTopic] = useState<string>(existingResource?.topic || existingResource?.title || '');
   const [gradeLevel, setGradeLevel] = useState<string>(existingResource?.gradeLevel || 'Senior Secondary / High School (Grades 9-12)');
   const [difficulty, setDifficulty] = useState<string>(existingResource?.difficulty || 'Intermediate');
   const [durationMinutes, setDurationMinutes] = useState<number>(existingResource?.durationMinutes || 60);
   const [totalMarks, setTotalMarks] = useState<number>(existingResource?.totalMarks || 50);
   const [questionCount, setQuestionCount] = useState<number>(10);
-  const [institutionHeader, setInstitutionHeader] = useState<string>(existingResource?.institutionHeader || 'Proudly Afrikan Examination Board');
   const [instructions, setInstructions] = useState<string>('');
-  const [sourceMaterial, setSourceMaterial] = useState<string>('');
-  const [sourceFileName, setSourceFileName] = useState<string>(existingResource?.sourceDocName || '');
+  const [sourceMaterial, setSourceMaterial] = useState<string>(existingResource?.sourceSnippet || '');
+  const [sourceFileName, setSourceFileName] = useState<string>(existingResource?.documentName || '');
 
-  // UI & Output States
+  // Result & View State
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
-  const [exam, setExam] = useState<ExamPaper | null>(existingResource || null);
-  const [showMarkingGuide, setShowMarkingGuide] = useState<boolean>(false);
-  const [copied, setCopied] = useState<boolean>(false);
+  const [exam, setExam] = useState<ExamResult | null>(
+    existingResource && Array.isArray(existingResource.sections) && existingResource.sections.length > 0
+      ? existingResource
+      : null
+  );
+  const [showMarkingScheme, setShowMarkingScheme] = useState<boolean>(false);
   const [saved, setSaved] = useState<boolean>(false);
+  const [copied, setCopied] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (existingResource) {
-      setExam(existingResource);
-      if (existingResource.subject) setSubject(existingResource.subject);
-      if (existingResource.topic) setTopic(existingResource.topic);
-      if (existingResource.gradeLevel) setGradeLevel(existingResource.gradeLevel);
-      if (existingResource.difficulty) setDifficulty(existingResource.difficulty);
-      if (existingResource.durationMinutes) setDurationMinutes(existingResource.durationMinutes);
-      if (existingResource.totalMarks) setTotalMarks(existingResource.totalMarks);
-      if (existingResource.institutionHeader) setInstitutionHeader(existingResource.institutionHeader);
-      if (existingResource.sourceDocName) setSourceFileName(existingResource.sourceDocName);
-    }
-  }, [existingResource]);
-
   const handleGenerate = async () => {
-    if (!topic.trim()) {
-      setError('Please enter an exam topic or concept.');
+    if (!topic.trim() && !sourceMaterial.trim()) {
+      setError('Please provide an examination topic or upload source curriculum material.');
       return;
     }
 
     if (!canAfford('EXAM')) {
-      setError('Insufficient credits for Exam generation. Please upgrade your plan or top up.');
+      setError('Insufficient credits for Exam Paper generation. Please upgrade your plan or top up.');
       openAuthModal('signup');
       return;
     }
@@ -86,44 +79,23 @@ export const ExamGenerator: React.FC<ExamGeneratorProps> = ({
     setIsGenerating(true);
 
     try {
-      const response = await fetch('/api/generate/exam', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          subject,
-          topic,
-          gradeLevel,
-          difficulty,
-          durationMinutes,
-          totalMarks,
-          questionCount,
-          institutionHeader,
-          instructions,
-          sourceMaterial,
-        }),
+      const result = await generateExam({
+        subject,
+        topic: topic.trim() || 'Comprehensive Curriculum Assessment',
+        gradeLevel,
+        difficulty,
+        durationMinutes,
+        totalMarks,
+        questionCount,
+        instructions,
+        sourceMaterial: sourceMaterial.trim() || undefined,
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to generate examination paper.');
-      }
-
-      const resData = await response.json();
-      if (resData.success && resData.data) {
-        const generatedExam: ExamPaper = {
-          ...resData.data,
-          sourceDocName: sourceFileName || undefined,
-          toolType: 'exam',
-        };
-        setExam(generatedExam);
-        saveResourceToStorage(generatedExam);
-        if (onSaved) onSaved();
-        await consumeCredits('EXAM', `Generated Exam: ${topic}`);
-      } else {
-        throw new Error(resData.error || 'Server returned invalid exam format.');
-      }
+      setExam(result);
+      await consumeCredits('EXAM', `Generated Exam Paper: ${result.title}`);
     } catch (err: any) {
       console.error(err);
-      setError(err.message || 'Generation failed. Please try again.');
+      setError(err.message || 'Exam generation failed. Please try again.');
     } finally {
       setIsGenerating(false);
     }
@@ -131,7 +103,17 @@ export const ExamGenerator: React.FC<ExamGeneratorProps> = ({
 
   const handleSave = () => {
     if (!exam) return;
-    saveResourceToStorage(exam);
+    saveResourceToStorage({
+      id: exam.id || `exam-${Date.now()}`,
+      toolType: 'exam',
+      title: exam.title,
+      subject: exam.subject || subject,
+      topic: exam.topic || topic,
+      createdAt: new Date().toISOString(),
+      data: exam,
+      sourceSnippet: sourceMaterial ? sourceMaterial.slice(0, 300) : undefined,
+      documentName: sourceFileName || undefined,
+    });
     setSaved(true);
     if (onSaved) onSaved();
     setTimeout(() => setSaved(false), 2500);
@@ -139,37 +121,36 @@ export const ExamGenerator: React.FC<ExamGeneratorProps> = ({
 
   const handleCopy = () => {
     if (!exam) return;
-    let fullText = `${exam.institutionHeader || ''}\n`;
-    fullText += `${exam.title.toUpperCase()}\n`;
-    fullText += `Subject: ${exam.subject} | Grade: ${exam.gradeLevel} | Duration: ${exam.durationMinutes} mins | Total: ${exam.totalMarks} Marks\n\n`;
-    const instructions = exam.generalInstructions || (exam as any).instructions;
-    if (instructions && instructions.length > 0) {
-      fullText += `INSTRUCTIONS:\n${instructions.map((ins: string, i: number) => `${i + 1}. ${ins}`).join('\n')}\n\n`;
-    }
-    exam.sections.forEach((sec, secIdx) => {
-      const label = (sec as any).sectionLabel || String.fromCharCode(65 + secIdx);
-      const title = sec.title || (sec as any).sectionTitle || `SECTION ${label}`;
-      fullText += `=== SECTION ${label}: ${title.toUpperCase()} (${sec.totalMarks} Marks) ===\n`;
-      if (sec.instructions) fullText += `${sec.instructions}\n`;
-      sec.questions.forEach((q, qIdx) => {
-        const qNum = q.questionNumber || (q as any).number || qIdx + 1;
-        const qPrompt = q.prompt || (q as any).text || '';
-        const bloom = (q as any).bloomTaxonomyLevel ? ` - (${(q as any).bloomTaxonomyLevel})` : '';
-        fullText += `\nQuestion ${qNum} [${q.marks} Marks]${bloom}\n`;
-        fullText += `${qPrompt}\n`;
+    let text = `${exam.institutionHeader || 'PROUDLY AFRIKAN EXAMINATION BOARD'}\n`;
+    text += `${exam.title}\nSubject: ${exam.subject} | Grade: ${exam.gradeLevel}\nTime Allowed: ${exam.durationMinutes} Minutes | Total Marks: ${exam.totalMarks}\n\n`;
+    text += `GENERAL INSTRUCTIONS:\n`;
+    (exam.generalInstructions || []).forEach((inst, i) => {
+      text += `${i + 1}. ${inst}\n`;
+    });
+    text += `\n`;
+
+    (exam.sections || []).forEach((sec) => {
+      text += `=========================================\n${sec.title.toUpperCase()} (${sec.totalMarks} MARKS)\n${sec.instructions}\n=========================================\n\n`;
+      (sec.questions || []).forEach((q) => {
+        text += `Question ${q.questionNumber} [${q.marks} Marks]\n${q.prompt}\n`;
         if (q.options && q.options.length > 0) {
-          fullText += `${q.options.join('\n')}\n`;
+          q.options.forEach((opt) => {
+            text += `  ${opt}\n`;
+          });
         }
-        if (showMarkingGuide) {
-          const answer = q.correctAnswer || (q as any).correctAnswerOrRubric;
-          if (answer) fullText += `\n>> Marking Rubric / Answer Key:\n${answer}\n`;
-          if (q.markingGuidance) fullText += `Guidance: ${q.markingGuidance}\n`;
+        if (showMarkingScheme) {
+          if (q.correctAnswer) text += `  >> Correct Answer: ${q.correctAnswer}\n`;
+          if (q.markingGuidance) text += `  >> Marking Guidance: ${q.markingGuidance}\n`;
         }
+        text += `\n`;
       });
-      fullText += '\n';
     });
 
-    navigator.clipboard.writeText(fullText);
+    if (showMarkingScheme && exam.overallMarkingNotes) {
+      text += `\nOVERALL MARKING & MODERATION NOTES:\n${exam.overallMarkingNotes}\n`;
+    }
+
+    navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -179,391 +160,388 @@ export const ExamGenerator: React.FC<ExamGeneratorProps> = ({
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+    <div className="w-full max-w-5xl mx-auto px-4 py-8 space-y-8 print:py-0 print:px-0">
       {/* Top Header & Navigation */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-5 border-b border-stone-200">
-        <div className="flex items-center gap-4">
-          <GlobalNavigationButtons onBack={onBack} onGoHome={onGoHome} />
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#E63956]"></span>
-              <span className="font-mono text-base font-bold uppercase tracking-wider text-[#E63956]">
-                GENERATOR 01 • EXAM & TEST MAKER
-              </span>
-            </div>
-            <h1 className="font-display font-black text-2xl sm:text-3xl uppercase tracking-tight text-[#161616]">
-              Examination Paper Builder
-            </h1>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200 pb-5 print:hidden">
+        <GlobalNavigationButtons onBack={onBack} onGoHome={onGoHome} />
+        <div className="flex items-center gap-3">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E05A2B]/10 text-[#E05A2B] font-mono text-xs font-bold uppercase tracking-wider">
+            <Award className="w-3.5 h-3.5" />
+            <span>30 Credits / Paper</span>
+          </span>
+          <span className="font-mono text-xs text-stone-500 uppercase">
+            Build • Assessment Suite
+          </span>
+        </div>
+      </div>
+
+      {/* Title block */}
+      <div className="space-y-2 print:hidden">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#18181B] text-white text-xs font-mono font-bold uppercase">
+          <FileQuestion className="w-3.5 h-3.5 text-[#E05A2B]" />
+          <span>Examiner Studio</span>
+        </div>
+        <h1 className="font-display font-black text-3xl sm:text-4xl uppercase tracking-tight text-stone-900">
+          Examination Paper & Marking Scheme Builder
+        </h1>
+        <p className="text-stone-600 text-sm max-w-2xl leading-relaxed">
+          Generate complete, structured academic examinations with Section A (Multiple Choice), Section B (Analytical Short Answers & Problem Solving), authentic question weighting, and a comprehensive teacher moderation rubric.
+        </p>
+      </div>
+
+      {/* Generator Configuration Form (Hidden if printing) */}
+      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200 shadow-sm space-y-6 print:hidden">
+        <h2 className="font-display font-black text-lg uppercase tracking-wider text-stone-900 flex items-center gap-2 border-b border-stone-100 pb-3">
+          <Sparkles className="w-5 h-5 text-[#E05A2B]" />
+          <span>Configure Examination Specifications</span>
+        </h2>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="font-display font-bold text-xs uppercase tracking-wider text-stone-700">
+              Subject / Academic Domain *
+            </label>
+            <select
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border border-stone-300 bg-[#FAF8F5] text-stone-900 font-medium text-sm focus:outline-none focus:ring-2 focus:ring-[#E05A2B]"
+            >
+              <option value="AFRICAN HISTORY">African History & Heritage</option>
+              <option value="PHYSICAL SCIENCES">Physical Sciences & Chemistry</option>
+              <option value="LIFE SCIENCES">Life Sciences & Biology</option>
+              <option value="MATHEMATICS">Mathematics & Calculus</option>
+              <option value="GEOGRAPHY & CLIMATE">Geography & Environmental Systems</option>
+              <option value="ECONOMICS & COMMERCE">Economics, Finance & Trade</option>
+              <option value="CIVICS & POLITICAL SCIENCE">Civics & Governance</option>
+              <option value="LITERATURE & LANGUAGES">African Literature & Rhetoric</option>
+              <option value="INFORMATION TECHNOLOGY">Computer Science & Algorithms</option>
+            </select>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="font-display font-bold text-xs uppercase tracking-wider text-stone-700">
+              Exam Topic / Focus Unit *
+            </label>
+            <input
+              type="text"
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+              placeholder="e.g. Resistance to Colonial Rule & The Battle of Adwa"
+              className="w-full px-4 py-3 rounded-xl border border-stone-300 bg-[#FAF8F5] text-stone-900 font-medium text-sm focus:outline-none focus:ring-2 focus:ring-[#E05A2B]"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="font-display font-bold text-xs uppercase tracking-wider text-stone-700">
+              Grade / Learning Level
+            </label>
+            <select
+              value={gradeLevel}
+              onChange={(e) => setGradeLevel(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border border-stone-300 bg-[#FAF8F5] text-stone-900 font-medium text-sm focus:outline-none focus:ring-2 focus:ring-[#E05A2B]"
+            >
+              <option value="Junior Secondary / Middle School (Grades 6-8)">Junior Secondary (Grades 6-8)</option>
+              <option value="Senior Secondary / High School (Grades 9-12)">Senior Secondary / High School (Grades 9-12)</option>
+              <option value="Matriculation / Grade 12 National Exam Prep">Matriculation / Grade 12 National Prep</option>
+              <option value="Undergraduate / Tertiary Level">Undergraduate / Tertiary Level</option>
+              <option value="Adult / Professional Certification">Adult & Professional Certification</option>
+            </select>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="font-display font-bold text-xs uppercase tracking-wider text-stone-700">
+              Rigor & Difficulty
+            </label>
+            <select
+              value={difficulty}
+              onChange={(e) => setDifficulty(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border border-stone-300 bg-[#FAF8F5] text-stone-900 font-medium text-sm focus:outline-none focus:ring-2 focus:ring-[#E05A2B]"
+            >
+              <option value="Standard Foundation">Standard Foundation (Low to Medium)</option>
+              <option value="Intermediate">Intermediate (CAPS / General National Standard)</option>
+              <option value="Advanced / Honors">Advanced / Honors (High Cognitive Demand)</option>
+              <option value="Olympiad / Distinction">Olympiad & Competitive Distinction</option>
+            </select>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="font-display font-bold text-xs uppercase tracking-wider text-stone-700">
+              Duration (Minutes)
+            </label>
+            <input
+              type="number"
+              min={15}
+              max={180}
+              step={15}
+              value={durationMinutes}
+              onChange={(e) => setDurationMinutes(Number(e.target.value) || 60)}
+              className="w-full px-4 py-3 rounded-xl border border-stone-300 bg-[#FAF8F5] text-stone-900 font-medium text-sm focus:outline-none focus:ring-2 focus:ring-[#E05A2B]"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="font-display font-bold text-xs uppercase tracking-wider text-stone-700">
+              Total Marks Target
+            </label>
+            <input
+              type="number"
+              min={20}
+              max={150}
+              step={10}
+              value={totalMarks}
+              onChange={(e) => setTotalMarks(Number(e.target.value) || 50)}
+              className="w-full px-4 py-3 rounded-xl border border-stone-300 bg-[#FAF8F5] text-stone-900 font-medium text-sm focus:outline-none focus:ring-2 focus:ring-[#E05A2B]"
+            />
           </div>
         </div>
 
-        {exam && (
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              onClick={() => setShowMarkingGuide(!showMarkingGuide)}
-              className={`px-4 py-2 rounded-full font-mono text-base font-bold uppercase tracking-wider border transition-all cursor-pointer ${
-                showMarkingGuide
-                  ? 'bg-emerald-600 border-emerald-600 text-white shadow-xs'
-                  : 'bg-white border-stone-200 text-stone-700 hover:bg-stone-50'
-              }`}
-            >
-              {showMarkingGuide ? 'Hide Marking Rubric' : 'Show Marking Rubric'}
-            </button>
-            <button
-              onClick={handleCopy}
-              className="px-4 py-2 rounded-full bg-white hover:bg-stone-50 border border-stone-200 font-mono text-base font-bold text-stone-700 flex items-center gap-1.5 cursor-pointer shadow-xs"
-            >
-              {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
-              <span>{copied ? 'Copied' : 'Copy'}</span>
-            </button>
-            <button
-              onClick={handlePrint}
-              className="px-4 py-2 rounded-full bg-white hover:bg-stone-50 border border-stone-200 font-mono text-base font-bold text-stone-700 flex items-center gap-1.5 cursor-pointer shadow-xs"
-            >
-              <Printer className="w-4 h-4" />
-              <span>Print / PDF</span>
-            </button>
-            <button
-              onClick={handleSave}
-              className="px-5 py-2 rounded-full bg-[#161616] hover:bg-stone-800 text-white font-mono text-base font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shadow-xs"
-            >
-              {saved ? <Check className="w-4 h-4 text-emerald-400" /> : <Bookmark className="w-4 h-4 text-[#E63956]" />}
-              <span>{saved ? 'Saved!' : 'Save Build'}</span>
-            </button>
+        {/* Source material upload (Optional) */}
+        <div className="space-y-2">
+          <label className="font-display font-bold text-xs uppercase tracking-wider text-stone-700">
+            Source Material, Past Papers, or Curriculum Excerpt (Optional)
+          </label>
+          <SourceMaterialUpload
+            sourceMaterial={sourceMaterial}
+            sourceFileName={sourceFileName}
+            onTextExtracted={(text, filename) => {
+              setSourceMaterial(text);
+              if (filename) setSourceFileName(filename);
+            }}
+            onClear={() => {
+              setSourceMaterial('');
+              setSourceFileName('');
+            }}
+          />
+        </div>
+
+        {/* Specific instructions */}
+        <div className="space-y-1.5">
+          <label className="font-display font-bold text-xs uppercase tracking-wider text-stone-700">
+            Specific Teacher / Examiner Directives (Optional)
+          </label>
+          <textarea
+            rows={2}
+            value={instructions}
+            onChange={(e) => setInstructions(e.target.value)}
+            placeholder="e.g. Include 1 source interpretation question and emphasize ethical reasoning."
+            className="w-full px-4 py-3 rounded-xl border border-stone-300 bg-[#FAF8F5] text-stone-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#E05A2B]"
+          />
+        </div>
+
+        {error && (
+          <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-2.5">
+            <AlertCircle className="w-5 h-5 shrink-0 text-red-500" />
+            <span>{error}</span>
           </div>
         )}
+
+        {/* Generate Button */}
+        <button
+          type="button"
+          onClick={handleGenerate}
+          disabled={isGenerating}
+          className="w-full py-4 rounded-2xl bg-[#E05A2B] hover:bg-[#c94d22] text-white font-display font-black text-sm uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.99]"
+        >
+          {isGenerating ? (
+            <>
+              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <span>Synthesizing Exam Paper & Marking Memo...</span>
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-5 h-5" />
+              <span>Generate Examination Paper (30 Credits)</span>
+            </>
+          )}
+        </button>
       </div>
 
-      {/* STACKED LAYOUT: TOOL OPTIONS on top, GENERATED RESULT directly underneath */}
-      <div className="flex flex-col gap-10 w-full">
-        {/* Section 1: TOOL OPTIONS */}
-        <div className="w-full space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b-2 border-stone-800">
-            <h2 className="font-mono text-base sm:text-lg font-bold uppercase tracking-wider text-stone-900 flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-[#E63956]"></span>
-              TOOL OPTIONS
-            </h2>
-            <span className="font-mono text-base text-stone-500">Exam Parameters & Specifications</span>
+      {/* Examination Output Screen */}
+      {exam && (
+        <div className="space-y-6">
+          {/* Action Toolbar */}
+          <div className="flex flex-wrap items-center justify-between gap-3 p-4 bg-white rounded-2xl border border-stone-200 shadow-sm print:hidden">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowMarkingScheme(!showMarkingScheme)}
+                className={`px-4 py-2 rounded-xl text-xs font-display font-black uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
+                  showMarkingScheme
+                    ? 'bg-[#18181B] text-white shadow-sm'
+                    : 'bg-stone-100 hover:bg-stone-200 text-stone-800'
+                }`}
+              >
+                {showMarkingScheme ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                <span>{showMarkingScheme ? 'Hide Marking Memo' : 'Show Marking Memo'}</span>
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleCopy}
+                className="px-4 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-display font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                <span>{copied ? 'Copied' : 'Copy Text'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handlePrint}
+                className="px-4 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-display font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <Printer className="w-4 h-4" />
+                <span>Print Paper</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSave}
+                className="px-4 py-2 rounded-xl bg-[#E05A2B] hover:bg-[#c94d22] text-white text-xs font-display font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
+              >
+                {saved ? <CheckCircle2 className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
+                <span>{saved ? 'Saved to My Sets' : 'Save Paper'}</span>
+              </button>
+            </div>
           </div>
 
-          <div className="bg-white border border-stone-200/90 rounded-[2rem] p-6 sm:p-8 shadow-xs space-y-6">
-            {/* Row 1: Subject & Central Topic */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Subject Dropdown */}
-              <div className="space-y-2">
-                <label className="font-mono text-base font-bold uppercase tracking-wider text-stone-700">
-                  Subject Domain
-                </label>
-                <select
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl font-mono text-base text-stone-800 focus:outline-none focus:border-[#E63956]"
-                >
-                  {SUBJECT_CATEGORIES.map((cat) => (
-                    <option key={cat.id} value={cat.name}>
-                      {cat.name}
-                    </option>
+          {/* Authentic Examination Sheet */}
+          <div className="bg-white rounded-3xl p-8 sm:p-12 border border-stone-300 shadow-md space-y-8 print:border-none print:shadow-none print:p-0">
+            {/* Institution Header */}
+            <div className="text-center border-b-2 border-stone-900 pb-6 space-y-2">
+              <div className="font-display font-black text-base sm:text-lg uppercase tracking-widest text-stone-800">
+                {exam.institutionHeader || 'PROUDLY AFRIKAN EXAMINATION BOARD'}
+              </div>
+              <h2 className="font-display font-black text-2xl sm:text-3xl uppercase tracking-tight text-stone-950">
+                {exam.title}
+              </h2>
+              <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-1 font-mono text-xs font-bold text-stone-600 uppercase">
+                <span>SUBJECT: {exam.subject}</span>
+                <span>•</span>
+                <span>LEVEL: {exam.gradeLevel}</span>
+                <span>•</span>
+                <span>DIFFICULTY: {exam.difficulty}</span>
+              </div>
+              <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-1 font-mono text-xs font-black text-stone-900 uppercase pt-2">
+                <span className="px-3 py-1 bg-stone-100 rounded-lg">TIME ALLOWED: {exam.durationMinutes} MINUTES</span>
+                <span className="px-3 py-1 bg-stone-100 rounded-lg">TOTAL MARKS: {exam.totalMarks} MARKS</span>
+              </div>
+            </div>
+
+            {/* General Instructions */}
+            {exam.generalInstructions && exam.generalInstructions.length > 0 && (
+              <div className="p-5 rounded-2xl bg-[#FAF8F5] border border-stone-200 space-y-2">
+                <div className="font-display font-black text-xs uppercase tracking-wider text-stone-800">
+                  General Instructions to Candidates:
+                </div>
+                <ol className="list-decimal list-inside space-y-1 text-xs text-stone-700 leading-relaxed font-medium">
+                  {exam.generalInstructions.map((instruction, idx) => (
+                    <li key={idx}>{instruction}</li>
                   ))}
-                </select>
-              </div>
-
-              {/* Topic Input */}
-              <div className="space-y-2">
-                <label className="font-mono text-base font-bold uppercase tracking-wider text-stone-700">
-                  Central Exam Topic *
-                </label>
-                <input
-                  type="text"
-                  value={topic}
-                  onChange={(e) => setTopic(e.target.value)}
-                  placeholder="e.g. Chemical Bonding, African Independence Movements"
-                  className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl font-sans text-base text-stone-900 focus:outline-none focus:border-[#E63956]"
-                />
-              </div>
-            </div>
-
-            {/* Row 2: Target Grade Level & Difficulty */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="font-mono text-base font-bold uppercase tracking-wider text-stone-700">
-                  Target Grade Level
-                </label>
-                <select
-                  value={gradeLevel}
-                  onChange={(e) => setGradeLevel(e.target.value)}
-                  className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl font-mono text-base text-stone-800 focus:outline-none focus:border-[#E63956]"
-                >
-                  {GRADE_LEVELS.map((gl) => (
-                    <option key={gl} value={gl}>
-                      {gl}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="font-mono text-base font-bold uppercase tracking-wider text-stone-700">
-                  Difficulty
-                </label>
-                <select
-                  value={difficulty}
-                  onChange={(e) => setDifficulty(e.target.value)}
-                  className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl font-mono text-base text-stone-800 focus:outline-none focus:border-[#E63956]"
-                >
-                  {DIFFICULTY_LEVELS.map((d) => (
-                    <option key={d} value={d}>
-                      {d}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Row 3: Total Marks, Duration & Questions */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              <div className="space-y-2">
-                <label className="font-mono text-base font-bold uppercase tracking-wider text-stone-700">
-                  Total Marks
-                </label>
-                <input
-                  type="number"
-                  min={10}
-                  max={200}
-                  value={totalMarks}
-                  onChange={(e) => setTotalMarks(Number(e.target.value) || 50)}
-                  className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl font-mono text-base text-stone-900 focus:outline-none focus:border-[#E63956]"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="font-mono text-base font-bold uppercase tracking-wider text-stone-700">
-                  Duration (Mins)
-                </label>
-                <input
-                  type="number"
-                  min={15}
-                  max={240}
-                  value={durationMinutes}
-                  onChange={(e) => setDurationMinutes(Number(e.target.value) || 60)}
-                  className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl font-mono text-base text-stone-900 focus:outline-none focus:border-[#E63956]"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="font-mono text-base font-bold uppercase tracking-wider text-stone-700">
-                  Question Count
-                </label>
-                <input
-                  type="number"
-                  min={3}
-                  max={30}
-                  value={questionCount}
-                  onChange={(e) => setQuestionCount(Number(e.target.value) || 10)}
-                  className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl font-mono text-base text-stone-900 focus:outline-none focus:border-[#E63956]"
-                />
-              </div>
-            </div>
-
-            {/* Optional Source Document */}
-            <div className="space-y-2 pt-2 border-t border-stone-100">
-              <label className="font-mono text-base font-bold uppercase tracking-wider text-stone-700 block">
-                Attach Reference Document (Optional)
-              </label>
-              <SourceMaterialUpload
-                currentFileName={sourceFileName}
-                onContentExtracted={(text, name) => {
-                  setSourceMaterial(text);
-                  setSourceFileName(name);
-                }}
-                onClear={() => {
-                  setSourceMaterial('');
-                  setSourceFileName('');
-                }}
-              />
-            </div>
-
-            {/* Error Message */}
-            {error && (
-              <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl font-mono text-base text-rose-700">
-                {error}
+                </ol>
               </div>
             )}
 
-            {/* Generate Action Button */}
-            <button
-              type="button"
-              disabled={isGenerating}
-              onClick={handleGenerate}
-              className="w-full py-4 rounded-full bg-gradient-to-r from-[#D92B8A] via-[#E03A6A] to-[#E63956] hover:opacity-95 text-white font-display text-base font-black uppercase tracking-wider shadow-[0_6px_20px_rgba(230,57,86,0.3)] transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 disabled:opacity-50"
-            >
-              <Sparkles className="w-5 h-5" />
-              <span>{isGenerating ? 'Synthesizing Exam Paper...' : 'Generate Exam Paper'}</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Section 2: GENERATED RESULT */}
-        <div className="w-full space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b-2 border-stone-800">
-            <h2 className="font-mono text-base sm:text-lg font-bold uppercase tracking-wider text-stone-900 flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-emerald-600"></span>
-              GENERATED RESULT
-            </h2>
-            {exam && (
-              <span className="font-mono text-base text-emerald-700 font-bold">
-                Exam Paper Ready
-              </span>
-            )}
-          </div>
-
-          {exam ? (
-            <div className="bg-white border border-stone-200/90 rounded-[2rem] p-6 sm:p-10 shadow-sm space-y-8 print:border-none print:shadow-none print:p-0">
-              {/* Exam Header */}
-              <div className="border-b-2 border-stone-800 pb-5 text-center space-y-2">
-                <div className="font-mono text-sm font-black uppercase tracking-widest text-stone-500">
-                  {exam.institutionHeader || 'PROUDLY AFRIKAN EXAMINATION BOARD'}
-                </div>
-                <h2 className="font-display font-black text-2xl sm:text-3xl uppercase tracking-tight text-[#161616]">
-                  {exam.title}
-                </h2>
-                <div className="flex items-center justify-center flex-wrap gap-4 font-mono text-sm font-bold text-stone-700 pt-2">
-                  <span>SUBJECT: {exam.subject}</span>
-                  <span>•</span>
-                  <span>GRADE: {exam.gradeLevel}</span>
-                  <span>•</span>
-                  <span>TIME: {exam.durationMinutes} MINS</span>
-                  <span>•</span>
-                  <span>TOTAL MARKS: {exam.totalMarks}</span>
-                </div>
-              </div>
-
-              {/* Instructions Box */}
-              {((exam.generalInstructions && exam.generalInstructions.length > 0) || ((exam as any).instructions && (exam as any).instructions.length > 0)) && (
-                <div className="bg-stone-50 border border-stone-200 rounded-2xl p-5 space-y-2">
-                  <h3 className="font-mono text-sm font-black uppercase tracking-wider text-stone-900">
-                    INSTRUCTIONS TO CANDIDATES:
-                  </h3>
-                  <ul className="list-decimal list-inside space-y-1 font-sans text-sm text-stone-700">
-                    {(exam.generalInstructions || (exam as any).instructions).map((ins: string, i: number) => (
-                      <li key={i}>{ins}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* Sections & Questions */}
-              <div className="space-y-8">
-                {exam.sections.map((sec, secIdx) => {
-                  const label = (sec as any).sectionLabel || String.fromCharCode(65 + secIdx);
-                  const title = sec.title || (sec as any).sectionTitle || `SECTION ${label}`;
-                  return (
-                    <div key={secIdx} className="space-y-4 pt-4 border-t border-stone-200 first:border-t-0 first:pt-0">
-                      <div className="flex items-center justify-between pb-2 border-b border-stone-300">
-                        <div>
-                          <h4 className="font-display font-black text-lg text-[#161616] uppercase">
-                            SECTION {label}: {title}
-                          </h4>
-                          {sec.instructions && (
-                            <p className="font-mono text-xs text-stone-500 italic mt-0.5">
-                              {sec.instructions}
-                            </p>
-                          )}
-                        </div>
-                        <span className="font-mono text-xs font-bold uppercase tracking-wider px-3 py-1 bg-stone-100 rounded-full text-stone-700">
-                          [{sec.totalMarks} Marks]
-                        </span>
-                      </div>
-
-                      <div className="space-y-6">
-                        {sec.questions.map((q, qIdx) => {
-                          const qNum = q.questionNumber || (q as any).number || qIdx + 1;
-                          const qPrompt = q.prompt || (q as any).text || '';
-                          const bloom = (q as any).bloomTaxonomyLevel;
-                          const rubricAnswer = q.correctAnswer || (q as any).correctAnswerOrRubric;
-
-                          return (
-                            <div
-                              key={qIdx}
-                              className="bg-stone-50/70 border border-stone-200 rounded-2xl p-5 space-y-3"
-                            >
-                              <div className="flex items-start justify-between gap-3">
-                                <span className="font-display font-black text-base text-[#161616]">
-                                  QUESTION {qNum}
-                                </span>
-                                <div className="flex items-center gap-2">
-                                  {bloom && (
-                                    <span className="font-mono text-[11px] font-bold text-stone-500 uppercase px-2 py-0.5 bg-stone-200 rounded-md">
-                                      {bloom}
-                                    </span>
-                                  )}
-                                  <span className="font-mono text-xs font-bold text-[#E63956] bg-rose-50 px-2.5 py-0.5 rounded-full border border-rose-200">
-                                    [{q.marks} {q.marks === 1 ? 'Mark' : 'Marks'}]
-                                  </span>
-                                </div>
-                              </div>
-
-                              <div className="font-sans text-base text-stone-800 leading-relaxed whitespace-pre-wrap">
-                                {qPrompt}
-                              </div>
-
-                              {q.options && q.options.length > 0 && (
-                                <div className="space-y-1.5 pt-2">
-                                  {q.options.map((opt, oIdx) => (
-                                    <div
-                                      key={oIdx}
-                                      className="font-sans text-sm text-stone-700 bg-white border border-stone-200 rounded-xl px-4 py-2.5"
-                                    >
-                                      {opt}
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-
-                              {/* Marking Rubric or Answer Key (Toggleable) */}
-                              {showMarkingGuide && (
-                                <div className="mt-4 p-4 rounded-xl bg-emerald-50 border border-emerald-200 space-y-2">
-                                  <div className="font-mono text-xs font-bold uppercase tracking-wider text-emerald-800 flex items-center gap-1.5">
-                                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                                    <span>Marking Rubric / Answer Key:</span>
-                                  </div>
-                                  {rubricAnswer && (
-                                    <div className="font-sans text-sm text-emerald-900 whitespace-pre-wrap">
-                                      {rubricAnswer}
-                                    </div>
-                                  )}
-                                  {q.markingGuidance && (
-                                    <div className="font-mono text-xs text-emerald-700 pt-1 border-t border-emerald-200">
-                                      Guidance: {q.markingGuidance}
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
+            {/* Examination Sections */}
+            <div className="space-y-10">
+              {(exam.sections || []).map((section, sIdx) => (
+                <div key={section.id || sIdx} className="space-y-6">
+                  <div className="border-b border-stone-900 pb-2 flex items-center justify-between">
+                    <div>
+                      <h3 className="font-display font-black text-lg sm:text-xl uppercase text-stone-950">
+                        {section.title}
+                      </h3>
+                      {section.instructions && (
+                        <p className="text-xs text-stone-600 italic mt-0.5">
+                          {section.instructions}
+                        </p>
+                      )}
                     </div>
-                  );
-                })}
-              </div>
+                    <span className="font-mono font-black text-xs px-3 py-1 bg-stone-900 text-white rounded-lg uppercase">
+                      [{section.totalMarks} MARKS]
+                    </span>
+                  </div>
+
+                  {/* Questions List */}
+                  <div className="space-y-6">
+                    {(section.questions || []).map((q) => (
+                      <div key={q.id || q.questionNumber} className="space-y-3 pt-2">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex items-start gap-3 flex-1">
+                            <span className="font-mono font-black text-sm text-stone-900 shrink-0">
+                              {q.questionNumber}.
+                            </span>
+                            <div className="text-stone-900 text-sm font-medium leading-relaxed">
+                              {q.prompt}
+                            </div>
+                          </div>
+                          <span className="font-mono font-bold text-xs text-stone-700 shrink-0">
+                            [{q.marks} {q.marks === 1 ? 'mark' : 'marks'}]
+                          </span>
+                        </div>
+
+                        {/* Multiple Choice Options if available */}
+                        {q.options && q.options.length > 0 && (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-7">
+                            {q.options.map((opt, optIdx) => (
+                              <div
+                                key={optIdx}
+                                className="p-2.5 rounded-xl border border-stone-200 bg-[#FAF8F5] text-xs text-stone-800 font-medium"
+                              >
+                                {opt}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Marking Guidance & Memo (Visible when toggled) */}
+                        {showMarkingScheme && (
+                          <div className="mt-3 ml-7 p-4 rounded-xl bg-emerald-50/80 border border-emerald-200 space-y-2 animate-fadeIn">
+                            <div className="flex items-center gap-1.5 font-display font-bold text-xs uppercase tracking-wider text-emerald-900">
+                              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                              <span>Marking Memo & Rubric:</span>
+                            </div>
+                            {q.correctAnswer && (
+                              <div className="text-xs text-emerald-950 font-medium">
+                                <strong>Answer:</strong> {q.correctAnswer}
+                              </div>
+                            )}
+                            {q.markingGuidance && (
+                              <div className="text-xs text-emerald-900/90 leading-relaxed">
+                                <strong>Guidance:</strong> {q.markingGuidance}
+                              </div>
+                            )}
+                            {q.rubricCriteria && q.rubricCriteria.length > 0 && (
+                              <ul className="list-disc list-inside text-xs text-emerald-800 space-y-0.5 pt-1">
+                                {q.rubricCriteria.map((crit, cIdx) => (
+                                  <li key={cIdx}>{crit}</li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
-          ) : (
-            <div className="bg-white border border-[#E5E0D8] rounded-3xl p-12 text-center flex flex-col items-center justify-center space-y-4 shadow-sm min-h-[350px]">
-              <div className="w-16 h-16 rounded-2xl bg-stone-100 border border-stone-200 text-stone-400 flex items-center justify-center">
-                <FileCheck className="w-8 h-8" />
-              </div>
-              <div className="max-w-md space-y-2">
-                <h3 className="font-display font-black text-xl text-[#161616] uppercase">
-                  Exam Paper Preview
-                </h3>
-                <p className="font-sans text-base text-stone-500 leading-relaxed">
-                  Configure your exam parameters above and click <strong>Generate Exam Paper</strong> to synthesize a classroom-ready test with questions, sections, and marking guides.
+
+            {/* Overall Marking Notes */}
+            {showMarkingScheme && exam.overallMarkingNotes && (
+              <div className="p-6 rounded-2xl bg-amber-50 border border-amber-200 space-y-2">
+                <div className="font-display font-black text-xs uppercase tracking-wider text-amber-900">
+                  Moderator & Chief Examiner Notes
+                </div>
+                <p className="text-xs text-amber-950 leading-relaxed font-medium">
+                  {exam.overallMarkingNotes}
                 </p>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

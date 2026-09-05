@@ -6,6 +6,7 @@ import {
   FileCheck2, 
   Presentation, 
   GitBranch, 
+  GraduationCap,
   ArrowUpRight
 } from 'lucide-react';
 import { StudyToolType } from '../types';
@@ -75,6 +76,15 @@ const STUDY_TOOLS: ToolItem[] = [
     icon: Presentation,
     btnText: 'CREATE SLIDE DECK →',
   },
+  {
+    id: 'course',
+    toolNumber: '07',
+    tag: 'ACADEMIC SYLLABUS',
+    title: 'COURSE CURRICULUM GENERATOR',
+    subtitle: 'Generate comprehensive multi-module course curricula with milestones, key readings, and study projects.',
+    icon: GraduationCap,
+    btnText: 'BUILD CURRICULUM →',
+  },
 ];
 
 interface StudyGeneratorsSectionProps {
@@ -92,7 +102,7 @@ export const StudyGeneratorsSection: React.FC<StudyGeneratorsSectionProps> = ({
             LEARNING & STUDY SUITE
           </span>
           <h2 className="font-display font-black text-3xl sm:text-5xl lg:text-6xl text-[#161616] tracking-tighter uppercase leading-[0.92]">
-            ALL 6 STUDY TOOLS.
+            ALL 7 STUDY TOOLS.
           </h2>
         </div>
         <span className="text-xs sm:text-sm font-mono font-bold text-stone-500 uppercase tracking-wider">
@@ -100,13 +110,14 @@ export const StudyGeneratorsSection: React.FC<StudyGeneratorsSectionProps> = ({
         </span>
       </div>
 
-      {/* 6 Generator Cards in responsive grid */}
+      {/* Generator Cards in responsive grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
         {STUDY_TOOLS.map((gen) => {
           const Icon = gen.icon;
           return (
             <div
               key={gen.id}
+              id={`study-tool-card-${gen.id}`}
               onClick={() => onSelectTool(gen.id)}
               className="rounded-[2rem] bg-white border border-stone-200/90 shadow-[0_10px_30px_rgba(0,0,0,0.05)] hover:shadow-[0_18px_40px_rgba(230,57,86,0.12)] hover:border-[#E63956]/40 transition-all p-6 flex flex-col justify-between cursor-pointer group"
             >
@@ -134,7 +145,7 @@ export const StudyGeneratorsSection: React.FC<StudyGeneratorsSectionProps> = ({
               </div>
 
               <div className="mt-6 pt-3 border-t border-stone-100 flex items-center justify-between">
-                <span className="font-display font-black text-xs uppercase tracking-wider text-stone-900 group-hover:text-[#E63956] transition-colors">
+                <span id={`study-tool-btn-${gen.id}`} className="font-display font-black text-xs uppercase tracking-wider text-stone-900 group-hover:text-[#E63956] transition-colors">
                   {gen.btnText}
                 </span>
                 <ArrowUpRight className="w-4 h-4 text-stone-400 group-hover:text-[#E63956] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />

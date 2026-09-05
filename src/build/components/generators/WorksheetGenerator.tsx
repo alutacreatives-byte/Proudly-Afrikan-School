@@ -1,15 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  FileSpreadsheet, 
-  Sparkles, 
-  Printer, 
-  Copy, 
-  Bookmark, 
-  Check, 
-  CheckCircle2
+import React, { useState } from 'react';
+import {
+  FileSpreadsheet,
+  Sparkles,
+  Printer,
+  Copy,
+  Bookmark,
+  Check,
+  ArrowLeft,
+  Clock,
+  Award,
+  Eye,
+  EyeOff,
+  CheckCircle2,
+  AlertCircle,
+  BookOpen
 } from 'lucide-react';
-import { WorksheetResource } from '../../types';
-import { SUBJECT_CATEGORIES, GRADE_LEVELS, DIFFICULTY_LEVELS } from '../../data/subjects';
+import { WorksheetResult } from '../../types';
+import { generateWorksheet } from '../../services/buildService';
 import { SourceMaterialUpload } from '../SourceMaterialUpload';
 import { saveResourceToStorage } from '../../utils/storage';
 import { useAuthCredit } from '../../../context/AuthCreditContext';
@@ -19,7 +26,7 @@ interface WorksheetGeneratorProps {
   onBack: () => void;
   onGoHome?: () => void;
   onSaved?: () => void;
-  existingResource?: WorksheetResource;
+  existingResource?: WorksheetResult;
 }
 
 export const WorksheetGenerator: React.FC<WorksheetGeneratorProps> = ({
@@ -31,35 +38,46 @@ export const WorksheetGenerator: React.FC<WorksheetGeneratorProps> = ({
   const { canAfford, consumeCredits, openAuthModal } = useAuthCredit();
 
   // Form State
-  const [subject, setSubject] = useState<string>(existingResource?.subject || 'Sciences & STEM');
-  const [topic, setTopic] = useState<string>(existingResource?.topic || '');
+  const [subject, setSubject] = useState<string>(existingResource?.subject || 'PHYSICAL SCIENCES');
+  const [topic, setTopic] = useState<string>(existingResource?.topic || existingResource?.title || '');
   const [gradeLevel, setGradeLevel] = useState<string>(existingResource?.gradeLevel || 'Junior Secondary / Middle School (Grades 6-8)');
   const [difficulty, setDifficulty] = useState<string>(existingResource?.difficulty || 'Intermediate');
-  const [sourceMaterial, setSourceMaterial] = useState<string>('');
-  const [sourceFileName, setSourceFileName] = useState<string>(existingResource?.sourceDocName || '');
+  const [learningObjectives, setLearningObjectives] = useState<string>('');
+  const [activityTypes, setActivityTypes] = useState<string[]>([
+    'matching',
+    'fill-in-blanks',
+    'structured-questions',
+    'critical-thinking',
+  ]);
+  const [additionalInstructions, setAdditionalInstructions] = useState<string>('');
+  const [sourceMaterial, setSourceMaterial] = useState<string>(existingResource?.sourceSnippet || '');
+  const [sourceFileName, setSourceFileName] = useState<string>(existingResource?.documentName || '');
 
-  // UI & Output States
+  // Result & View State
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
-  const [worksheet, setWorksheet] = useState<WorksheetResource | null>(existingResource || null);
-  const [showAnswerKey, setShowAnswerKey] = useState<boolean>(false);
-  const [copied, setCopied] = useState<boolean>(false);
+  const [worksheet, setWorksheet] = useState<WorksheetResult | null>(
+    existingResource && Array.isArray(existingResource.sections) && existingResource.sections.length > 0
+      ? existingResource
+      : null
+  );
+  const [showSolutions, setShowSolutions] = useState<boolean>(false);
   const [saved, setSaved] = useState<boolean>(false);
+  const [copied, setCopied] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (existingResource) {
-      setWorksheet(existingResource);
-      if (existingResource.subject) setSubject(existingResource.subject);
-      if (existingResource.topic) setTopic(existingResource.topic);
-      if (existingResource.gradeLevel) setGradeLevel(existingResource.gradeLevel);
-      if (existingResource.difficulty) setDifficulty(existingResource.difficulty);
-      if (existingResource.sourceDocName) setSourceFileName(existingResource.sourceDocName);
+  const toggleActivityType = (type: string) => {
+    if (activityTypes.includes(type)) {
+      if (activityTypes.length > 1) {
+        setActivityTypes(activityTypes.filter((t) => t !== type));
+      }
+    } else {
+      setActivityTypes([...activityTypes, type]);
     }
-  }, [existingResource]);
+  };
 
   const handleGenerate = async () => {
-    if (!topic.trim()) {
-      setError('Please enter a worksheet topic.');
+    if (!topic.trim() && !sourceMaterial.trim()) {
+      setError('Please provide a worksheet topic or upload curriculum source material.');
       return;
     }
 
@@ -73,39 +91,27 @@ export const WorksheetGenerator: React.FC<WorksheetGeneratorProps> = ({
     setIsGenerating(true);
 
     try {
-      const response = await fetch('/api/generate/worksheet', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          subject,
-          topic,
-          gradeLevel,
-          difficulty,
-          sourceMaterial,
-        }),
+      const objectivesList = learningObjectives
+        .split('\n')
+        .map((o) => o.trim())
+        .filter(Boolean);
+
+      const result = await generateWorksheet({
+        subject,
+        topic: topic.trim() || 'Core Curriculum Practice',
+        gradeLevel,
+        difficulty,
+        learningObjectives: objectivesList.length > 0 ? objectivesList : undefined,
+        activityTypes,
+        additionalInstructions,
+        sourceMaterial: sourceMaterial.trim() || undefined,
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to generate worksheet.');
-      }
-
-      const resData = await response.json();
-      if (resData.success && resData.data) {
-        const generatedWorksheet: WorksheetResource = {
-          ...resData.data,
-          sourceDocName: sourceFileName || undefined,
-          toolType: 'worksheet',
-        };
-        setWorksheet(generatedWorksheet);
-        saveResourceToStorage(generatedWorksheet);
-        if (onSaved) onSaved();
-        await consumeCredits('WORKSHEET', `Generated Worksheet: ${topic}`);
-      } else {
-        throw new Error(resData.error || 'Invalid worksheet output from server.');
-      }
+      setWorksheet(result);
+      await consumeCredits('WORKSHEET', `Generated Worksheet: ${result.title}`);
     } catch (err: any) {
       console.error(err);
-      setError(err.message || 'Generation failed. Please try again.');
+      setError(err.message || 'Worksheet generation failed. Please try again.');
     } finally {
       setIsGenerating(false);
     }
@@ -113,7 +119,17 @@ export const WorksheetGenerator: React.FC<WorksheetGeneratorProps> = ({
 
   const handleSave = () => {
     if (!worksheet) return;
-    saveResourceToStorage(worksheet);
+    saveResourceToStorage({
+      id: worksheet.id || `worksheet-${Date.now()}`,
+      toolType: 'worksheet',
+      title: worksheet.title,
+      subject: worksheet.subject || subject,
+      topic: worksheet.topic || topic,
+      createdAt: new Date().toISOString(),
+      data: worksheet,
+      sourceSnippet: sourceMaterial ? sourceMaterial.slice(0, 300) : undefined,
+      documentName: sourceFileName || undefined,
+    });
     setSaved(true);
     if (onSaved) onSaved();
     setTimeout(() => setSaved(false), 2500);
@@ -121,304 +137,367 @@ export const WorksheetGenerator: React.FC<WorksheetGeneratorProps> = ({
 
   const handleCopy = () => {
     if (!worksheet) return;
-    let fullText = `${worksheet.title.toUpperCase()}\n`;
-    fullText += `Subject: ${worksheet.subject} | Grade: ${worksheet.gradeLevel} | Est Time: ${worksheet.estimatedDurationMinutes} mins | Total: ${worksheet.totalMarks} Marks\n\n`;
-    if (worksheet.instructions) fullText += `STUDENT INSTRUCTIONS:\n${worksheet.instructions}\n\n`;
-    worksheet.sections.forEach((sec) => {
-      fullText += `=== ${sec.title.toUpperCase()} (${sec.marks} Marks) ===\n`;
-      if (sec.instructions) fullText += `${sec.instructions}\n`;
-      sec.items.forEach((item, idx) => {
-        fullText += `${idx + 1}. ${item.prompt}\n`;
-        if (showAnswerKey && item.expectedAnswer) {
-          fullText += `   [ANSWER KEY]: ${item.expectedAnswer}\n`;
+    let text = `${worksheet.title.toUpperCase()}\n`;
+    text += `Subject: ${worksheet.subject} | Grade Level: ${worksheet.gradeLevel}\n`;
+    text += `Estimated Time: ${worksheet.estimatedDurationMinutes} mins | Total Marks: ${worksheet.totalMarks}\n`;
+    text += `Instructions: ${worksheet.instructions}\n\n`;
+
+    (worksheet.sections || []).forEach((sec) => {
+      text += `--- ${sec.title.toUpperCase()} [${sec.marks} Marks] ---\n`;
+      text += `${sec.instructions}\n\n`;
+      (sec.items || []).forEach((item, idx) => {
+        text += `${idx + 1}. ${item.prompt}\n`;
+        if (showSolutions && item.expectedAnswer) {
+          text += `   [SOLUTION]: ${item.expectedAnswer}\n`;
         }
       });
-      fullText += '\n';
+      text += `\n`;
     });
 
-    navigator.clipboard.writeText(fullText);
+    if (showSolutions && worksheet.teacherNotes) {
+      text += `TEACHER NOTES & RUBRIC:\n${worksheet.teacherNotes}\n`;
+    }
+
+    navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+    <div className="w-full max-w-5xl mx-auto px-4 py-8 space-y-8 print:py-0 print:px-0">
       {/* Top Header & Navigation */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-5 border-b border-stone-200">
-        <div className="flex items-center gap-4">
-          <GlobalNavigationButtons onBack={onBack} onGoHome={onGoHome} />
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#E63956]"></span>
-              <span className="font-mono text-base font-bold uppercase tracking-wider text-[#E63956]">
-                GENERATOR 02 • CLASSROOM WORKSHEETS
-              </span>
-            </div>
-            <h1 className="font-display font-black text-2xl sm:text-3xl uppercase tracking-tight text-[#161616]">
-              Worksheet Generator
-            </h1>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200 pb-5 print:hidden">
+        <GlobalNavigationButtons onBack={onBack} onGoHome={onGoHome} />
+        <div className="flex items-center gap-3">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E05A2B]/10 text-[#E05A2B] font-mono text-xs font-bold uppercase tracking-wider">
+            <Award className="w-3.5 h-3.5" />
+            <span>25 Credits / Worksheet</span>
+          </span>
+          <span className="font-mono text-xs text-stone-500 uppercase">
+            Build • Classroom Tools
+          </span>
+        </div>
+      </div>
+
+      {/* Title block */}
+      <div className="space-y-2 print:hidden">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#18181B] text-white text-xs font-mono font-bold uppercase">
+          <FileSpreadsheet className="w-3.5 h-3.5 text-[#E05A2B]" />
+          <span>Classroom Exercises</span>
+        </div>
+        <h1 className="font-display font-black text-3xl sm:text-4xl uppercase tracking-tight text-stone-900">
+          Classroom Mastery Worksheet Generator
+        </h1>
+        <p className="text-stone-600 text-sm max-w-2xl leading-relaxed">
+          Create structured, printable classroom activity sheets with concept matching, fill-in-the-blanks, problem solving, student header fields, and an automated teacher solution key.
+        </p>
+      </div>
+
+      {/* Configuration Form (Hidden when printing) */}
+      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200 shadow-sm space-y-6 print:hidden">
+        <h2 className="font-display font-black text-lg uppercase tracking-wider text-stone-900 flex items-center gap-2 border-b border-stone-100 pb-3">
+          <Sparkles className="w-5 h-5 text-[#E05A2B]" />
+          <span>Configure Worksheet Parameters</span>
+        </h2>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="font-display font-bold text-xs uppercase tracking-wider text-stone-700">
+              Subject *
+            </label>
+            <select
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border border-stone-300 bg-[#FAF8F5] text-stone-900 font-medium text-sm focus:outline-none focus:ring-2 focus:ring-[#E05A2B]"
+            >
+              <option value="PHYSICAL SCIENCES">Physical Sciences & Physics</option>
+              <option value="LIFE SCIENCES">Life Sciences & Biology</option>
+              <option value="MATHEMATICS">Mathematics & Geometry</option>
+              <option value="AFRICAN HISTORY">African History & Social Sciences</option>
+              <option value="GEOGRAPHY">Geography & Climatology</option>
+              <option value="BUSINESS STUDIES">Economics & Business Studies</option>
+              <option value="ENGLISH & LITERATURE">English & Literary Devices</option>
+              <option value="TECHNOLOGY">Digital Literacy & Coding</option>
+            </select>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="font-display font-bold text-xs uppercase tracking-wider text-stone-700">
+              Worksheet Topic *
+            </label>
+            <input
+              type="text"
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+              placeholder="e.g. Newton's Third Law & Momentum Conservation"
+              className="w-full px-4 py-3 rounded-xl border border-stone-300 bg-[#FAF8F5] text-stone-900 font-medium text-sm focus:outline-none focus:ring-2 focus:ring-[#E05A2B]"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="font-display font-bold text-xs uppercase tracking-wider text-stone-700">
+              Grade Level
+            </label>
+            <select
+              value={gradeLevel}
+              onChange={(e) => setGradeLevel(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border border-stone-300 bg-[#FAF8F5] text-stone-900 font-medium text-sm focus:outline-none focus:ring-2 focus:ring-[#E05A2B]"
+            >
+              <option value="Primary School (Grades 4-5)">Primary School (Grades 4-5)</option>
+              <option value="Junior Secondary / Middle School (Grades 6-8)">Junior Secondary (Grades 6-8)</option>
+              <option value="Senior Secondary / High School (Grades 9-12)">Senior Secondary (Grades 9-12)</option>
+              <option value="Undergraduate Level">Undergraduate Level</option>
+            </select>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="font-display font-bold text-xs uppercase tracking-wider text-stone-700">
+              Difficulty Tier
+            </label>
+            <select
+              value={difficulty}
+              onChange={(e) => setDifficulty(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border border-stone-300 bg-[#FAF8F5] text-stone-900 font-medium text-sm focus:outline-none focus:ring-2 focus:ring-[#E05A2B]"
+            >
+              <option value="Foundational">Foundational (Accessible Reinforcement)</option>
+              <option value="Intermediate">Intermediate (Core Grade Competency)</option>
+              <option value="Challenging">Challenging (Critical Thinking & Extension)</option>
+            </select>
           </div>
         </div>
 
-        {worksheet && (
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              onClick={() => setShowAnswerKey(!showAnswerKey)}
-              className={`px-4 py-2 rounded-full font-mono text-base font-bold uppercase tracking-wider border transition-all cursor-pointer ${
-                showAnswerKey
-                  ? 'bg-emerald-600 border-emerald-600 text-white shadow-xs'
-                  : 'bg-white border-stone-200 text-stone-700 hover:bg-stone-50'
-              }`}
-            >
-              {showAnswerKey ? 'Hide Answer Key' : 'Show Answer Key'}
-            </button>
-            <button
-              onClick={handleCopy}
-              className="px-4 py-2 rounded-full bg-white hover:bg-stone-50 border border-stone-200 font-mono text-base font-bold text-stone-700 flex items-center gap-1.5 cursor-pointer shadow-xs"
-            >
-              {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
-              <span>{copied ? 'Copied' : 'Copy'}</span>
-            </button>
-            <button
-              onClick={() => window.print()}
-              className="px-4 py-2 rounded-full bg-white hover:bg-stone-50 border border-stone-200 font-mono text-base font-bold text-stone-700 flex items-center gap-1.5 cursor-pointer shadow-xs"
-            >
-              <Printer className="w-4 h-4" />
-              <span>Print / PDF</span>
-            </button>
-            <button
-              onClick={handleSave}
-              className="px-5 py-2 rounded-full bg-[#161616] hover:bg-stone-800 text-white font-mono text-base font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shadow-xs"
-            >
-              {saved ? <Check className="w-4 h-4 text-emerald-400" /> : <Bookmark className="w-4 h-4 text-[#E63956]" />}
-              <span>{saved ? 'Saved!' : 'Save Build'}</span>
-            </button>
+        {/* Activity Types selector */}
+        <div className="space-y-2">
+          <label className="font-display font-bold text-xs uppercase tracking-wider text-stone-700">
+            Included Activity Sections
+          </label>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {[
+              { id: 'matching', label: 'Matching Definitions' },
+              { id: 'fill-in-blanks', label: 'Fill-in-Blanks' },
+              { id: 'structured-questions', label: 'Structured Questions' },
+              { id: 'critical-thinking', label: 'Critical Inquiry' },
+            ].map((act) => {
+              const active = activityTypes.includes(act.id);
+              return (
+                <button
+                  key={act.id}
+                  type="button"
+                  onClick={() => toggleActivityType(act.id)}
+                  className={`p-3 rounded-xl text-xs font-display font-bold uppercase tracking-wider text-center border transition-all cursor-pointer ${
+                    active
+                      ? 'bg-[#18181B] text-white border-[#18181B]'
+                      : 'bg-[#FAF8F5] text-stone-600 border-stone-200 hover:border-stone-400'
+                  }`}
+                >
+                  {act.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Learning objectives (Optional) */}
+        <div className="space-y-1.5">
+          <label className="font-display font-bold text-xs uppercase tracking-wider text-stone-700">
+            Key Learning Outcomes (Optional, one per line)
+          </label>
+          <textarea
+            rows={2}
+            value={learningObjectives}
+            onChange={(e) => setLearningObjectives(e.target.value)}
+            placeholder="e.g. State the relationship between action and reaction forces;&#10;Calculate momentum in isolated systems."
+            className="w-full px-4 py-3 rounded-xl border border-stone-300 bg-[#FAF8F5] text-stone-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#E05A2B]"
+          />
+        </div>
+
+        {/* Source Material Upload */}
+        <div className="space-y-2">
+          <label className="font-display font-bold text-xs uppercase tracking-wider text-stone-700">
+            Source Material / Textbook Passages (Optional)
+          </label>
+          <SourceMaterialUpload
+            sourceMaterial={sourceMaterial}
+            sourceFileName={sourceFileName}
+            onTextExtracted={(text, filename) => {
+              setSourceMaterial(text);
+              if (filename) setSourceFileName(filename);
+            }}
+            onClear={() => {
+              setSourceMaterial('');
+              setSourceFileName('');
+            }}
+          />
+        </div>
+
+        {error && (
+          <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-2.5">
+            <AlertCircle className="w-5 h-5 shrink-0 text-red-500" />
+            <span>{error}</span>
           </div>
         )}
+
+        <button
+          type="button"
+          onClick={handleGenerate}
+          disabled={isGenerating}
+          className="w-full py-4 rounded-2xl bg-[#E05A2B] hover:bg-[#c94d22] text-white font-display font-black text-sm uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.99]"
+        >
+          {isGenerating ? (
+            <>
+              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <span>Building Classroom Worksheet...</span>
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-5 h-5" />
+              <span>Generate Worksheet (25 Credits)</span>
+            </>
+          )}
+        </button>
       </div>
 
-      {/* STACKED LAYOUT: TOOL OPTIONS on top, GENERATED RESULT directly underneath */}
-      <div className="flex flex-col gap-10 w-full">
-        {/* Section 1: TOOL OPTIONS */}
-        <div className="w-full space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b-2 border-stone-800">
-            <h2 className="font-mono text-base sm:text-lg font-bold uppercase tracking-wider text-stone-900 flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-[#E63956]"></span>
-              TOOL OPTIONS
-            </h2>
-            <span className="font-mono text-base text-stone-500">Worksheet Parameters & Topics</span>
-          </div>
-
-          <div className="bg-white border border-stone-200/90 rounded-[2rem] p-6 sm:p-8 shadow-xs space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Subject Domain */}
-              <div className="space-y-2">
-                <label className="font-mono text-base font-bold uppercase tracking-wider text-stone-700">
-                  Subject Domain
-                </label>
-                <select
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl font-mono text-base text-stone-800 focus:outline-none focus:border-[#E63956]"
-                >
-                  {SUBJECT_CATEGORIES.map((cat) => (
-                    <option key={cat.id} value={cat.name}>
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Worksheet Topic */}
-              <div className="space-y-2">
-                <label className="font-mono text-base font-bold uppercase tracking-wider text-stone-700">
-                  Worksheet Topic *
-                </label>
-                <input
-                  type="text"
-                  value={topic}
-                  onChange={(e) => setTopic(e.target.value)}
-                  placeholder="e.g. Fractions, Photosynthesis, Ancient Mali"
-                  className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl font-sans text-base text-stone-900 focus:outline-none focus:border-[#E63956]"
-                />
-              </div>
+      {/* Worksheet Output Sheet */}
+      {worksheet && (
+        <div className="space-y-6">
+          {/* Action Toolbar */}
+          <div className="flex flex-wrap items-center justify-between gap-3 p-4 bg-white rounded-2xl border border-stone-200 shadow-sm print:hidden">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowSolutions(!showSolutions)}
+                className={`px-4 py-2 rounded-xl text-xs font-display font-black uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
+                  showSolutions
+                    ? 'bg-[#18181B] text-white shadow-sm'
+                    : 'bg-stone-100 hover:bg-stone-200 text-stone-800'
+                }`}
+              >
+                {showSolutions ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                <span>{showSolutions ? 'Hide Teacher Solutions' : 'Show Teacher Solutions'}</span>
+              </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="font-mono text-base font-bold uppercase tracking-wider text-stone-700">
-                  Grade Level
-                </label>
-                <select
-                  value={gradeLevel}
-                  onChange={(e) => setGradeLevel(e.target.value)}
-                  className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl font-mono text-base text-stone-800 focus:outline-none focus:border-[#E63956]"
-                >
-                  {GRADE_LEVELS.map((gl) => (
-                    <option key={gl} value={gl}>
-                      {gl}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleCopy}
+                className="px-4 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-display font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                <span>{copied ? 'Copied' : 'Copy Text'}</span>
+              </button>
 
-              <div className="space-y-2">
-                <label className="font-mono text-base font-bold uppercase tracking-wider text-stone-700">
-                  Difficulty
-                </label>
-                <select
-                  value={difficulty}
-                  onChange={(e) => setDifficulty(e.target.value)}
-                  className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl font-mono text-base text-stone-800 focus:outline-none focus:border-[#E63956]"
-                >
-                  {DIFFICULTY_LEVELS.map((d) => (
-                    <option key={d} value={d}>
-                      {d}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <button
+                type="button"
+                onClick={handlePrint}
+                className="px-4 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-display font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <Printer className="w-4 h-4" />
+                <span>Print Worksheet</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSave}
+                className="px-4 py-2 rounded-xl bg-[#E05A2B] hover:bg-[#c94d22] text-white text-xs font-display font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
+              >
+                {saved ? <CheckCircle2 className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
+                <span>{saved ? 'Saved' : 'Save Worksheet'}</span>
+              </button>
             </div>
-
-            <div className="space-y-2 pt-2 border-t border-stone-100">
-              <label className="font-mono text-base font-bold uppercase tracking-wider text-stone-700 block">
-                Attach Source Notes / Document (Optional)
-              </label>
-              <SourceMaterialUpload
-                currentFileName={sourceFileName}
-                onContentExtracted={(text, name) => {
-                  setSourceMaterial(text);
-                  setSourceFileName(name);
-                }}
-                onClear={() => {
-                  setSourceMaterial('');
-                  setSourceFileName('');
-                }}
-              />
-            </div>
-
-            {error && (
-              <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl font-mono text-base text-rose-700">
-                {error}
-              </div>
-            )}
-
-            <button
-              type="button"
-              disabled={isGenerating}
-              onClick={handleGenerate}
-              className="w-full py-4 rounded-full bg-gradient-to-r from-[#D92B8A] via-[#E03A6A] to-[#E63956] hover:opacity-95 text-white font-display text-base font-black uppercase tracking-wider shadow-[0_6px_20px_rgba(230,57,86,0.3)] transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 disabled:opacity-50"
-            >
-              <Sparkles className="w-5 h-5" />
-              <span>{isGenerating ? 'Synthesizing Worksheet...' : 'Generate Worksheet'}</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Section 2: GENERATED RESULT */}
-        <div className="w-full space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b-2 border-stone-800">
-            <h2 className="font-mono text-base sm:text-lg font-bold uppercase tracking-wider text-stone-900 flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-emerald-600"></span>
-              GENERATED RESULT
-            </h2>
-            {worksheet && (
-              <span className="font-mono text-base text-emerald-700 font-bold">
-                Worksheet Ready
-              </span>
-            )}
           </div>
 
-          {worksheet ? (
-            <div className="bg-white border border-stone-200/90 rounded-[2rem] p-6 sm:p-10 shadow-sm space-y-8 print:border-none print:shadow-none print:p-0">
-              <div className="border-b-2 border-stone-800 pb-5 text-center space-y-2">
-                <h2 className="font-display font-black text-2xl sm:text-3xl uppercase tracking-tight text-[#161616]">
-                  {worksheet.title}
-                </h2>
-                <div className="flex items-center justify-center flex-wrap gap-4 font-mono text-sm font-bold text-stone-700 pt-2">
-                  <span>SUBJECT: {worksheet.subject}</span>
-                  <span>•</span>
-                  <span>GRADE: {worksheet.gradeLevel}</span>
-                  <span>•</span>
-                  <span>EST. TIME: {worksheet.estimatedDurationMinutes} MINS</span>
-                  <span>•</span>
-                  <span>TOTAL: {worksheet.totalMarks} MARKS</span>
-                </div>
-              </div>
+          {/* Printable Classroom Sheet */}
+          <div className="bg-white rounded-3xl p-8 sm:p-12 border border-stone-300 shadow-md space-y-8 print:border-none print:shadow-none print:p-0">
+            {/* Student Header Fillable Box */}
+            <div className="border border-stone-800 rounded-xl p-4 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs font-mono font-bold uppercase text-stone-900">
+              <div className="border-b border-stone-400 pb-1">NAME: </div>
+              <div className="border-b border-stone-400 pb-1">DATE: </div>
+              <div className="border-b border-stone-400 pb-1">CLASS / GRADE: </div>
+              <div className="border-b border-stone-400 pb-1">SCORE: ______ / {worksheet.totalMarks}</div>
+            </div>
 
+            {/* Header Title */}
+            <div className="text-center space-y-1 border-b border-stone-200 pb-5">
+              <h2 className="font-display font-black text-2xl sm:text-3xl uppercase tracking-tight text-stone-900">
+                {worksheet.title}
+              </h2>
+              <div className="font-mono text-xs text-stone-600 font-bold uppercase">
+                {worksheet.subject} • {worksheet.gradeLevel} • {worksheet.estimatedDurationMinutes} MINS • {worksheet.totalMarks} MARKS
+              </div>
               {worksheet.instructions && (
-                <div className="p-5 bg-stone-50 border border-stone-200 rounded-2xl">
-                  <div className="font-mono text-sm font-black uppercase tracking-wider text-stone-800 mb-1">
-                    STUDENT INSTRUCTIONS:
-                  </div>
-                  <p className="font-mono text-sm text-stone-700 leading-relaxed">
-                    {worksheet.instructions}
-                  </p>
-                </div>
+                <p className="text-xs text-stone-700 italic pt-2 max-w-xl mx-auto">
+                  {worksheet.instructions}
+                </p>
               )}
-
-              <div className="space-y-8">
-                {worksheet.sections.map((sec, sIdx) => (
-                  <div key={sec.id || sIdx} className="space-y-4">
-                    <div className="border-b border-stone-200 pb-2 flex items-center justify-between">
-                      <h3 className="font-display font-black text-lg uppercase tracking-tight text-[#161616]">
-                        {sec.title}
-                      </h3>
-                      <span className="font-mono text-sm font-bold text-[#E63956]">
-                        [{sec.marks} MARKS]
-                      </span>
-                    </div>
-                    {sec.instructions && (
-                      <p className="font-mono text-sm text-stone-600 italic">
-                        {sec.instructions}
-                      </p>
-                    )}
-
-                    <div className="space-y-4">
-                      {sec.items.map((item, iIdx) => (
-                        <div key={item.id || iIdx} className="p-5 bg-[#FAF8F5] border border-stone-200 rounded-2xl space-y-3">
-                          <div className="font-sans text-base font-semibold text-stone-900 leading-relaxed">
-                            <span className="font-display font-black text-[#161616] mr-2">
-                              {iIdx + 1}.
-                            </span>
-                            {item.prompt}
-                          </div>
-
-                          {showAnswerKey && item.expectedAnswer && (
-                            <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl space-y-1">
-                              <div className="flex items-center gap-1.5 font-mono text-xs font-black uppercase text-emerald-800">
-                                <CheckCircle2 className="w-4 h-4" />
-                                <span>ANSWER KEY:</span>
-                              </div>
-                              <div className="font-mono text-sm text-emerald-900 font-bold">
-                                {item.expectedAnswer}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
             </div>
-          ) : (
-            <div className="bg-white border border-[#E5E0D8] rounded-3xl p-12 text-center flex flex-col items-center justify-center space-y-4 shadow-sm min-h-[350px]">
-              <div className="w-16 h-16 rounded-2xl bg-stone-100 border border-stone-200 text-stone-400 flex items-center justify-center">
-                <FileSpreadsheet className="w-8 h-8" />
-              </div>
-              <div className="max-w-md space-y-2">
-                <h3 className="font-display font-black text-xl text-[#161616] uppercase">
-                  Worksheet Preview
-                </h3>
-                <p className="font-sans text-base text-stone-500 leading-relaxed">
-                  Enter your topic above and click <strong>Generate Worksheet</strong> to synthesize classroom activities, practice items, and answer keys.
+
+            {/* Sections */}
+            <div className="space-y-8">
+              {(worksheet.sections || []).map((section, sIdx) => (
+                <div key={section.id || sIdx} className="space-y-4">
+                  <div className="flex items-center justify-between border-b border-stone-800 pb-1.5">
+                    <h3 className="font-display font-black text-base sm:text-lg uppercase text-stone-900">
+                      {section.title}
+                    </h3>
+                    <span className="font-mono text-xs font-bold text-stone-700">
+                      [{section.marks} Marks]
+                    </span>
+                  </div>
+                  {section.instructions && (
+                    <p className="text-xs text-stone-600 italic">
+                      {section.instructions}
+                    </p>
+                  )}
+
+                  <div className="space-y-4 pt-1">
+                    {(section.items || []).map((item, idx) => (
+                      <div key={item.id || idx} className="space-y-2 text-sm text-stone-900">
+                        <div className="flex items-start gap-3">
+                          <span className="font-mono font-bold text-xs text-stone-600 shrink-0">
+                            {idx + 1}.
+                          </span>
+                          <span className="leading-relaxed font-medium">
+                            {item.prompt}
+                          </span>
+                        </div>
+
+                        {/* Blank answer writing space for student printout */}
+                        <div className="pl-6 print:block">
+                          <div className="h-7 border-b border-stone-300 border-dashed w-full max-w-xl" />
+                        </div>
+
+                        {/* Teacher Solution (Toggled) */}
+                        {showSolutions && item.expectedAnswer && (
+                          <div className="ml-6 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-950 font-medium animate-fadeIn">
+                            <strong>Solution:</strong> {item.expectedAnswer}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Teacher Notes & Rubric (Visible when solutions toggled) */}
+            {showSolutions && worksheet.teacherNotes && (
+              <div className="p-5 rounded-2xl bg-amber-50 border border-amber-200 space-y-2">
+                <div className="font-display font-black text-xs uppercase tracking-wider text-amber-900">
+                  Teacher Facilitation & Solution Notes
+                </div>
+                <p className="text-xs text-amber-950 leading-relaxed font-medium">
+                  {worksheet.teacherNotes}
                 </p>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
