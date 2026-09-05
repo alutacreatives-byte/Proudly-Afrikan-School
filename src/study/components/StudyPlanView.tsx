@@ -654,13 +654,13 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
           </span>
         </div>
 
-        {/* 4 Study-Input Option Tabs: TYPE IT | PASTE IT | UPLOAD IT | CAPTURE IT */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-stone-100/80 p-1.5 rounded-2xl">
+        {/* Study-Input Option Tabs: 3 on desktop, 4 on mobile/tablet */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-3 gap-2 bg-stone-100/80 p-1.5 rounded-2xl">
           <button
             type="button"
             id="planner-tab-type"
             onClick={() => setInputMethod('type')}
-            className={`py-3 px-2 sm:px-3 rounded-xl font-display text-xs sm:text-sm font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap ${
+            className={`py-3 px-2 sm:px-3 rounded-xl font-display text-base font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap ${
               inputMethod === 'type'
                 ? 'bg-white text-stone-950 shadow-sm border border-stone-200/60'
                 : 'text-stone-600 hover:text-stone-900 hover:bg-white/40'
@@ -674,7 +674,7 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
             type="button"
             id="planner-tab-paste"
             onClick={() => setInputMethod('paste')}
-            className={`py-3 px-2 sm:px-3 rounded-xl font-display text-xs sm:text-sm font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap ${
+            className={`py-3 px-2 sm:px-3 rounded-xl font-display text-base font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap ${
               inputMethod === 'paste'
                 ? 'bg-white text-stone-950 shadow-sm border border-stone-200/60'
                 : 'text-stone-600 hover:text-stone-900 hover:bg-white/40'
@@ -688,7 +688,7 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
             type="button"
             id="planner-tab-upload"
             onClick={() => setInputMethod('upload')}
-            className={`py-3 px-2 sm:px-3 rounded-xl font-display text-xs sm:text-sm font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap ${
+            className={`py-3 px-2 sm:px-3 rounded-xl font-display text-base font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap ${
               inputMethod === 'upload'
                 ? 'bg-white text-stone-950 shadow-sm border border-stone-200/60'
                 : 'text-stone-600 hover:text-stone-900 hover:bg-white/40'
@@ -707,7 +707,7 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
                 setIsCameraModalOpen(true);
               }
             }}
-            className={`py-3 px-2 sm:px-3 rounded-xl font-display text-xs sm:text-sm font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap ${
+            className={`py-3 px-2 sm:px-3 rounded-xl font-display text-base font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap lg:hidden ${
               inputMethod === 'capture'
                 ? 'bg-white text-stone-950 shadow-sm border border-stone-200/60'
                 : 'text-stone-600 hover:text-stone-900 hover:bg-white/40'

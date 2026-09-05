@@ -1,69 +1,62 @@
-import React, { useState } from 'react';
-import {
-  BookOpen,
-  Sparkles,
-  Printer,
-  Copy,
-  Bookmark,
-  Check,
+import React, { useState, useEffect } from 'react';
+import { 
+  BookOpen, 
+  Sparkles, 
+  Printer, 
+  Copy, 
+  Bookmark, 
+  Check, 
   ArrowLeft,
   Clock,
   Award,
-  CheckCircle2,
-  AlertCircle,
-  Users,
   Target,
-  Layers,
   FileText
 } from 'lucide-react';
-import { LessonPlanResult } from '../../types';
-import { generateLessonPlan } from '../../services/buildService';
-import { SourceMaterialUpload } from '../SourceMaterialUpload';
+import { LessonPlanData, SavedResource } from '../../types';
+import { generateLessonPlanApi } from '../../services/buildService';
 import { saveResourceToStorage } from '../../utils/storage';
+import { SourceMaterialUpload } from '../SourceMaterialUpload';
 import { useAuthCredit } from '../../../context/AuthCreditContext';
 import { GlobalNavigationButtons } from '../../../components/GlobalNavigationButtons';
 
 interface LessonPlanGeneratorProps {
   onBack: () => void;
   onGoHome?: () => void;
-  onSaved?: () => void;
-  existingResource?: LessonPlanResult;
+  initialResource?: SavedResource | null;
 }
 
 export const LessonPlanGenerator: React.FC<LessonPlanGeneratorProps> = ({
   onBack,
   onGoHome,
-  onSaved,
-  existingResource,
+  initialResource,
 }) => {
   const { canAfford, consumeCredits, openAuthModal } = useAuthCredit();
 
   // Form State
-  const [subject, setSubject] = useState<string>(existingResource?.subject || 'AFRICAN HISTORY');
-  const [topic, setTopic] = useState<string>(existingResource?.topic || existingResource?.title || '');
-  const [gradeLevel, setGradeLevel] = useState<string>(existingResource?.gradeLevel || 'Senior Secondary / High School (Grades 9-12)');
-  const [durationMinutes, setDurationMinutes] = useState<number>(existingResource?.durationMinutes || 60);
-  const [learningObjectives, setLearningObjectives] = useState<string>('');
-  const [keyConcepts, setKeyConcepts] = useState<string>('');
-  const [assessmentApproach, setAssessmentApproach] = useState<string>('Formative inquiry + Exit ticket');
-  const [requiredResources, setRequiredResources] = useState<string>('');
-  const [sourceMaterial, setSourceMaterial] = useState<string>(existingResource?.sourceSnippet || '');
-  const [sourceFileName, setSourceFileName] = useState<string>(existingResource?.documentName || '');
+  const [topic, setTopic] = useState<string>(initialResource?.topic || initialResource?.title || '');
+  const [subject, setSubject] = useState<string>(initialResource?.subject || 'History & Geography');
+  const [gradeLevel, setGradeLevel] = useState<string>(initialResource?.gradeLevel || 'Secondary / High School (Grades 9-12)');
+  const [durationMinutes, setDurationMinutes] = useState<number>(45);
+  const [pedagogyStyle, setPedagogyStyle] = useState<string>('Inquiry-Based & African Centered');
+  const [sourceMaterial, setSourceMaterial] = useState<string>(initialResource?.sourceSnippet || '');
+  const [sourceFileName, setSourceFileName] = useState<string>(initialResource?.documentName || '');
 
-  // Result & View State
+  // Active Result State
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
-  const [lessonPlan, setLessonPlan] = useState<LessonPlanResult | null>(
-    existingResource && Array.isArray(existingResource.phases) && existingResource.phases.length > 0
-      ? existingResource
-      : null
-  );
+  const [result, setResult] = useState<LessonPlanData | null>(initialResource?.data || null);
   const [saved, setSaved] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (initialResource?.data) {
+      setResult(initialResource.data);
+    }
+  }, [initialResource]);
+
   const handleGenerate = async () => {
     if (!topic.trim() && !sourceMaterial.trim()) {
-      setError('Please provide a lesson topic or upload curriculum notes.');
+      setError('Please enter a lesson topic or attach syllabus notes.');
       return;
     }
 
@@ -77,84 +70,68 @@ export const LessonPlanGenerator: React.FC<LessonPlanGeneratorProps> = ({
     setIsGenerating(true);
 
     try {
-      const objectivesList = learningObjectives
-        .split('\n')
-        .map((o) => o.trim())
-        .filter(Boolean);
-
-      const result = await generateLessonPlan({
+      const data = await generateLessonPlanApi({
         subject,
-        topic: topic.trim() || 'Core Curriculum Lesson Unit',
+        topic: topic.trim() || 'Classroom Pedagogical Lesson Plan',
         gradeLevel,
         durationMinutes,
-        learningObjectives: objectivesList.length > 0 ? objectivesList : undefined,
-        keyConcepts: keyConcepts.trim() || undefined,
-        assessmentApproach,
-        requiredResources: requiredResources.trim() || undefined,
+        pedagogyStyle,
         sourceMaterial: sourceMaterial.trim() || undefined,
       });
 
-      setLessonPlan(result);
-      await consumeCredits('LESSON_PLAN', `Generated Lesson Plan: ${result.title}`);
+      setResult(data);
+      await consumeCredits('LESSON_PLAN', `Generated Lesson Plan: ${data.title}`);
+
+      // Smooth scroll to generated lesson plan
+      setTimeout(() => {
+        const el = document.getElementById('generated-lessonplan-result');
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 150);
     } catch (err: any) {
       console.error(err);
-      setError(err.message || 'Lesson Plan generation failed. Please try again.');
+      setError(err.message || 'Lesson plan generation failed. Please try again.');
     } finally {
       setIsGenerating(false);
     }
   };
 
   const handleSave = () => {
-    if (!lessonPlan) return;
+    if (!result) return;
     saveResourceToStorage({
-      id: lessonPlan.id || `lp-${Date.now()}`,
+      id: result.id || `lesson-${Date.now()}`,
       toolType: 'lesson-plan',
-      title: lessonPlan.title,
-      subject: lessonPlan.subject || subject,
-      topic: lessonPlan.topic || topic,
+      title: result.title,
+      subject: result.subject || subject,
+      topic: result.topic || topic,
+      gradeLevel: result.gradeLevel || gradeLevel,
       createdAt: new Date().toISOString(),
-      data: lessonPlan,
+      data: result,
       sourceSnippet: sourceMaterial ? sourceMaterial.slice(0, 300) : undefined,
       documentName: sourceFileName || undefined,
     });
     setSaved(true);
-    if (onSaved) onSaved();
     setTimeout(() => setSaved(false), 2500);
   };
 
   const handleCopy = () => {
-    if (!lessonPlan) return;
-    let text = `${lessonPlan.title.toUpperCase()}\n`;
-    text += `Subject: ${lessonPlan.subject} | Grade Level: ${lessonPlan.gradeLevel}\n`;
-    text += `Lesson Duration: ${lessonPlan.durationMinutes} minutes\n\n`;
-
-    text += `LEARNING OBJECTIVES:\n`;
-    (lessonPlan.objectives || []).forEach((obj, i) => {
-      text += `${i + 1}. ${obj}\n`;
-    });
-    text += `\n`;
-
-    text += `MATERIALS & RESOURCES:\n`;
-    (lessonPlan.materialsNeeded || []).forEach((mat) => {
-      text += `- ${mat}\n`;
-    });
-    text += `\n`;
-
-    text += `PEDAGOGICAL PHASES & TIMELINE:\n`;
-    (lessonPlan.phases || []).forEach((phase, idx) => {
-      text += `Phase ${idx + 1}: ${phase.phase} (${phase.durationMinutes} mins)\n`;
-      text += `  Teacher Action: ${phase.teacherActivity}\n`;
-      text += `  Learner Action: ${phase.studentActivity}\n\n`;
-    });
-
-    if (lessonPlan.assessmentStrategy) {
-      text += `ASSESSMENT STRATEGY:\n${lessonPlan.assessmentStrategy}\n\n`;
+    if (!result) return;
+    let text = `# ${result.title}\nSubject: ${result.subject} | Grade: ${result.gradeLevel} | Duration: ${result.totalDurationMinutes}m\n\n`;
+    
+    if (result.learningObjectives && result.learningObjectives.length > 0) {
+      text += `LEARNING OBJECTIVES:\n${result.learningObjectives.map((o) => `• ${o}`).join('\n')}\n\n`;
     }
 
-    if (lessonPlan.differentiation) {
-      text += `DIFFERENTIATION & INCLUSION:\n`;
-      text += `  Support / Scaffolding: ${lessonPlan.differentiation.support}\n`;
-      text += `  Extension / Challenge: ${lessonPlan.differentiation.extension}\n`;
+    (result.phases || []).forEach((p, idx) => {
+      text += `### Phase ${idx + 1}: ${p.phaseName} (${p.durationMinutes}m)\n`;
+      text += `Teacher: ${p.teacherActivity}\n`;
+      text += `Students: ${p.studentActivity}\n`;
+      text += `Assessment: ${p.assessmentStrategy}\n\n`;
+    });
+
+    if (result.homeworkOrExtension) {
+      text += `HOMEWORK / EXTENSION:\n${result.homeworkOrExtension}\n\n`;
     }
 
     navigator.clipboard.writeText(text);
@@ -162,356 +139,311 @@ export const LessonPlanGenerator: React.FC<LessonPlanGeneratorProps> = ({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handlePrint = () => {
-    window.print();
-  };
-
   return (
-    <div className="w-full max-w-5xl mx-auto px-4 py-8 space-y-8 print:py-0 print:px-0">
-      {/* Top Navigation */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200 pb-5 print:hidden">
-        <GlobalNavigationButtons onBack={onBack} onGoHome={onGoHome} />
-        <div className="flex items-center gap-3">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E05A2B]/10 text-[#E05A2B] font-mono text-xs font-bold uppercase tracking-wider">
-            <Award className="w-3.5 h-3.5" />
-            <span>30 Credits / Plan</span>
-          </span>
-          <span className="font-mono text-xs text-stone-500 uppercase">
-            Build • Pedagogy Suite
-          </span>
-        </div>
-      </div>
-
-      {/* Title block */}
-      <div className="space-y-2 print:hidden">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#18181B] text-white text-xs font-mono font-bold uppercase">
-          <BookOpen className="w-3.5 h-3.5 text-[#E05A2B]" />
-          <span>Lesson Architecture</span>
-        </div>
-        <h1 className="font-display font-black text-3xl sm:text-4xl uppercase tracking-tight text-stone-900">
-          Pedagogical Lesson Plan Generator
-        </h1>
-        <p className="text-stone-600 text-sm max-w-2xl leading-relaxed">
-          Formulate structured, evidence-based lesson plans with explicit learning objectives, 4-phase pedagogical timelines (Hook, Direct Instruction, Guided Practice, Closure/Exit Ticket), materials checklists, and tiered differentiation.
-        </p>
-      </div>
-
-      {/* Generator Configuration Form */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200 shadow-sm space-y-6 print:hidden">
-        <h2 className="font-display font-black text-lg uppercase tracking-wider text-stone-900 flex items-center gap-2 border-b border-stone-100 pb-3">
-          <Sparkles className="w-5 h-5 text-[#E05A2B]" />
-          <span>Configure Lesson Specifications</span>
-        </h2>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <label className="font-display font-bold text-xs uppercase tracking-wider text-stone-700">
-              Subject *
-            </label>
-            <select
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-stone-300 bg-[#FAF8F5] text-stone-900 font-medium text-sm focus:outline-none focus:ring-2 focus:ring-[#E05A2B]"
-            >
-              <option value="AFRICAN HISTORY">African History & Heritage</option>
-              <option value="PHYSICAL SCIENCES">Physical Sciences & Chemistry</option>
-              <option value="LIFE SCIENCES">Life Sciences & Ecology</option>
-              <option value="MATHEMATICS">Mathematics & Geometry</option>
-              <option value="GEOGRAPHY & CLIMATE">Geography & Climatology</option>
-              <option value="CIVICS & CITIZENSHIP">Civics & Leadership</option>
-              <option value="LITERATURE & RHETORIC">African Literature & Rhetoric</option>
-              <option value="ECONOMICS">Economics & Enterprise</option>
-            </select>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="font-display font-bold text-xs uppercase tracking-wider text-stone-700">
-              Lesson Topic *
-            </label>
-            <input
-              type="text"
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              placeholder="e.g. Great Zimbabwe: Architecture, Trade & Social Structure"
-              className="w-full px-4 py-3 rounded-xl border border-stone-300 bg-[#FAF8F5] text-stone-900 font-medium text-sm focus:outline-none focus:ring-2 focus:ring-[#E05A2B]"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="font-display font-bold text-xs uppercase tracking-wider text-stone-700">
-              Grade Level
-            </label>
-            <select
-              value={gradeLevel}
-              onChange={(e) => setGradeLevel(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-stone-300 bg-[#FAF8F5] text-stone-900 font-medium text-sm focus:outline-none focus:ring-2 focus:ring-[#E05A2B]"
-            >
-              <option value="Primary School (Grades 4-5)">Primary School (Grades 4-5)</option>
-              <option value="Junior Secondary (Grades 6-8)">Junior Secondary (Grades 6-8)</option>
-              <option value="Senior Secondary / High School (Grades 9-12)">Senior Secondary / High School (Grades 9-12)</option>
-              <option value="Undergraduate / Tertiary">Undergraduate / Tertiary</option>
-            </select>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="font-display font-bold text-xs uppercase tracking-wider text-stone-700">
-              Allocated Class Duration
-            </label>
-            <select
-              value={durationMinutes}
-              onChange={(e) => setDurationMinutes(Number(e.target.value) || 60)}
-              className="w-full px-4 py-3 rounded-xl border border-stone-300 bg-[#FAF8F5] text-stone-900 font-medium text-sm focus:outline-none focus:ring-2 focus:ring-[#E05A2B]"
-            >
-              <option value={45}>45 Minutes (Single Period)</option>
-              <option value={60}>60 Minutes (Standard Hour)</option>
-              <option value={90}>90 Minutes (Double Block Period)</option>
-              <option value={120}>120 Minutes (Extended Workshop / Seminar)</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Learning Objectives */}
-        <div className="space-y-1.5">
-          <label className="font-display font-bold text-xs uppercase tracking-wider text-stone-700">
-            Desired Learning Objectives (Optional, one per line)
-          </label>
-          <textarea
-            rows={2}
-            value={learningObjectives}
-            onChange={(e) => setLearningObjectives(e.target.value)}
-            placeholder="e.g. Learners will explain the engineering methods of dry-stone wall construction;&#10;Learners will evaluate Indian Ocean gold and ivory trade routes."
-            className="w-full px-4 py-3 rounded-xl border border-stone-300 bg-[#FAF8F5] text-stone-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#E05A2B]"
-          />
-        </div>
-
-        {/* Source Material Upload */}
-        <div className="space-y-2">
-          <label className="font-display font-bold text-xs uppercase tracking-wider text-stone-700">
-            Curriculum Documents / Scheme of Work (Optional)
-          </label>
-          <SourceMaterialUpload
-            sourceMaterial={sourceMaterial}
-            sourceFileName={sourceFileName}
-            onTextExtracted={(text, filename) => {
-              setSourceMaterial(text);
-              if (filename) setSourceFileName(filename);
-            }}
-            onClear={() => {
-              setSourceMaterial('');
-              setSourceFileName('');
-            }}
-          />
-        </div>
-
-        {error && (
-          <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-2.5">
-            <AlertCircle className="w-5 h-5 shrink-0 text-red-500" />
-            <span>{error}</span>
-          </div>
-        )}
-
-        <button
-          type="button"
-          onClick={handleGenerate}
-          disabled={isGenerating}
-          className="w-full py-4 rounded-2xl bg-[#E05A2B] hover:bg-[#c94d22] text-white font-display font-black text-sm uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.99]"
-        >
-          {isGenerating ? (
-            <>
-              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              <span>Architecting Pedagogical Lesson Plan...</span>
-            </>
-          ) : (
-            <>
-              <Sparkles className="w-5 h-5" />
-              <span>Generate Lesson Plan (30 Credits)</span>
-            </>
-          )}
-        </button>
-      </div>
-
-      {/* Lesson Plan Output Display */}
-      {lessonPlan && (
-        <div className="space-y-6">
-          {/* Action Toolbar */}
-          <div className="flex flex-wrap items-center justify-between gap-3 p-4 bg-white rounded-2xl border border-stone-200 shadow-sm print:hidden">
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-xs font-bold text-stone-600 uppercase px-3 py-1.5 bg-stone-100 rounded-xl">
-                4-Phase Sequence Active
+    <div className="min-h-screen bg-[#FAF7F0] py-6 sm:py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto space-y-6">
+        
+        {/* Navigation & Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-stone-200/80">
+          <div className="flex items-center gap-3">
+            <GlobalNavigationButtons onBack={onBack} onGoHome={onGoHome} />
+            <div>
+              <span className="font-mono text-base font-bold text-[#E63956] uppercase tracking-wider block">
+                BUILD TOOL 05 • TEACHING & PEDAGOGY
               </span>
+              <h1 className="font-display font-black text-2xl sm:text-3xl text-[#161616] uppercase tracking-tight">
+                LESSON PLAN GENERATOR
+              </h1>
             </div>
+          </div>
 
-            <div className="flex items-center gap-2">
+          {result && (
+            <div className="flex items-center gap-2 flex-wrap">
               <button
                 type="button"
                 onClick={handleCopy}
-                className="px-4 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-display font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer"
+                className="px-4 py-2.5 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-base font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
               >
                 {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
-                <span>{copied ? 'Copied' : 'Copy Plan'}</span>
+                <span>{copied ? 'Copied' : 'Copy'}</span>
               </button>
-
               <button
                 type="button"
-                onClick={handlePrint}
-                className="px-4 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-display font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer"
+                onClick={() => window.print()}
+                className="px-4 py-2.5 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-base font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
               >
                 <Printer className="w-4 h-4" />
-                <span>Print Plan</span>
+                <span>Print</span>
               </button>
-
               <button
                 type="button"
                 onClick={handleSave}
-                className="px-4 py-2 rounded-xl bg-[#E05A2B] hover:bg-[#c94d22] text-white text-xs font-display font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
+                className="px-5 py-2.5 rounded-xl bg-[#E63956] hover:bg-[#D32F4C] text-white font-mono text-base font-bold uppercase flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
               >
-                {saved ? <CheckCircle2 className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
-                <span>{saved ? 'Saved' : 'Save Plan'}</span>
+                <Bookmark className="w-4 h-4" />
+                <span>{saved ? 'Saved' : 'Save Lesson Plan'}</span>
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Layout Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          
+          {/* Left Form */}
+          <div className="lg:col-span-4 space-y-6">
+            <div className="p-6 sm:p-7 rounded-[2rem] bg-white border border-stone-200/90 shadow-[0_10px_30px_rgba(0,0,0,0.05)] space-y-5">
+              <div className="flex items-center gap-2 pb-3 border-b border-stone-100">
+                <Sparkles className="w-5 h-5 text-[#E63956]" />
+                <h2 className="font-display font-black text-lg uppercase text-[#161616] tracking-wider">
+                  Lesson Parameters
+                </h2>
+              </div>
+
+              <div>
+                <label className="block font-mono text-base font-bold text-stone-800 uppercase mb-2">
+                  Lesson Topic / Unit Goal *
+                </label>
+                <input
+                  type="text"
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                  placeholder="e.g. Chinua Achebe's Things Fall Apart Literary Analysis"
+                  className="w-full px-4 py-3.5 rounded-xl border border-stone-200 focus:border-[#E63956] focus:ring-1 focus:ring-[#E63956] bg-stone-50 text-base font-medium outline-hidden"
+                />
+              </div>
+
+              <div>
+                <label className="block font-mono text-base font-bold text-stone-800 uppercase mb-2">
+                  Subject Domain
+                </label>
+                <select
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  className="w-full px-4 py-3.5 rounded-xl border border-stone-200 focus:border-[#E63956] bg-stone-50 text-base font-medium outline-hidden"
+                >
+                  <option value="Languages & Literature">Languages & Literature</option>
+                  <option value="History & Geography">History & Geography</option>
+                  <option value="Sciences & STEM">Sciences & STEM</option>
+                  <option value="Mathematics">Mathematics</option>
+                  <option value="Civics & Economics">Civics & Economics</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-mono text-base font-bold text-stone-800 uppercase mb-2">
+                    Grade Level
+                  </label>
+                  <select
+                    value={gradeLevel}
+                    onChange={(e) => setGradeLevel(e.target.value)}
+                    className="w-full px-3 py-3 rounded-xl border border-stone-200 focus:border-[#E63956] bg-stone-50 text-base font-medium outline-hidden"
+                  >
+                    <option value="Primary (Grades 1-5)">Primary (1-5)</option>
+                    <option value="Junior Sec (Grades 6-8)">Junior Sec (6-8)</option>
+                    <option value="Senior Sec (Grades 9-12)">Senior Sec (9-12)</option>
+                    <option value="Tertiary / University">Tertiary / Uni</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-mono text-base font-bold text-stone-800 uppercase mb-2">
+                    Duration
+                  </label>
+                  <select
+                    value={durationMinutes}
+                    onChange={(e) => setDurationMinutes(Number(e.target.value))}
+                    className="w-full px-3 py-3 rounded-xl border border-stone-200 focus:border-[#E63956] bg-stone-50 text-base font-medium outline-hidden"
+                  >
+                    <option value={40}>40 Minutes</option>
+                    <option value={45}>45 Minutes</option>
+                    <option value={60}>60 Minutes</option>
+                    <option value={90}>90 Minutes (Double Period)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-mono text-base font-bold text-stone-800 uppercase mb-2">
+                  Optional Source Syllabus (PDF / Notes)
+                </label>
+                <SourceMaterialUpload
+                  currentFileName={sourceFileName}
+                  onTextExtracted={(text, name) => {
+                    setSourceMaterial(text);
+                    setSourceFileName(name);
+                  }}
+                  onClear={() => {
+                    setSourceMaterial('');
+                    setSourceFileName('');
+                  }}
+                />
+              </div>
+
+              {error && (
+                <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-base font-mono">
+                  {error}
+                </div>
+              )}
+
+              <button
+                type="button"
+                disabled={isGenerating}
+                onClick={handleGenerate}
+                className="w-full py-4 rounded-xl bg-[#E63956] hover:bg-[#D32F4C] disabled:bg-stone-300 text-white font-display font-black text-base uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md active:scale-98"
+              >
+                <Sparkles className="w-5 h-5" />
+                <span>{isGenerating ? 'LESSON PLAN LOADING…' : 'Generate Lesson Plan →'}</span>
               </button>
             </div>
           </div>
 
-          {/* Printable Lesson Plan Doc */}
-          <div className="bg-white rounded-3xl p-8 sm:p-12 border border-stone-300 shadow-md space-y-8 print:border-none print:shadow-none print:p-0">
-            {/* Header */}
-            <div className="border-b-2 border-stone-900 pb-5 space-y-2">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="font-mono font-bold text-xs text-[#E05A2B] uppercase tracking-wider">
-                  MASTER LESSON PLAN • PROUDLY AFRIKAN
-                </span>
-                <span className="font-mono text-xs font-black text-stone-700 bg-stone-100 px-2.5 py-1 rounded-md">
-                  {lessonPlan.durationMinutes} MINUTES
-                </span>
-              </div>
-              <h2 className="font-display font-black text-2xl sm:text-3xl uppercase tracking-tight text-stone-900">
-                {lessonPlan.title}
-              </h2>
-              <div className="flex flex-wrap items-center gap-4 text-xs font-mono font-bold text-stone-600 uppercase">
-                <span>SUBJECT: {lessonPlan.subject}</span>
-                <span>•</span>
-                <span>GRADE: {lessonPlan.gradeLevel}</span>
-              </div>
-            </div>
-
-            {/* Objectives & Materials Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Objectives */}
-              <div className="p-5 rounded-2xl bg-[#FAF8F5] border border-stone-200 space-y-3">
-                <div className="flex items-center gap-2 font-display font-black text-xs uppercase tracking-wider text-stone-900">
-                  <Target className="w-4 h-4 text-[#E05A2B]" />
-                  <span>Curriculum Learning Objectives</span>
+          {/* Right Output */}
+          <div className="lg:col-span-8" id="generated-lessonplan-result">
+            {isGenerating ? (
+              <div className="min-h-[460px] p-12 rounded-[2rem] bg-white border border-stone-200/90 shadow-sm flex flex-col items-center justify-center text-center space-y-4">
+                <div className="w-14 h-14 rounded-2xl bg-[#E63956]/10 text-[#E63956] flex items-center justify-center animate-bounce">
+                  <BookOpen className="w-7 h-7" />
                 </div>
-                <ul className="space-y-2">
-                  {(lessonPlan.objectives || []).map((obj, idx) => (
-                    <li key={idx} className="flex items-start gap-2 text-xs text-stone-800 font-medium leading-relaxed">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
-                      <span>{obj}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Materials */}
-              <div className="p-5 rounded-2xl bg-[#FAF8F5] border border-stone-200 space-y-3">
-                <div className="flex items-center gap-2 font-display font-black text-xs uppercase tracking-wider text-stone-900">
-                  <Layers className="w-4 h-4 text-[#E05A2B]" />
-                  <span>Required Resources & Materials</span>
-                </div>
-                <ul className="space-y-2">
-                  {(lessonPlan.materialsNeeded || []).map((mat, idx) => (
-                    <li key={idx} className="flex items-start gap-2 text-xs text-stone-800 font-medium leading-relaxed">
-                      <span className="w-1.5 h-1.5 rounded-full bg-stone-900 shrink-0 mt-1.5" />
-                      <span>{mat}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-
-            {/* 4-Phase Pedagogical Timeline */}
-            <div className="space-y-4">
-              <h3 className="font-display font-black text-lg uppercase tracking-wider text-stone-900 border-b border-stone-200 pb-2">
-                Pedagogical Delivery Timeline
-              </h3>
-
-              <div className="space-y-4">
-                {(lessonPlan.phases || []).map((phase, pIdx) => (
-                  <div
-                    key={pIdx}
-                    className="p-5 rounded-2xl border border-stone-200 bg-white hover:border-stone-400 transition-all space-y-3 shadow-xs"
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-stone-100 pb-2">
-                      <div className="flex items-center gap-2.5">
-                        <span className="w-6 h-6 rounded-full bg-[#18181B] text-white flex items-center justify-center font-mono font-bold text-xs">
-                          {pIdx + 1}
-                        </span>
-                        <h4 className="font-display font-black text-sm uppercase tracking-wide text-stone-900">
-                          {phase.phase}
-                        </h4>
-                      </div>
-                      <span className="font-mono font-bold text-xs px-2.5 py-0.5 rounded-full bg-[#E05A2B]/10 text-[#E05A2B]">
-                        {phase.durationMinutes} mins
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                      <div className="space-y-1">
-                        <div className="font-display font-bold uppercase tracking-wider text-stone-700">
-                          Teacher Facilitation:
-                        </div>
-                        <p className="text-stone-800 leading-relaxed font-medium">
-                          {phase.teacherActivity}
-                        </p>
-                      </div>
-
-                      <div className="space-y-1">
-                        <div className="font-display font-bold uppercase tracking-wider text-stone-700">
-                          Learner Active Engagement:
-                        </div>
-                        <p className="text-stone-800 leading-relaxed font-medium">
-                          {phase.studentActivity}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Assessment Strategy & Differentiation */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-              {/* Assessment */}
-              {lessonPlan.assessmentStrategy && (
-                <div className="p-5 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-2">
-                  <div className="font-display font-black text-xs uppercase tracking-wider text-amber-900">
-                    Formative Assessment & Exit Check
-                  </div>
-                  <p className="text-xs text-amber-950 leading-relaxed font-medium">
-                    {lessonPlan.assessmentStrategy}
+                <div className="space-y-1">
+                  <h3 className="font-display font-black text-2xl text-[#161616] uppercase tracking-tight">
+                    LESSON PLAN LOADING…
+                  </h3>
+                  <p className="text-stone-600 text-base font-normal max-w-md">
+                    Structuring learning outcomes, timing pedagogical phases, teacher prompts, and assessment checkpoints.
                   </p>
                 </div>
-              )}
+              </div>
+            ) : result ? (
+              <div className="space-y-6">
+                
+                {/* Lesson Plan Sheet */}
+                <div className="p-8 sm:p-12 rounded-[2rem] bg-white border-2 border-stone-300/80 shadow-[0_15px_40px_rgba(0,0,0,0.06)] space-y-8">
+                  
+                  {/* Header */}
+                  <div className="border-b-2 border-stone-800 pb-6 text-center space-y-2">
+                    <span className="font-mono text-base font-black tracking-[0.25em] text-[#E63956] uppercase block">
+                      PROUDLY AFRIKAN SCHOOL • PEDAGOGICAL LESSON PLAN
+                    </span>
+                    <h2 className="font-display font-black text-2xl sm:text-3xl text-stone-900 uppercase tracking-tight">
+                      {result.title}
+                    </h2>
+                    
+                    <div className="flex flex-wrap items-center justify-center gap-4 text-base font-mono text-stone-700 pt-2">
+                      <span><strong>SUBJECT:</strong> {result.subject}</span>
+                      <span>•</span>
+                      <span><strong>GRADE:</strong> {result.gradeLevel}</span>
+                      <span>•</span>
+                      <span><strong>DURATION:</strong> {result.totalDurationMinutes} MIN</span>
+                    </div>
+                  </div>
 
-              {/* Differentiation */}
-              {lessonPlan.differentiation && (
-                <div className="p-5 rounded-2xl bg-indigo-50/70 border border-indigo-200 space-y-2">
-                  <div className="font-display font-black text-xs uppercase tracking-wider text-indigo-900">
-                    Tiered Differentiation & Scaffolding
-                  </div>
-                  <div className="space-y-1.5 text-xs text-indigo-950">
-                    <div>
-                      <strong>Support / Scaffolding:</strong> {lessonPlan.differentiation.support}
+                  {/* Objectives & Prereqs */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-5 rounded-2xl bg-stone-50 border border-stone-200 space-y-2">
+                      <strong className="text-stone-900 font-mono text-base uppercase block">
+                        Target Learning Objectives:
+                      </strong>
+                      <ul className="space-y-1.5 text-base text-stone-700 list-disc list-inside">
+                        {(result.learningObjectives || []).map((obj, i) => (
+                          <li key={i}>{obj}</li>
+                        ))}
+                      </ul>
                     </div>
-                    <div>
-                      <strong>Extension / Challenge:</strong> {lessonPlan.differentiation.extension}
+
+                    <div className="p-5 rounded-2xl bg-stone-50 border border-stone-200 space-y-2">
+                      <strong className="text-stone-900 font-mono text-base uppercase block">
+                        Materials & Prerequisites:
+                      </strong>
+                      <ul className="space-y-1.5 text-base text-stone-700 list-disc list-inside">
+                        {(result.materialsRequired || []).map((mat, i) => (
+                          <li key={i}>{mat}</li>
+                        ))}
+                      </ul>
                     </div>
                   </div>
+
+                  {/* Phases Table */}
+                  <div className="space-y-4">
+                    <h3 className="font-display font-black text-xl text-stone-900 uppercase tracking-wide">
+                      Instructional Timeline & Phases
+                    </h3>
+
+                    <div className="space-y-4">
+                      {(result.phases || []).map((phase, pIdx) => (
+                        <div key={pIdx} className="p-5 rounded-2xl border border-stone-200 bg-white space-y-3 shadow-xs">
+                          <div className="flex items-center justify-between border-b border-stone-100 pb-2">
+                            <span className="font-display font-black text-lg text-stone-900 uppercase">
+                              Phase {pIdx + 1}: {phase.phaseName}
+                            </span>
+                            <span className="font-mono text-base font-bold text-[#E63956] px-3 py-1 bg-pink-50 rounded-full">
+                              {phase.durationMinutes} min
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-base">
+                            <div className="space-y-1">
+                              <strong className="text-stone-900 font-mono uppercase text-base block text-[#E63956]">
+                                Teacher Facilitation:
+                              </strong>
+                              <p className="text-stone-700 leading-relaxed font-normal">
+                                {phase.teacherActivity}
+                              </p>
+                            </div>
+
+                            <div className="space-y-1">
+                              <strong className="text-stone-900 font-mono uppercase text-base block text-emerald-700">
+                                Student Engagement:
+                              </strong>
+                              <p className="text-stone-700 leading-relaxed font-normal">
+                                {phase.studentActivity}
+                              </p>
+                            </div>
+                          </div>
+
+                          {phase.assessmentStrategy && (
+                            <div className="pt-2 border-t border-stone-100 text-base font-mono text-stone-600">
+                              <strong>Formative Check:</strong> {phase.assessmentStrategy}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Homework & Reflection */}
+                  {result.homeworkOrExtension && (
+                    <div className="p-5 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-1">
+                      <strong className="text-amber-950 font-mono text-base uppercase block">
+                        Homework / Extension Task:
+                      </strong>
+                      <p className="text-amber-900 text-base leading-relaxed">
+                        {result.homeworkOrExtension}
+                      </p>
+                    </div>
+                  )}
+
                 </div>
-              )}
-            </div>
+
+              </div>
+            ) : (
+              <div className="min-h-[460px] p-12 rounded-[2rem] bg-white border border-dashed border-stone-300 flex flex-col items-center justify-center text-center space-y-4 text-stone-500">
+                <BookOpen className="w-12 h-12 text-stone-300" />
+                <div className="space-y-1">
+                  <h3 className="font-display font-black text-xl text-stone-700 uppercase">
+                    No Lesson Plan Active
+                  </h3>
+                  <p className="text-base text-stone-500 max-w-sm">
+                    Configure your pedagogical parameters or upload notes on the left to generate timed lesson plans.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
+
         </div>
-      )}
+
+      </div>
     </div>
   );
 };

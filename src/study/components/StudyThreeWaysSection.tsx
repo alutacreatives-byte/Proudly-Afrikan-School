@@ -77,16 +77,17 @@ export const StudyThreeWaysSection: React.FC<StudyThreeWaysSectionProps> = ({
               FLEXIBLE STUDY MODES
             </span>
             <h2 className="font-display font-black text-3xl sm:text-5xl md:text-6xl uppercase tracking-tight text-[#161616] leading-none">
-              FOUR WAYS TO STUDY.
+              <span className="hidden lg:inline">THREE WAYS TO STUDY.</span>
+              <span className="lg:hidden">FOUR WAYS TO STUDY.</span>
             </h2>
           </div>
-          <p className="font-mono text-xs sm:text-sm text-stone-600 max-w-md leading-relaxed">
+          <p className="font-mono text-base text-stone-600 max-w-md leading-relaxed">
             Choose how you want to provide your study content to generate instant revision materials.
           </p>
         </div>
 
-        {/* 4 Elevated Soft Cards - Fully responsive across mobile, tablet, and desktop */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-6">
+        {/* Responsive Study Mode Cards - 3 on desktop, 4 on mobile & tablet */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">
           {cards.map((card) => {
             const Icon = card.icon;
             const isSelected = activeMethod === card.id;
@@ -97,6 +98,8 @@ export const StudyThreeWaysSection: React.FC<StudyThreeWaysSectionProps> = ({
                 id={`method-card-${card.id}`}
                 onClick={() => handleCardClick(card.id)}
                 className={`bg-white rounded-[2rem] border transition-all p-6 sm:p-7 flex flex-col justify-between cursor-pointer group ${
+                  card.id === 'capture' ? 'lg:hidden' : ''
+                } ${
                   isSelected
                     ? 'border-[#E63956] shadow-[0_20px_45px_-10px_rgba(230,57,86,0.18)] ring-2 ring-[#E63956]/20'
                     : 'border-stone-200/90 shadow-[0_16px_40px_rgba(0,0,0,0.06)] hover:shadow-[0_24px_50px_rgba(230,57,86,0.14)] hover:-translate-y-1 hover:border-[#E63956]/40'

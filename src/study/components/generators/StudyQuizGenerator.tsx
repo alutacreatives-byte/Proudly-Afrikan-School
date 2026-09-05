@@ -183,7 +183,7 @@ export const StudyQuizGenerator: React.FC<StudyQuizGeneratorProps> = ({
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-5 border-b border-stone-200">
         <div>
           <div className="flex items-center gap-2">
-            <span className="font-mono text-xs font-bold text-[#E63956] uppercase tracking-wider">
+            <span className="font-mono text-base font-bold text-[#E63956] uppercase tracking-wider">
               STUDY TOOL 04
             </span>
           </div>
@@ -197,33 +197,33 @@ export const StudyQuizGenerator: React.FC<StudyQuizGeneratorProps> = ({
             <button
               type="button"
               onClick={handleCopy}
-              className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="px-4 py-2.5 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-base font-bold uppercase text-stone-800 flex items-center gap-2 transition-colors cursor-pointer"
             >
-              {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+              {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
               {copied ? 'Copied' : 'Copy'}
             </button>
             <button
               type="button"
               onClick={handleExportJson}
-              className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="px-4 py-2.5 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-base font-bold uppercase text-stone-800 flex items-center gap-2 transition-colors cursor-pointer"
             >
-              <Download className="w-3.5 h-3.5" />
+              <Download className="w-4 h-4" />
               JSON
             </button>
             <button
               type="button"
               onClick={() => window.print()}
-              className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="px-4 py-2.5 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-base font-bold uppercase text-stone-800 flex items-center gap-2 transition-colors cursor-pointer"
             >
-              <Printer className="w-3.5 h-3.5" />
+              <Printer className="w-4 h-4" />
               Print
             </button>
             <button
               type="button"
               onClick={handleSave}
-              className="px-4 py-2 rounded-xl bg-[#18181B] hover:bg-[#27272A] text-white font-mono text-xs font-bold uppercase flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+              className="px-4 py-2.5 rounded-xl bg-[#18181B] hover:bg-[#27272A] text-white font-mono text-base font-bold uppercase flex items-center gap-2 transition-colors cursor-pointer shadow-xs"
             >
-              <Bookmark className="w-3.5 h-3.5" />
+              <Bookmark className="w-4 h-4" />
               {saved ? 'Saved' : 'Save Quiz'}
             </button>
           </div>
@@ -236,14 +236,14 @@ export const StudyQuizGenerator: React.FC<StudyQuizGeneratorProps> = ({
         <div className="lg:col-span-4 space-y-6">
           <div className="p-6 rounded-[2rem] bg-white border border-stone-200/90 shadow-[0_10px_30px_rgba(0,0,0,0.05)] space-y-5">
             <div className="flex items-center gap-2 pb-3 border-b border-stone-100">
-              <Sparkles className="w-4 h-4 text-[#E63956]" />
-              <h2 className="font-display font-black text-sm uppercase text-[#161616] tracking-wider">
+              <Sparkles className="w-5 h-5 text-[#E63956]" />
+              <h2 className="font-display font-black text-base uppercase text-[#161616] tracking-wider">
                 Quiz Setup
               </h2>
             </div>
 
             <div>
-              <label className="block font-mono text-xs font-bold text-stone-700 uppercase mb-2">
+              <label className="block font-mono text-base font-bold text-stone-700 uppercase mb-2">
                 Quiz Topic / Test Area *
               </label>
               <input
@@ -251,18 +251,18 @@ export const StudyQuizGenerator: React.FC<StudyQuizGeneratorProps> = ({
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
                 placeholder="e.g. Swahili Coast Maritime Trade"
-                className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:border-[#E63956] focus:ring-1 focus:ring-[#E63956] bg-stone-50 text-sm font-medium outline-hidden"
+                className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:border-[#E63956] focus:ring-1 focus:ring-[#E63956] bg-stone-50 text-base font-medium outline-hidden"
               />
             </div>
 
             <div>
-              <label className="block font-mono text-xs font-bold text-stone-700 uppercase mb-2">
+              <label className="block font-mono text-base font-bold text-stone-700 uppercase mb-2">
                 Subject
               </label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:border-[#E63956] bg-stone-50 text-sm font-medium outline-hidden"
+                className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:border-[#E63956] bg-stone-50 text-base font-medium outline-hidden"
               >
                 <option value="AFRICAN HISTORY">African History</option>
                 <option value="SCIENCES & STEM">Sciences & STEM</option>
@@ -274,7 +274,7 @@ export const StudyQuizGenerator: React.FC<StudyQuizGeneratorProps> = ({
             </div>
 
             <div>
-              <label className="block font-mono text-xs font-bold text-stone-700 uppercase mb-2">
+              <label className="block font-mono text-base font-bold text-stone-700 uppercase mb-2">
                 Difficulty
               </label>
               <div className="grid grid-cols-3 gap-2">
@@ -283,7 +283,7 @@ export const StudyQuizGenerator: React.FC<StudyQuizGeneratorProps> = ({
                     key={d}
                     type="button"
                     onClick={() => setDifficulty(d)}
-                    className={`py-2 text-xs font-mono font-bold uppercase rounded-xl border transition-all cursor-pointer ${
+                    className={`py-2 text-base font-mono font-bold uppercase rounded-xl border transition-all cursor-pointer ${
                       difficulty === d
                         ? 'bg-[#18181B] text-white border-[#18181B]'
                         : 'bg-stone-50 text-stone-600 border-stone-200 hover:bg-stone-100'
@@ -296,13 +296,13 @@ export const StudyQuizGenerator: React.FC<StudyQuizGeneratorProps> = ({
             </div>
 
             <div>
-              <label className="block font-mono text-xs font-bold text-stone-700 uppercase mb-2">
+              <label className="block font-mono text-base font-bold text-stone-700 uppercase mb-2">
                 Questions Count
               </label>
               <select
                 value={count}
                 onChange={(e) => setCount(Number(e.target.value))}
-                className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:border-[#E63956] bg-stone-50 text-sm font-medium outline-hidden"
+                className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:border-[#E63956] bg-stone-50 text-base font-medium outline-hidden"
               >
                 <option value={5}>5 Questions (Rapid Check)</option>
                 <option value={8}>8 Questions (Standard Assessment)</option>
@@ -311,7 +311,7 @@ export const StudyQuizGenerator: React.FC<StudyQuizGeneratorProps> = ({
             </div>
 
             <div>
-              <label className="block font-mono text-xs font-bold text-stone-700 uppercase mb-2">
+              <label className="block font-mono text-base font-bold text-stone-700 uppercase mb-2">
                 Optional Source Material (PDF / DOC / Notes)
               </label>
               <SourceMaterialUpload
@@ -328,7 +328,7 @@ export const StudyQuizGenerator: React.FC<StudyQuizGeneratorProps> = ({
             </div>
 
             {error && (
-              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs font-mono">
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-base font-mono">
                 {error}
               </div>
             )}
@@ -337,9 +337,9 @@ export const StudyQuizGenerator: React.FC<StudyQuizGeneratorProps> = ({
               type="button"
               disabled={isGenerating}
               onClick={handleGenerate}
-              className="w-full py-3.5 rounded-xl bg-[#E63956] hover:bg-[#D32F4C] disabled:bg-stone-300 text-white font-display font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm"
+              className="w-full py-3.5 rounded-xl bg-[#E63956] hover:bg-[#D32F4C] disabled:bg-stone-300 text-white font-display font-black text-base uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm"
             >
-              <Sparkles className="w-4 h-4" />
+              <Sparkles className="w-5 h-5" />
               {isGenerating ? 'Building Quiz...' : 'Generate Practice Quiz →'}
             </button>
           </div>
@@ -353,10 +353,10 @@ export const StudyQuizGenerator: React.FC<StudyQuizGeneratorProps> = ({
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-stone-100">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="px-3 py-1 bg-pink-50 border border-pink-200 text-[#E63956] text-[11px] font-mono font-bold uppercase rounded-full">
+                    <span className="px-3.5 py-1.5 bg-pink-50 border border-pink-200 text-[#E63956] text-base font-mono font-bold uppercase rounded-full">
                       {quiz.subject || category}
                     </span>
-                    <span className="px-3 py-1 bg-stone-100 text-stone-600 text-[11px] font-mono font-bold uppercase rounded-full">
+                    <span className="px-3.5 py-1.5 bg-stone-100 text-stone-600 text-base font-mono font-bold uppercase rounded-full">
                       {quiz.difficulty || difficulty}
                     </span>
                   </div>
@@ -369,10 +369,10 @@ export const StudyQuizGenerator: React.FC<StudyQuizGeneratorProps> = ({
                   <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center gap-3">
                     <Award className="w-6 h-6 text-emerald-600 shrink-0" />
                     <div>
-                      <div className="font-mono text-xs font-bold text-emerald-900 uppercase">
+                      <div className="font-mono text-base font-bold text-emerald-900 uppercase">
                         Final Score
                       </div>
-                      <div className="font-display font-black text-xl text-emerald-700">
+                      <div className="font-display font-black text-2xl text-emerald-700">
                         {score.correct} / {score.total} ({score.percent}%)
                       </div>
                     </div>
@@ -399,7 +399,7 @@ export const StudyQuizGenerator: React.FC<StudyQuizGeneratorProps> = ({
                       }`}
                     >
                       <div className="flex items-start justify-between gap-4">
-                        <h3 className="font-mono text-sm sm:text-base font-bold text-[#161616] leading-relaxed">
+                        <h3 className="font-mono text-base sm:text-lg font-bold text-[#161616] leading-relaxed">
                           <span className="text-[#E63956] mr-2">Q{qIdx + 1}.</span>
                           {q.prompt}
                         </h3>
@@ -430,16 +430,16 @@ export const StudyQuizGenerator: React.FC<StudyQuizGeneratorProps> = ({
                               type="button"
                               disabled={isSubmitted}
                               onClick={() => handleSelectOption(qIdx, oIdx)}
-                              className={`w-full p-3.5 rounded-xl border text-left text-xs sm:text-sm transition-all flex items-center justify-between gap-3 cursor-pointer ${optionStyle}`}
+                              className={`w-full p-4 rounded-xl border text-left text-base transition-all flex items-center justify-between gap-3 cursor-pointer ${optionStyle}`}
                             >
-                              <div className="flex items-center gap-2.5">
-                                <span className="w-6 h-6 rounded-lg bg-stone-100/80 text-stone-700 flex items-center justify-center font-mono text-xs font-bold shrink-0">
+                              <div className="flex items-center gap-3">
+                                <span className="w-7 h-7 rounded-lg bg-stone-100/80 text-stone-700 flex items-center justify-center font-mono text-base font-bold shrink-0">
                                   {String.fromCharCode(65 + oIdx)}
                                 </span>
                                 <span>{opt}</span>
                               </div>
                               {isSubmitted && isRightOption && (
-                                <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                                <Check className="w-5 h-5 text-emerald-600 shrink-0" />
                               )}
                             </button>
                           );
@@ -448,7 +448,7 @@ export const StudyQuizGenerator: React.FC<StudyQuizGeneratorProps> = ({
 
                       {/* Explanation Box on submit */}
                       {isSubmitted && q.explanation && (
-                        <div className="p-4 rounded-xl bg-white border border-stone-200 text-xs text-stone-700 font-normal leading-relaxed space-y-1">
+                        <div className="p-4 rounded-xl bg-white border border-stone-200 text-base text-stone-700 font-normal leading-relaxed space-y-1">
                           <span className="font-mono font-bold text-stone-900 block">
                             💡 Diagnostic Explanation:
                           </span>
@@ -467,23 +467,23 @@ export const StudyQuizGenerator: React.FC<StudyQuizGeneratorProps> = ({
                     type="button"
                     onClick={handleGradeQuiz}
                     disabled={Object.keys(userAnswers).length === 0}
-                    className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-[#E63956] hover:bg-[#D32F4C] disabled:bg-stone-300 text-white font-display font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
+                    className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-[#E63956] hover:bg-[#D32F4C] disabled:bg-stone-300 text-white font-display font-black text-base uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
                   >
-                    <CheckSquare className="w-4 h-4" />
+                    <CheckSquare className="w-5 h-5" />
                     Submit & Grade Quiz ({Object.keys(userAnswers).length}/{quiz.questions.length})
                   </button>
                 ) : (
                   <button
                     type="button"
                     onClick={handleResetQuiz}
-                    className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-[#18181B] hover:bg-[#27272A] text-white font-display font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
+                    className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-[#18181B] hover:bg-[#27272A] text-white font-display font-black text-base uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
                   >
-                    <RotateCcw className="w-4 h-4" />
+                    <RotateCcw className="w-5 h-5" />
                     Retake Practice Quiz
                   </button>
                 )}
 
-                <span className="font-mono text-xs text-stone-400">
+                <span className="font-mono text-base text-stone-500 font-bold">
                   {Object.keys(userAnswers).length} of {quiz.questions.length} answered
                 </span>
               </div>
@@ -493,10 +493,10 @@ export const StudyQuizGenerator: React.FC<StudyQuizGeneratorProps> = ({
               <div className="w-12 h-12 rounded-full bg-stone-100 text-stone-400 flex items-center justify-center">
                 <CheckSquare className="w-6 h-6" />
               </div>
-              <h3 className="font-display font-black text-lg uppercase text-stone-900">
+              <h3 className="font-display font-black text-xl uppercase text-stone-900">
                 Ready to Build Practice Quiz
               </h3>
-              <p className="text-xs sm:text-sm text-stone-500 max-w-md font-normal leading-relaxed">
+              <p className="text-base text-stone-500 max-w-md font-normal leading-relaxed">
                 Configure your subject, choose your difficulty and questions count, then generate an interactive graded diagnostic quiz with explanations.
               </p>
             </div>

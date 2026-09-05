@@ -72,7 +72,7 @@ const STUDY_TOOLS: ToolItem[] = [
     toolNumber: '06',
     tag: 'SLIDES & LECTURE',
     title: 'PRESENTATION GENERATOR',
-    subtitle: 'Generate structured slide decks with presenter notes, visual prompts, and interactive discussion starters.',
+    subtitle: 'Generate structured slide decks with presenter notes, interactive discussion starters, and key concepts.',
     icon: Presentation,
     btnText: 'CREATE SLIDE DECK →',
   },

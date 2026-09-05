@@ -11,7 +11,8 @@ import {
   RotateCw,
   Shuffle,
   Eye,
-  Download
+  Download,
+  FileDown
 } from 'lucide-react';
 import { FlashcardResult, StudyToolInput } from '../../types';
 import { generateStudyTool } from '../../services/aiService';
@@ -19,6 +20,7 @@ import { SourceMaterialUpload } from '../SourceMaterialUpload';
 import { saveResourceToStorage } from '../../utils/storage';
 import { useAuthCredit } from '../../../context/AuthCreditContext';
 import { GlobalNavigationButtons } from '../../../components/GlobalNavigationButtons';
+import { exportFlashcardsToPdf, exportFlashcardsToPptx } from '../../../utils/exportHelpers';
 
 interface FlashcardGeneratorProps {
   onBack: () => void;
@@ -169,7 +171,7 @@ export const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-5 border-b border-stone-200">
         <div>
           <div className="flex items-center gap-2">
-            <span className="font-mono text-xs font-bold text-[#E63956] uppercase tracking-wider">
+            <span className="font-mono text-base font-bold text-[#E63956] uppercase tracking-wider">
               STUDY TOOL 03
             </span>
           </div>
@@ -182,42 +184,60 @@ export const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({
           <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
             <button
               type="button"
-              onClick={handleShuffle}
-              className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
+              onClick={() => exportFlashcardsToPdf(flashcards.title, flashcards.cards, flashcards.subject || category)}
+              className="px-4 py-2.5 rounded-xl bg-pink-50 border border-pink-200 hover:bg-pink-100 font-mono text-base font-bold uppercase text-[#E63956] flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+              title="Download Flashcards as PDF"
             >
-              <Shuffle className="w-3.5 h-3.5" />
+              <FileDown className="w-4 h-4" />
+              PDF
+            </button>
+            <button
+              type="button"
+              onClick={() => exportFlashcardsToPptx(flashcards.title, flashcards.cards, flashcards.subject || category)}
+              className="px-4 py-2.5 rounded-xl bg-amber-50 border border-amber-200 hover:bg-amber-100 font-mono text-base font-bold uppercase text-amber-800 flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+              title="Download Flashcards as PPTX"
+            >
+              <FileDown className="w-4 h-4" />
+              PPTX
+            </button>
+            <button
+              type="button"
+              onClick={handleShuffle}
+              className="px-4 py-2.5 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-base font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <Shuffle className="w-4 h-4" />
               Shuffle
             </button>
             <button
               type="button"
               onClick={handleCopy}
-              className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="px-4 py-2.5 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-base font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
             >
-              {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+              {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
               {copied ? 'Copied' : 'Copy'}
             </button>
             <button
               type="button"
               onClick={handleExportJson}
-              className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="px-4 py-2.5 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-base font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
             >
-              <Download className="w-3.5 h-3.5" />
+              <Download className="w-4 h-4" />
               JSON
             </button>
             <button
               type="button"
               onClick={() => window.print()}
-              className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="px-4 py-2.5 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-base font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
             >
-              <Printer className="w-3.5 h-3.5" />
+              <Printer className="w-4 h-4" />
               Print
             </button>
             <button
               type="button"
               onClick={handleSave}
-              className="px-4 py-2 rounded-xl bg-[#18181B] hover:bg-[#27272A] text-white font-mono text-xs font-bold uppercase flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+              className="px-4 py-2.5 rounded-xl bg-[#18181B] hover:bg-[#27272A] text-white font-mono text-base font-bold uppercase flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
             >
-              <Bookmark className="w-3.5 h-3.5" />
+              <Bookmark className="w-4 h-4" />
               {saved ? 'Saved' : 'Save Set'}
             </button>
           </div>
@@ -231,13 +251,13 @@ export const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({
           <div className="p-6 rounded-[2rem] bg-white border border-stone-200/90 shadow-[0_10px_30px_rgba(0,0,0,0.05)] space-y-5">
             <div className="flex items-center gap-2 pb-3 border-b border-stone-100">
               <Sparkles className="w-4 h-4 text-[#E63956]" />
-              <h2 className="font-display font-black text-sm uppercase text-[#161616] tracking-wider">
+              <h2 className="font-display font-black text-base uppercase text-[#161616] tracking-wider">
                 Deck Configuration
               </h2>
             </div>
 
             <div>
-              <label className="block font-mono text-xs font-bold text-stone-700 uppercase mb-2">
+              <label className="block font-mono text-base font-bold text-stone-700 uppercase mb-2">
                 Study Topic / Terminology *
               </label>
               <input
@@ -245,18 +265,18 @@ export const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
                 placeholder="e.g. Ancient Carthage Trade Networks"
-                className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:border-[#E63956] focus:ring-1 focus:ring-[#E63956] bg-stone-50 text-sm font-medium outline-hidden"
+                className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:border-[#E63956] focus:ring-1 focus:ring-[#E63956] bg-stone-50 text-base font-medium outline-hidden"
               />
             </div>
 
             <div>
-              <label className="block font-mono text-xs font-bold text-stone-700 uppercase mb-2">
+              <label className="block font-mono text-base font-bold text-stone-700 uppercase mb-2">
                 Subject
               </label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:border-[#E63956] bg-stone-50 text-sm font-medium outline-hidden"
+                className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:border-[#E63956] bg-stone-50 text-base font-medium outline-hidden"
               >
                 <option value="AFRICAN HISTORY">African History</option>
                 <option value="SCIENCES & STEM">Sciences & STEM</option>
@@ -268,13 +288,13 @@ export const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({
             </div>
 
             <div>
-              <label className="block font-mono text-xs font-bold text-stone-700 uppercase mb-2">
+              <label className="block font-mono text-base font-bold text-stone-700 uppercase mb-2">
                 Card Count
               </label>
               <select
                 value={count}
                 onChange={(e) => setCount(Number(e.target.value))}
-                className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:border-[#E63956] bg-stone-50 text-sm font-medium outline-hidden"
+                className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:border-[#E63956] bg-stone-50 text-base font-medium outline-hidden"
               >
                 <option value={6}>6 Flashcards (Quick Drill)</option>
                 <option value={8}>8 Flashcards (Standard Review)</option>
@@ -284,7 +304,7 @@ export const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({
             </div>
 
             <div>
-              <label className="block font-mono text-xs font-bold text-stone-700 uppercase mb-2">
+              <label className="block font-mono text-base font-bold text-stone-700 uppercase mb-2">
                 Optional Source Material (PDF / DOC / Notes)
               </label>
               <SourceMaterialUpload
@@ -301,7 +321,7 @@ export const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({
             </div>
 
             {error && (
-              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs font-mono">
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-base font-mono">
                 {error}
               </div>
             )}
@@ -310,10 +330,10 @@ export const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({
               type="button"
               disabled={isGenerating}
               onClick={handleGenerate}
-              className="w-full py-3.5 rounded-xl bg-[#E63956] hover:bg-[#D32F4C] disabled:bg-stone-300 text-white font-display font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm"
+              className="w-full py-4 rounded-xl bg-[#E63956] hover:bg-[#D32F4C] disabled:bg-stone-300 text-white font-display font-black text-base uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm"
             >
-              <Sparkles className="w-4 h-4" />
-              {isGenerating ? 'Generating Flashcards...' : 'Generate Flashcards →'}
+              <Sparkles className="w-5 h-5" />
+              {isGenerating ? 'FLASHCARDS LOADING…' : 'Generate Flashcards →'}
             </button>
           </div>
         </div>
@@ -324,40 +344,40 @@ export const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({
             <div className="space-y-6">
               {/* Card Meta Bar */}
               <div className="flex items-center justify-between">
-                <span className="font-mono text-xs font-bold text-stone-500 uppercase">
+                <span className="font-mono text-base font-bold text-stone-600 uppercase">
                   Card {currentIndex + 1} of {flashcards.cards.length}
                 </span>
-                <span className="px-3 py-1 bg-pink-50 border border-pink-200 text-[#E63956] text-[11px] font-mono font-bold uppercase rounded-full">
+                <span className="px-4 py-2 bg-pink-50 border border-pink-200 text-[#E63956] text-base font-mono font-bold uppercase rounded-full">
                   {currentCard.category || flashcards.subject || category}
                 </span>
               </div>
 
-              {/* Flip Card Container */}
+              {/* Flip Card Container - Stronger design & bolder text */}
               <div
                 onClick={() => setIsFlipped(!isFlipped)}
-                className="relative w-full min-h-[360px] sm:min-h-[400px] p-8 sm:p-12 rounded-[2.5rem] bg-white border-2 border-stone-200/90 hover:border-[#E63956]/60 shadow-[0_15px_40px_rgba(0,0,0,0.06)] flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200 select-none group"
+                className="relative w-full min-h-[380px] sm:min-h-[440px] p-8 sm:p-14 rounded-[2.5rem] bg-white border-2 sm:border-3 border-stone-900 hover:border-[#E63956] shadow-[0_20px_50px_rgba(0,0,0,0.08),0_4px_16px_rgba(230,57,86,0.12)] flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200 select-none group"
               >
-                <span className="absolute top-6 right-6 px-3 py-1 rounded-full bg-stone-100 text-stone-500 text-[10px] font-mono font-bold uppercase tracking-wider flex items-center gap-1 group-hover:bg-[#E63956] group-hover:text-white transition-colors">
-                  <RotateCw className="w-3 h-3" />
+                <span className="absolute top-6 right-6 px-4 py-2 rounded-full bg-stone-100 text-stone-700 text-base font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 group-hover:bg-[#E63956] group-hover:text-white transition-colors border border-stone-200 group-hover:border-[#E63956]">
+                  <RotateCw className="w-4 h-4" />
                   {isFlipped ? 'Answer (Click to flip)' : 'Question (Click to flip)'}
                 </span>
 
-                <div className="space-y-4 max-w-xl">
+                <div className="space-y-5 max-w-xl">
                   {!isFlipped ? (
                     <>
-                      <span className="text-xs font-mono font-bold text-[#E63956] uppercase tracking-wider block">
+                      <span className="text-base font-mono font-black text-[#E63956] uppercase tracking-wider block">
                         PROMPT / QUESTION
                       </span>
-                      <h3 className="font-display font-black text-xl sm:text-2xl text-[#161616] leading-snug">
+                      <h3 className="font-display font-black text-2xl sm:text-4xl text-stone-950 leading-tight tracking-tight">
                         {currentCard.front}
                       </h3>
                     </>
                   ) : (
                     <>
-                      <span className="text-xs font-mono font-bold text-emerald-600 uppercase tracking-wider block">
+                      <span className="text-base font-mono font-black text-emerald-700 uppercase tracking-wider block">
                         ANSWER / DEFINITION
                       </span>
-                      <p className="text-stone-800 text-base sm:text-lg font-medium leading-relaxed">
+                      <p className="text-stone-950 text-xl sm:text-2xl font-bold leading-relaxed">
                         {currentCard.back}
                       </p>
                     </>
@@ -367,7 +387,7 @@ export const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({
                 {currentCard.hint && !isFlipped && (
                   <div className="absolute bottom-6 left-6 right-6">
                     {showHint ? (
-                      <p className="text-xs font-mono text-stone-500 bg-stone-50 p-2.5 rounded-xl border border-stone-200 max-w-md mx-auto">
+                      <p className="text-base font-mono font-bold text-stone-600 bg-stone-50 p-3.5 rounded-xl border border-stone-200 max-w-md mx-auto">
                         💡 Hint: {currentCard.hint}
                       </p>
                     ) : (
@@ -377,9 +397,9 @@ export const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({
                           e.stopPropagation();
                           setShowHint(true);
                         }}
-                        className="text-[11px] font-mono font-bold text-stone-400 hover:text-stone-700 flex items-center justify-center gap-1 mx-auto"
+                        className="text-base font-mono font-bold text-stone-500 hover:text-stone-800 flex items-center justify-center gap-1.5 mx-auto"
                       >
-                        <Eye className="w-3 h-3" />
+                        <Eye className="w-4 h-4" />
                         Show Hint
                       </button>
                     )}
@@ -392,9 +412,9 @@ export const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({
                 <button
                   type="button"
                   onClick={handlePrev}
-                  className="px-6 py-3 rounded-2xl bg-white border border-stone-200 hover:bg-stone-50 font-display font-black text-xs uppercase text-stone-800 flex items-center gap-2 transition-colors cursor-pointer"
+                  className="px-6 py-3 rounded-2xl bg-white border border-stone-200 hover:bg-stone-50 font-display font-black text-base uppercase text-stone-800 flex items-center gap-2 transition-colors cursor-pointer"
                 >
-                  <ArrowLeft className="w-4 h-4" />
+                  <ArrowLeft className="w-5 h-5" />
                   Previous Card
                 </button>
 
@@ -409,8 +429,8 @@ export const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({
                         setIsFlipped(false);
                         setShowHint(false);
                       }}
-                      className={`h-2 rounded-full transition-all cursor-pointer ${
-                        idx === currentIndex ? 'w-6 bg-[#E63956]' : 'w-2 bg-stone-200 hover:bg-stone-300'
+                      className={`h-2.5 rounded-full transition-all cursor-pointer ${
+                        idx === currentIndex ? 'w-8 bg-[#E63956]' : 'w-2.5 bg-stone-200 hover:bg-stone-300'
                       }`}
                     />
                   ))}
@@ -419,16 +439,16 @@ export const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({
                 <button
                   type="button"
                   onClick={handleNext}
-                  className="px-6 py-3 rounded-2xl bg-[#18181B] hover:bg-[#27272A] text-white font-display font-black text-xs uppercase flex items-center gap-2 transition-colors cursor-pointer shadow-xs"
+                  className="px-6 py-3 rounded-2xl bg-[#18181B] hover:bg-[#27272A] text-white font-display font-black text-base uppercase flex items-center gap-2 transition-colors cursor-pointer shadow-xs"
                 >
                   Next Card
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowRight className="w-5 h-5" />
                 </button>
               </div>
 
               {/* All Cards Overview Grid */}
               <div className="pt-8 border-t border-stone-200 space-y-4">
-                <h4 className="font-display font-black text-sm uppercase text-stone-900 tracking-wider">
+                <h4 className="font-display font-black text-base uppercase text-stone-900 tracking-wider">
                   Full Set Overview ({flashcards.cards.length} Cards)
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -441,19 +461,19 @@ export const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({
                         setShowHint(false);
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                       }}
-                      className={`p-4 rounded-2xl border cursor-pointer transition-all space-y-2 ${
+                      className={`p-5 rounded-2xl border-2 cursor-pointer transition-all space-y-2.5 ${
                         idx === currentIndex
                           ? 'bg-pink-50/50 border-[#E63956]'
-                          : 'bg-white border-stone-200 hover:border-stone-300'
+                          : 'bg-white border-stone-200 hover:border-stone-400'
                       }`}
                     >
-                      <span className="font-mono text-[10px] font-bold text-stone-400 block uppercase">
+                      <span className="font-mono text-base font-bold text-stone-400 block uppercase">
                         #{idx + 1}
                       </span>
-                      <p className="font-mono text-xs font-bold text-stone-900 line-clamp-2">
+                      <p className="font-mono text-base font-bold text-stone-900 line-clamp-2">
                         {c.front}
                       </p>
-                      <p className="text-xs text-stone-600 line-clamp-2 font-normal">
+                      <p className="text-base text-stone-600 line-clamp-2 font-medium">
                         {c.back}
                       </p>
                     </div>
@@ -466,10 +486,10 @@ export const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({
               <div className="w-12 h-12 rounded-full bg-stone-100 text-stone-400 flex items-center justify-center">
                 <Layers className="w-6 h-6" />
               </div>
-              <h3 className="font-display font-black text-lg uppercase text-stone-900">
+              <h3 className="font-display font-black text-xl uppercase text-stone-900">
                 Ready to Generate Active Recall Cards
               </h3>
-              <p className="text-xs sm:text-sm text-stone-500 max-w-md font-normal leading-relaxed">
+              <p className="text-base text-stone-500 max-w-md font-normal leading-relaxed">
                 Enter your study concepts and choose the deck size to create interactive active-recall flashcards with instant flip animations and hints.
               </p>
             </div>

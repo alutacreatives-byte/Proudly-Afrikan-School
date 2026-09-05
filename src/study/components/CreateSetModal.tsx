@@ -313,19 +313,19 @@ export const CreateSetModal: React.FC<CreateSetModalProps> = ({
         <div className="p-5 sm:p-6 overflow-y-auto flex-1 space-y-6">
           {!generatedSet ? (
             <>
-              {/* Input Method Selector - Responsive 4 options: TYPE IT, PASTE IT, UPLOAD IT, CAPTURE IT */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2 p-1.5 bg-[#F4F1EA] rounded-2xl sm:rounded-full border border-stone-200">
+              {/* Input Method Selector - Responsive: 3 on desktop, 4 on mobile/tablet */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-3 gap-1.5 sm:gap-2 p-1.5 bg-[#F4F1EA] rounded-2xl sm:rounded-full border border-stone-200">
                 <button
                   id="tab-enter-topic"
                   type="button"
                   onClick={() => setMethod('topic')}
-                  className={`py-2.5 px-3 rounded-xl sm:rounded-full font-display text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  className={`py-2.5 px-3 rounded-xl sm:rounded-full font-display text-base font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                     method === 'topic'
                       ? 'bg-[#18181B] text-white shadow-md'
                       : 'text-stone-700 hover:bg-white/80'
                   }`}
                 >
-                  <BookOpen className="w-3.5 h-3.5" />
+                  <BookOpen className="w-4 h-4" />
                   <span>01. Topic</span>
                 </button>
 
@@ -333,13 +333,13 @@ export const CreateSetModal: React.FC<CreateSetModalProps> = ({
                   id="tab-paste-text"
                   type="button"
                   onClick={() => setMethod('paste')}
-                  className={`py-2.5 px-3 rounded-xl sm:rounded-full font-display text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  className={`py-2.5 px-3 rounded-xl sm:rounded-full font-display text-base font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                     method === 'paste'
                       ? 'bg-[#18181B] text-white shadow-md'
                       : 'text-stone-700 hover:bg-white/80'
                   }`}
                 >
-                  <FileText className="w-3.5 h-3.5" />
+                  <FileText className="w-4 h-4" />
                   <span>02. Paste</span>
                 </button>
 
@@ -347,13 +347,13 @@ export const CreateSetModal: React.FC<CreateSetModalProps> = ({
                   id="tab-upload-material"
                   type="button"
                   onClick={() => setMethod('upload')}
-                  className={`py-2.5 px-3 rounded-xl sm:rounded-full font-display text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  className={`py-2.5 px-3 rounded-xl sm:rounded-full font-display text-base font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                     method === 'upload'
                       ? 'bg-[#18181B] text-white shadow-md'
                       : 'text-stone-700 hover:bg-white/80'
                   }`}
                 >
-                  <Upload className="w-3.5 h-3.5" />
+                  <Upload className="w-4 h-4" />
                   <span>03. Upload</span>
                 </button>
 
@@ -361,13 +361,13 @@ export const CreateSetModal: React.FC<CreateSetModalProps> = ({
                   id="tab-capture-material"
                   type="button"
                   onClick={() => setMethod('capture')}
-                  className={`py-2.5 px-3 rounded-xl sm:rounded-full font-display text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  className={`py-2.5 px-3 rounded-xl sm:rounded-full font-display text-base font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer lg:hidden ${
                     method === 'capture'
                       ? 'bg-[#18181B] text-white shadow-md'
                       : 'text-stone-700 hover:bg-white/80'
                   }`}
                 >
-                  <Camera className={`w-3.5 h-3.5 ${method === 'capture' ? 'text-[#D92B8A]' : 'text-stone-600'}`} />
+                  <Camera className={`w-4 h-4 ${method === 'capture' ? 'text-[#D92B8A]' : 'text-stone-600'}`} />
                   <span>04. Capture</span>
                 </button>
               </div>

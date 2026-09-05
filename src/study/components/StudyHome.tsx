@@ -237,38 +237,38 @@ export const StudyHome: React.FC<StudyHomeProps> = ({
             </h3>
           </div>
 
-          <div className="flex flex-wrap items-center gap-1.5 p-1 bg-stone-100/90 rounded-2xl sm:rounded-full border border-stone-200/70">
+          <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-stone-100/90 rounded-2xl sm:rounded-full border border-stone-200/70">
             <button
               type="button"
               id="workbench-tab-type"
               onClick={() => setActiveMethod('topic')}
-              className={`px-3.5 py-2 rounded-xl sm:rounded-full text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`px-4 py-2.5 rounded-xl sm:rounded-full text-base font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
                 activeMethod === 'topic' ? 'bg-[#18181B] text-white shadow-xs' : 'text-stone-600 hover:text-stone-900'
               }`}
             >
-              <Type className="w-3.5 h-3.5" />
+              <Type className="w-4 h-4" />
               <span>TYPE IT</span>
             </button>
             <button
               type="button"
               id="workbench-tab-paste"
               onClick={() => setActiveMethod('text')}
-              className={`px-3.5 py-2 rounded-xl sm:rounded-full text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`px-4 py-2.5 rounded-xl sm:rounded-full text-base font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
                 activeMethod === 'text' ? 'bg-[#18181B] text-white shadow-xs' : 'text-stone-600 hover:text-stone-900'
               }`}
             >
-              <ClipboardList className="w-3.5 h-3.5" />
+              <ClipboardList className="w-4 h-4" />
               <span>PASTE IT</span>
             </button>
             <button
               type="button"
               id="workbench-tab-upload"
               onClick={() => setActiveMethod('pdf')}
-              className={`px-3.5 py-2 rounded-xl sm:rounded-full text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`px-4 py-2.5 rounded-xl sm:rounded-full text-base font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
                 activeMethod === 'pdf' ? 'bg-[#18181B] text-white shadow-xs' : 'text-stone-600 hover:text-stone-900'
               }`}
             >
-              <FileUp className="w-3.5 h-3.5" />
+              <FileUp className="w-4 h-4" />
               <span>UPLOAD IT</span>
             </button>
             <button
@@ -280,11 +280,11 @@ export const StudyHome: React.FC<StudyHomeProps> = ({
                   setIsCameraModalOpen(true);
                 }
               }}
-              className={`px-3.5 py-2 rounded-xl sm:rounded-full text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`px-4 py-2.5 rounded-xl sm:rounded-full text-base font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer lg:hidden ${
                 activeMethod === 'capture' ? 'bg-[#D92B8A] text-white shadow-[0_4px_12px_rgba(217,43,138,0.35)]' : 'text-stone-700 hover:text-[#D92B8A]'
               }`}
             >
-              <Camera className="w-3.5 h-3.5" />
+              <Camera className="w-4 h-4" />
               <span>CAPTURE IT</span>
             </button>
           </div>

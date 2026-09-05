@@ -1,41 +1,14 @@
-import {
-  ExamResult,
-  WorksheetResult,
-  LessonPlanResult,
-  PdfQuizBuildResult,
-  PdfStudyPackResult,
-  PresentationBuildResult,
-  CourseBuildResult,
-  LearningPathBuildResult,
+import { 
+  ExamPaper, 
+  WorksheetData, 
+  LessonPlanData, 
+  PdfStudyPackData, 
+  PresentationDeck, 
+  CourseSyllabus, 
+  LearningPathData 
 } from '../types';
 
-async function postJson<T>(url: string, body: Record<string, any>): Promise<T> {
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(body),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    let errorMessage = `Failed to generate build resource (${response.status})`;
-    try {
-      const parsed = JSON.parse(errorText);
-      if (parsed.error) errorMessage = parsed.error;
-    } catch {}
-    throw new Error(errorMessage);
-  }
-
-  const json = await response.json();
-  if (json.data) {
-    return json.data as T;
-  }
-  return json as T;
-}
-
-export async function generateExam(params: {
+export async function generateExamApi(params: {
   subject: string;
   topic: string;
   gradeLevel?: string;
@@ -46,119 +19,128 @@ export async function generateExam(params: {
   totalMarks?: number;
   instructions?: string;
   sourceMaterial?: string;
-  institutionHeader?: string;
-}): Promise<ExamResult> {
-  const data = await postJson<ExamResult>('/api/generate/exam', params);
-  data.toolType = 'exam';
-  if (!data.id) data.id = `exam-${Date.now()}`;
-  return data;
+}): Promise<ExamPaper> {
+  const response = await fetch('/api/generate/exam', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to generate exam paper.');
+  }
+  return response.json();
 }
 
-export async function generateWorksheet(params: {
+export async function generateWorksheetApi(params: {
   subject: string;
   topic: string;
   gradeLevel?: string;
-  difficulty?: string;
-  learningObjectives?: string[];
   activityTypes?: string[];
+  itemCount?: number;
+  includeAnswerKey?: boolean;
   sourceMaterial?: string;
-  additionalInstructions?: string;
-}): Promise<WorksheetResult> {
-  const data = await postJson<WorksheetResult>('/api/generate/worksheet', params);
-  data.toolType = 'worksheet';
-  if (!data.id) data.id = `worksheet-${Date.now()}`;
-  return data;
+}): Promise<WorksheetData> {
+  const response = await fetch('/api/generate/worksheet', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to generate worksheet.');
+  }
+  return response.json();
 }
 
-export async function generateLessonPlan(params: {
+export async function generateLessonPlanApi(params: {
   subject: string;
   topic: string;
   gradeLevel?: string;
   durationMinutes?: number;
-  learningObjectives?: string[];
-  keyConcepts?: string;
-  assessmentApproach?: string;
-  requiredResources?: string;
+  pedagogyStyle?: string;
   sourceMaterial?: string;
-}): Promise<LessonPlanResult> {
-  const data = await postJson<LessonPlanResult>('/api/generate/lesson-plan', params);
-  data.toolType = 'lesson-plan';
-  if (!data.id) data.id = `lesson-plan-${Date.now()}`;
-  return data;
+}): Promise<LessonPlanData> {
+  const response = await fetch('/api/generate/lesson-plan', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to generate lesson plan.');
+  }
+  return response.json();
 }
 
-export async function generatePdfQuiz(params: {
-  sourceDocName?: string;
-  extractedText: string;
-  totalQuestions?: number;
-  difficulty?: string;
-  questionType?: string;
-  gradeLevel?: string;
-}): Promise<PdfQuizBuildResult> {
-  const data = await postJson<PdfQuizBuildResult>('/api/generate/pdf-quiz', params);
-  data.toolType = 'pdf-quiz';
-  if (!data.id) data.id = `pdf-quiz-${Date.now()}`;
-  return data;
+export async function generatePdfStudyPackApi(params: {
+  documentName?: string;
+  sourceMaterial: string;
+}): Promise<PdfStudyPackData> {
+  const response = await fetch('/api/generate/pdf-studypack', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to generate study pack.');
+  }
+  return response.json();
 }
 
-export async function generatePdfStudyPack(params: {
-  sourceDocName?: string;
-  extractedText: string;
-  gradeLevel?: string;
-}): Promise<PdfStudyPackResult> {
-  const data = await postJson<PdfStudyPackResult>('/api/generate/pdf-studypack', params);
-  data.toolType = 'pdf-studypack';
-  if (!data.id) data.id = `pdf-studypack-${Date.now()}`;
-  return data;
-}
-
-export async function generatePresentation(params: {
+export async function generateCourseApi(params: {
   subject: string;
   topic: string;
-  audienceLevel?: string;
-  slidesCount?: number;
-  presentationStyle?: string;
-  keyPoints?: string;
-  learningObjectives?: string[];
-  sourceMaterial?: string;
-}): Promise<PresentationBuildResult> {
-  const data = await postJson<PresentationBuildResult>('/api/generate/presentation', params);
-  data.toolType = 'presentation';
-  if (!data.id) data.id = `presentation-${Date.now()}`;
-  return data;
-}
-
-export async function generateCourse(params: {
-  title?: string;
-  topic?: string;
-  subject?: string;
-  gradeLevel?: string;
-  targetAudience?: string;
-  description?: string;
-  courseObjectives?: string[];
+  targetLevel?: string;
   moduleCount?: number;
-  courseDuration?: string;
-  pedagogicalStyle?: string;
-  assessmentStrategy?: string;
-  prerequisites?: string;
-  customFocus?: string;
   sourceMaterial?: string;
-}): Promise<CourseBuildResult> {
-  const data = await postJson<CourseBuildResult>('/api/generate/course', params);
-  data.toolType = 'course';
-  if (!data.id) data.id = `course-${Date.now()}`;
-  return data;
+}): Promise<CourseSyllabus> {
+  const response = await fetch('/api/generate/course', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to architect course.');
+  }
+  return response.json();
 }
 
-export async function generateLearningPath(params: {
-  title?: string;
-  subject?: string;
-  targetGoal?: string;
-  estimatedWeeks?: number;
+export async function generatePresentationApi(params: {
+  subject: string;
+  topic: string;
+  targetAudience?: string;
+  slideCount?: number;
   sourceMaterial?: string;
-}): Promise<LearningPathBuildResult> {
-  const data = await postJson<LearningPathBuildResult>('/api/generate/learning-path', params);
-  data.toolType = 'learning-path';
-  if (!data.id) data.id = `learning-path-${Date.now()}`;
-  return data;
+}): Promise<PresentationDeck> {
+  const response = await fetch('/api/generate/presentation', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to generate presentation deck.');
+  }
+  return response.json();
+}
+
+export async function generateLearningPathApi(params: {
+  subject: string;
+  topic: string;
+  goal: string;
+  timeframeMonths?: number;
+}): Promise<LearningPathData> {
+  const response = await fetch('/api/generate/learning-path', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to generate learning path.');
+  }
+  return response.json();
 }
