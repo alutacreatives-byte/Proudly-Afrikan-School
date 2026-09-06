@@ -402,7 +402,7 @@ export const MindMapGenerator: React.FC<MindMapGeneratorProps> = ({
             <div className="bg-white border border-stone-200/90 rounded-[2rem] p-6 sm:p-10 shadow-sm space-y-8 print:border-none print:shadow-none print:p-0">
               {/* Header */}
               <div className="border-b border-stone-200 pb-5">
-                <div className="flex items-center gap-2 text-base font-mono font-bold text-[#D92B8A] uppercase tracking-wider mb-1">
+                <div className="flex items-center gap-2 text-sm font-mono font-bold text-[#D92B8A] uppercase tracking-wider mb-1">
                   <span>{mindMap.subject}</span>
                   <span>•</span>
                   <span>{mindMap.gradeLevel}</span>
@@ -421,14 +421,14 @@ export const MindMapGenerator: React.FC<MindMapGeneratorProps> = ({
               <div className="p-6 sm:p-8 bg-stone-50/70 border border-stone-200 rounded-2xl space-y-8 overflow-x-auto">
                 {/* Central Root Node */}
                 <div className="p-6 bg-[#18181B] text-white rounded-2xl shadow-md border border-stone-800 text-center max-w-xl mx-auto">
-                  <span className="font-mono text-base text-[#D92B8A] font-bold uppercase tracking-widest block mb-1">
+                  <span className="font-mono text-xs text-[#D92B8A] font-bold uppercase tracking-widest block mb-1">
                     CENTRAL CONCEPT
                   </span>
-                  <h3 className="font-display font-black text-2xl sm:text-3xl uppercase tracking-tight">
+                  <h3 className="font-display font-black text-xl sm:text-2xl uppercase tracking-tight">
                     {mindMap.rootNode.label}
                   </h3>
                   {mindMap.rootNode.notes && (
-                    <p className="text-base text-stone-300 font-normal mt-2">
+                    <p className="text-sm text-stone-300 font-normal mt-2">
                       {mindMap.rootNode.notes}
                     </p>
                   )}
@@ -442,16 +442,16 @@ export const MindMapGenerator: React.FC<MindMapGeneratorProps> = ({
                       className="bg-white border-2 border-stone-200 hover:border-[#D92B8A] transition-colors rounded-2xl p-6 shadow-xs space-y-4"
                     >
                       <div className="flex items-center gap-3">
-                        <span className="w-8 h-8 rounded-full bg-pink-100 text-[#D92B8A] font-mono text-base font-bold flex items-center justify-center shrink-0">
+                        <span className="w-7 h-7 rounded-full bg-pink-100 text-[#D92B8A] font-mono text-sm font-bold flex items-center justify-center shrink-0">
                           {idx + 1}
                         </span>
-                        <h4 className="font-display font-bold text-xl text-[#161616] uppercase tracking-tight">
+                        <h4 className="font-display font-bold text-lg text-[#161616] uppercase tracking-tight">
                           {branch.label}
                         </h4>
                       </div>
 
                       {branch.notes && (
-                        <p className="text-base text-stone-600 font-sans pl-10">
+                        <p className="text-sm text-stone-600 font-sans pl-10">
                           {branch.notes}
                         </p>
                       )}
@@ -462,13 +462,13 @@ export const MindMapGenerator: React.FC<MindMapGeneratorProps> = ({
                           {branch.children.map((leaf, leafIdx) => (
                             <div
                               key={leaf.id || leafIdx}
-                              className="flex items-start gap-2.5 text-base text-stone-700 bg-stone-50 p-3.5 rounded-xl border border-stone-200/80"
+                              className="flex items-start gap-2.5 text-sm text-stone-700 bg-stone-50 p-3 rounded-xl border border-stone-200/80"
                             >
                               <span className="text-[#D92B8A] font-bold mt-0.5">•</span>
                               <div className="space-y-1">
                                 <span className="font-semibold text-stone-900">{leaf.label}</span>
                                 {leaf.notes && (
-                                  <p className="text-base text-stone-600">{leaf.notes}</p>
+                                  <p className="text-xs text-stone-500">{leaf.notes}</p>
                                 )}
                               </div>
                             </div>

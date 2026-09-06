@@ -6,57 +6,63 @@ import {
   Copy, 
   Bookmark, 
   Check, 
-  ArrowLeft,
-  Download,
-  BookOpen,
-  HelpCircle,
-  ListOrdered
+  BookOpen, 
+  HelpCircle, 
+  Lightbulb, 
+  CheckCircle2 
 } from 'lucide-react';
-import { PdfStudyPackData, SavedResource } from '../../types';
-import { generatePdfStudyPackApi } from '../../services/buildService';
-import { saveResourceToStorage } from '../../utils/storage';
+import { StudyPackResource } from '../../types';
+import { GRADE_LEVELS } from '../../data/subjects';
 import { SourceMaterialUpload } from '../SourceMaterialUpload';
+import { saveResourceToStorage } from '../../utils/storage';
 import { useAuthCredit } from '../../../context/AuthCreditContext';
 import { GlobalNavigationButtons } from '../../../components/GlobalNavigationButtons';
 
 interface PdfStudyPackGeneratorProps {
   onBack: () => void;
   onGoHome?: () => void;
-  initialResource?: SavedResource | null;
+  onSaved?: () => void;
+  existingResource?: StudyPackResource;
 }
 
 export const PdfStudyPackGenerator: React.FC<PdfStudyPackGeneratorProps> = ({
   onBack,
   onGoHome,
-  initialResource,
+  onSaved,
+  existingResource,
 }) => {
   const { canAfford, consumeCredits, openAuthModal } = useAuthCredit();
 
   // Form State
-  const [sourceMaterial, setSourceMaterial] = useState<string>(initialResource?.sourceSnippet || '');
-  const [sourceFileName, setSourceFileName] = useState<string>(initialResource?.documentName || '');
+  const [sourceDocName, setSourceDocName] = useState<string>(existingResource?.sourceDocumentName || existingResource?.sourceDocName || '');
+  const [extractedText, setExtractedText] = useState<string>('');
+  const [gradeLevel, setGradeLevel] = useState<string>(existingResource?.gradeLevel || 'Senior Secondary / High School (Grades 9-12)');
 
-  // Active Result State
+  // Output States
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
-  const [result, setResult] = useState<PdfStudyPackData | null>(initialResource?.data || null);
-  const [saved, setSaved] = useState<boolean>(false);
+  const [studyPack, setStudyPack] = useState<StudyPackResource | null>(existingResource || null);
   const [copied, setCopied] = useState<boolean>(false);
+  const [saved, setSaved] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (initialResource?.data) {
-      setResult(initialResource.data);
+    if (existingResource) {
+      setStudyPack(existingResource);
+      if (existingResource.sourceDocumentName || existingResource.sourceDocName) {
+        setSourceDocName(existingResource.sourceDocumentName || existingResource.sourceDocName || '');
+      }
+      if (existingResource.gradeLevel) setGradeLevel(existingResource.gradeLevel);
     }
-  }, [initialResource]);
+  }, [existingResource]);
 
   const handleGenerate = async () => {
-    if (!sourceMaterial.trim()) {
-      setError('Please upload a document or paste text to generate the study pack.');
+    if (!extractedText.trim() && !sourceDocName) {
+      setError('Please upload or provide a source PDF/document.');
       return;
     }
 
     if (!canAfford('PDF_STUDY_PACK')) {
-      setError('Insufficient credits for PDF Study Pack generation. Please upgrade your plan or top up.');
+      setError('Insufficient credits for Study Pack generation. Please upgrade your plan or top up.');
       openAuthModal('signup');
       return;
     }
@@ -65,307 +71,294 @@ export const PdfStudyPackGenerator: React.FC<PdfStudyPackGeneratorProps> = ({
     setIsGenerating(true);
 
     try {
-      const data = await generatePdfStudyPackApi({
-        documentName: sourceFileName || 'Curriculum Reference Document',
-        sourceMaterial: sourceMaterial.trim(),
+      const response = await fetch('/api/generate/pdf-studypack', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sourceDocName: sourceDocName || 'Uploaded_Document.pdf',
+          extractedText: extractedText || 'Document content provided for analysis',
+          gradeLevel,
+        }),
       });
 
-      setResult(data);
-      await consumeCredits('PDF_STUDY_PACK', `Generated Study Pack: ${data.title}`);
+      if (!response.ok) {
+        throw new Error('Failed to generate Study Pack.');
+      }
 
-      // Smooth scroll to generated study pack
-      setTimeout(() => {
-        const el = document.getElementById('generated-studypack-result');
-        if (el) {
-          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 150);
+      const resData = await response.json();
+      if (resData.success && resData.data) {
+        const generated: StudyPackResource = {
+          ...resData.data,
+          toolType: 'pdf-studypack',
+        };
+        setStudyPack(generated);
+        saveResourceToStorage(generated);
+        if (onSaved) onSaved();
+        await consumeCredits('PDF_STUDY_PACK', `Generated Study Pack: ${sourceDocName || 'Document'}`);
+      } else {
+        throw new Error(resData.error || 'Server returned invalid study pack format.');
+      }
     } catch (err: any) {
       console.error(err);
-      setError(err.message || 'Study pack generation failed. Please try again.');
+      setError(err.message || 'Generation failed. Please try again.');
     } finally {
       setIsGenerating(false);
     }
   };
 
   const handleSave = () => {
-    if (!result) return;
-    saveResourceToStorage({
-      id: result.id || `pack-${Date.now()}`,
-      toolType: 'pdf-studypack',
-      title: result.title,
-      subject: 'Document Synthesis',
-      topic: result.title,
-      createdAt: new Date().toISOString(),
-      data: result,
-      sourceSnippet: sourceMaterial ? sourceMaterial.slice(0, 300) : undefined,
-      documentName: sourceFileName || undefined,
-    });
+    if (!studyPack) return;
+    saveResourceToStorage(studyPack);
     setSaved(true);
+    if (onSaved) onSaved();
     setTimeout(() => setSaved(false), 2500);
   };
 
   const handleCopy = () => {
-    if (!result) return;
-    let text = `# ${result.title}\n\n`;
-    text += `EXECUTIVE SUMMARY:\n${result.summary}\n\n`;
-
-    (result.keyPillars || []).forEach((pillar, i) => {
-      text += `### Pillar ${i + 1}: ${pillar.title}\n${pillar.description}\n`;
-      (pillar.bulletPoints || []).forEach((b) => {
-        text += `• ${b}\n`;
-      });
-      text += '\n';
-    });
-
-    if (result.vocabularyGlossary && result.vocabularyGlossary.length > 0) {
-      text += `GLOSSARY:\n`;
-      result.vocabularyGlossary.forEach((v) => {
-        text += `• ${v.term}: ${v.definition}\n`;
-      });
-      text += '\n';
+    if (!studyPack) return;
+    let fullText = `${studyPack.title.toUpperCase()}\n`;
+    fullText += `Source: ${studyPack.sourceDocumentName || studyPack.sourceDocName} | Grade: ${studyPack.gradeLevel}\n\n`;
+    fullText += `OVERVIEW:\n${studyPack.overview || studyPack.documentOverview}\n\n`;
+    const takeaways = studyPack.highYieldTakeaways || studyPack.highYieldRevisionPoints;
+    if (takeaways && takeaways.length > 0) {
+      fullText += `HIGH-YIELD REVISION POINTS:\n${takeaways.map((t, i) => `${i + 1}. ${t}`).join('\n')}\n\n`;
     }
-
-    navigator.clipboard.writeText(text);
+    if (studyPack.essentialGlossary && studyPack.essentialGlossary.length > 0) {
+      fullText += `ESSENTIAL GLOSSARY:\n${studyPack.essentialGlossary.map((g) => `• ${g.term}: ${g.definition}`).join('\n')}\n\n`;
+    }
+    if (studyPack.selfCheckQuestions && studyPack.selfCheckQuestions.length > 0) {
+      fullText += `SELF-CHECK QUESTIONS:\n${studyPack.selfCheckQuestions.map((q, i) => `${i + 1}. ${q.question}\n   Answer: ${q.answer}`).join('\n')}\n`;
+    }
+    navigator.clipboard.writeText(fullText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF7F0] py-6 sm:py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto space-y-6">
-        
-        {/* Navigation & Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-stone-200/80">
-          <div className="flex items-center gap-3">
-            <GlobalNavigationButtons onBack={onBack} onGoHome={onGoHome} />
-            <div>
-              <span className="font-mono text-base font-bold text-[#E63956] uppercase tracking-wider block">
-                BUILD TOOL 06 • DOCUMENT ANALYSIS
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+      {/* Top Header & Navigation */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-5 border-b border-stone-200">
+        <div className="flex items-center gap-4">
+          <GlobalNavigationButtons onBack={onBack} onGoHome={onGoHome} />
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#E63956]"></span>
+              <span className="font-mono text-base font-bold uppercase tracking-wider text-[#E63956]">
+                GENERATOR 08 • PDF & DOC STUDY PACK
               </span>
-              <h1 className="font-display font-black text-2xl sm:text-3xl text-[#161616] uppercase tracking-tight">
-                PDF TO STUDY PACK GENERATOR
-              </h1>
             </div>
+            <h1 className="font-display font-black text-2xl sm:text-3xl uppercase tracking-tight text-[#161616]">
+              Document Study Pack Builder
+            </h1>
           </div>
-
-          {result && (
-            <div className="flex items-center gap-2 flex-wrap">
-              <button
-                type="button"
-                onClick={handleCopy}
-                className="px-4 py-2.5 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-base font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
-              >
-                {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
-                <span>{copied ? 'Copied' : 'Copy Text'}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => window.print()}
-                className="px-4 py-2.5 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-base font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
-              >
-                <Printer className="w-4 h-4" />
-                <span>Print</span>
-              </button>
-              <button
-                type="button"
-                onClick={handleSave}
-                className="px-5 py-2.5 rounded-xl bg-[#E63956] hover:bg-[#D32F4C] text-white font-mono text-base font-bold uppercase flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
-              >
-                <Bookmark className="w-4 h-4" />
-                <span>{saved ? 'Saved' : 'Save Study Pack'}</span>
-              </button>
-            </div>
-          )}
         </div>
 
-        {/* Layout Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          
-          {/* Left Form */}
-          <div className="lg:col-span-4 space-y-6">
-            <div className="p-6 sm:p-7 rounded-[2rem] bg-white border border-stone-200/90 shadow-[0_10px_30px_rgba(0,0,0,0.05)] space-y-5">
-              <div className="flex items-center gap-2 pb-3 border-b border-stone-100">
-                <Sparkles className="w-5 h-5 text-[#E63956]" />
-                <h2 className="font-display font-black text-lg uppercase text-[#161616] tracking-wider">
-                  Document Ingestion
-                </h2>
-              </div>
+        {studyPack && (
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={handleCopy}
+              className="px-4 py-2 rounded-full bg-white hover:bg-stone-50 border border-stone-200 font-mono text-base font-bold text-stone-700 flex items-center gap-1.5 cursor-pointer shadow-xs"
+            >
+              {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+              <span>{copied ? 'Copied' : 'Copy'}</span>
+            </button>
+            <button
+              onClick={() => window.print()}
+              className="px-4 py-2 rounded-full bg-white hover:bg-stone-50 border border-stone-200 font-mono text-base font-bold text-stone-700 flex items-center gap-1.5 cursor-pointer shadow-xs"
+            >
+              <Printer className="w-4 h-4" />
+              <span>Print / PDF</span>
+            </button>
+            <button
+              onClick={handleSave}
+              className="px-5 py-2 rounded-full bg-[#161616] hover:bg-stone-800 text-white font-mono text-base font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shadow-xs"
+            >
+              {saved ? <Check className="w-4 h-4 text-emerald-400" /> : <Bookmark className="w-4 h-4 text-[#E63956]" />}
+              <span>{saved ? 'Saved!' : 'Save Build'}</span>
+            </button>
+          </div>
+        )}
+      </div>
 
-              <div>
-                <label className="block font-mono text-base font-bold text-stone-800 uppercase mb-2">
-                  Upload PDF, DOCX, or Notes *
-                </label>
-                <SourceMaterialUpload
-                  currentFileName={sourceFileName}
-                  onTextExtracted={(text, name) => {
-                    setSourceMaterial(text);
-                    setSourceFileName(name);
-                  }}
-                  onClear={() => {
-                    setSourceMaterial('');
-                    setSourceFileName('');
-                  }}
-                />
-              </div>
-
-              {sourceMaterial && (
-                <div className="p-4 rounded-xl bg-stone-50 border border-stone-200 text-base font-mono text-stone-700">
-                  <span className="font-bold block text-stone-900 mb-1">Loaded Source Context:</span>
-                  <p className="line-clamp-4 text-base">{sourceMaterial}</p>
-                </div>
-              )}
-
-              {error && (
-                <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-base font-mono">
-                  {error}
-                </div>
-              )}
-
-              <button
-                type="button"
-                disabled={isGenerating || !sourceMaterial.trim()}
-                onClick={handleGenerate}
-                className="w-full py-4 rounded-xl bg-[#E63956] hover:bg-[#D32F4C] disabled:bg-stone-300 text-white font-display font-black text-base uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md active:scale-98"
-              >
-                <Sparkles className="w-5 h-5" />
-                <span>{isGenerating ? 'PDF STUDY PACK LOADING…' : 'Synthesize Study Pack →'}</span>
-              </button>
-            </div>
+      {/* STACKED LAYOUT: TOOL OPTIONS on top, GENERATED RESULT directly underneath */}
+      <div className="flex flex-col gap-10 w-full">
+        {/* Section 1: TOOL OPTIONS */}
+        <div className="w-full space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b-2 border-stone-800">
+            <h2 className="font-mono text-base sm:text-lg font-bold uppercase tracking-wider text-stone-900 flex items-center gap-2">
+              <span className="w-3 h-3 rounded-full bg-[#E63956]"></span>
+              TOOL OPTIONS
+            </h2>
+            <span className="font-mono text-base text-stone-500">Document Upload & Target Level</span>
           </div>
 
-          {/* Right Output */}
-          <div className="lg:col-span-8" id="generated-studypack-result">
-            {isGenerating ? (
-              <div className="min-h-[460px] p-12 rounded-[2rem] bg-white border border-stone-200/90 shadow-sm flex flex-col items-center justify-center text-center space-y-4">
-                <div className="w-14 h-14 rounded-2xl bg-[#E63956]/10 text-[#E63956] flex items-center justify-center animate-bounce">
-                  <FileText className="w-7 h-7" />
-                </div>
-                <div className="space-y-1">
-                  <h3 className="font-display font-black text-2xl text-[#161616] uppercase tracking-tight">
-                    PDF STUDY PACK LOADING…
-                  </h3>
-                  <p className="text-stone-600 text-base font-normal max-w-md">
-                    Extracting core pillars, generating executive summary, glossary terms, and discussion questions.
-                  </p>
-                </div>
+          <div className="bg-white border border-stone-200/90 rounded-[2rem] p-6 sm:p-8 shadow-xs space-y-6">
+            <div className="space-y-2">
+              <label className="font-mono text-base font-bold uppercase tracking-wider text-stone-700 block">
+                Source Document (PDF, TXT, DOCX) *
+              </label>
+              <SourceMaterialUpload
+                currentFileName={sourceDocName}
+                onContentExtracted={(text, name) => {
+                  setExtractedText(text);
+                  setSourceDocName(name);
+                }}
+                onClear={() => {
+                  setExtractedText('');
+                  setSourceDocName('');
+                }}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="font-mono text-base font-bold uppercase tracking-wider text-stone-700">
+                Target Grade / Comprehension Level
+              </label>
+              <select
+                value={gradeLevel}
+                onChange={(e) => setGradeLevel(e.target.value)}
+                className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl font-mono text-base text-stone-800 focus:outline-none focus:border-[#E63956]"
+              >
+                {GRADE_LEVELS.map((gl) => (
+                  <option key={gl} value={gl}>
+                    {gl}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {error && (
+              <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl font-mono text-base text-rose-700">
+                {error}
               </div>
-            ) : result ? (
-              <div className="space-y-6">
-                
-                {/* Study Pack Sheet */}
-                <div className="p-8 sm:p-12 rounded-[2rem] bg-white border-2 border-stone-300/80 shadow-[0_15px_40px_rgba(0,0,0,0.06)] space-y-8">
-                  
-                  {/* Header */}
-                  <div className="border-b-2 border-stone-800 pb-6 text-center space-y-2">
-                    <span className="font-mono text-base font-black tracking-[0.25em] text-[#E63956] uppercase block">
-                      PROUDLY AFRIKAN SCHOOL • EXECUTIVE STUDY PACK
-                    </span>
-                    <h2 className="font-display font-black text-2xl sm:text-3xl text-stone-900 uppercase tracking-tight">
-                      {result.title}
-                    </h2>
-                    {result.documentName && (
-                      <span className="text-base font-mono text-stone-600 block">
-                        Source Document: {result.documentName}
-                      </span>
-                    )}
-                  </div>
+            )}
 
-                  {/* Summary */}
-                  <div className="p-6 rounded-2xl bg-stone-50 border border-stone-200 space-y-2">
-                    <strong className="text-stone-900 font-mono text-base uppercase block text-[#E63956]">
-                      Executive Curriculum Summary:
-                    </strong>
-                    <p className="text-stone-800 text-base leading-relaxed font-normal">
-                      {result.summary}
-                    </p>
-                  </div>
+            <button
+              type="button"
+              disabled={isGenerating}
+              onClick={handleGenerate}
+              className="w-full py-4 rounded-full bg-gradient-to-r from-[#D92B8A] via-[#E03A6A] to-[#E63956] hover:opacity-95 text-white font-display text-base font-black uppercase tracking-wider shadow-[0_6px_20px_rgba(230,57,86,0.3)] transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 disabled:opacity-50"
+            >
+              <Sparkles className="w-5 h-5" />
+              <span>{isGenerating ? 'Analyzing & Synthesizing...' : 'Generate Study Pack'}</span>
+            </button>
+          </div>
+        </div>
 
-                  {/* Key Pillars */}
-                  <div className="space-y-4">
-                    <h3 className="font-display font-black text-xl text-stone-900 uppercase tracking-wide">
-                      Core Academic Pillars
-                    </h3>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {(result.keyPillars || []).map((pillar, pIdx) => (
-                        <div key={pIdx} className="p-5 rounded-2xl border border-stone-200 bg-white space-y-2 shadow-xs">
-                          <span className="font-mono text-base font-bold text-[#E63956] block">
-                            PILLAR 0{pIdx + 1}
-                          </span>
-                          <h4 className="font-display font-black text-lg text-stone-900 uppercase">
-                            {pillar.title}
-                          </h4>
-                          <p className="text-stone-700 text-base leading-relaxed">
-                            {pillar.description}
-                          </p>
-                          {pillar.bulletPoints && (
-                            <ul className="pt-2 border-t border-stone-100 space-y-1 text-base text-stone-600 list-disc list-inside">
-                              {pillar.bulletPoints.map((bp, bIdx) => (
-                                <li key={bIdx}>{bp}</li>
-                              ))}
-                            </ul>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Glossary */}
-                  {result.vocabularyGlossary && result.vocabularyGlossary.length > 0 && (
-                    <div className="space-y-4">
-                      <h3 className="font-display font-black text-xl text-stone-900 uppercase tracking-wide">
-                        Key Vocabulary & Terminology
-                      </h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {result.vocabularyGlossary.map((term, tIdx) => (
-                          <div key={tIdx} className="p-4 rounded-xl border border-stone-200 bg-stone-50 space-y-1 text-base">
-                            <strong className="text-stone-900 font-mono uppercase block text-[#E63956]">
-                              {term.term}
-                            </strong>
-                            <p className="text-stone-700 text-base">
-                              {term.definition}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Critical Thinking Questions */}
-                  {result.criticalThinkingQuestions && result.criticalThinkingQuestions.length > 0 && (
-                    <div className="p-6 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-3">
-                      <strong className="text-amber-950 font-mono text-base uppercase block">
-                        Discussion & Critical Inquiry Questions:
-                      </strong>
-                      <ul className="space-y-2 text-base text-amber-900 list-decimal list-inside font-medium">
-                        {result.criticalThinkingQuestions.map((q, qIdx) => (
-                          <li key={qIdx}>{q}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                </div>
-
-              </div>
-            ) : (
-              <div className="min-h-[460px] p-12 rounded-[2rem] bg-white border border-dashed border-stone-300 flex flex-col items-center justify-center text-center space-y-4 text-stone-500">
-                <FileText className="w-12 h-12 text-stone-300" />
-                <div className="space-y-1">
-                  <h3 className="font-display font-black text-xl text-stone-700 uppercase">
-                    No Study Pack Active
-                  </h3>
-                  <p className="text-base text-stone-500 max-w-sm">
-                    Upload a syllabus document, textbook excerpt, or notes on the left to extract an executive study pack.
-                  </p>
-                </div>
-              </div>
+        {/* Section 2: GENERATED RESULT */}
+        <div className="w-full space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b-2 border-stone-800">
+            <h2 className="font-mono text-base sm:text-lg font-bold uppercase tracking-wider text-stone-900 flex items-center gap-2">
+              <span className="w-3 h-3 rounded-full bg-emerald-600"></span>
+              GENERATED RESULT
+            </h2>
+            {studyPack && (
+              <span className="font-mono text-base text-emerald-700 font-bold">
+                Study Pack Ready
+              </span>
             )}
           </div>
 
-        </div>
+          {studyPack ? (
+            <div className="bg-white border border-stone-200/90 rounded-[2rem] p-6 sm:p-10 shadow-sm space-y-8 print:border-none print:shadow-none print:p-0">
+              <div className="border-b-2 border-stone-800 pb-5 space-y-2">
+                <div className="font-mono text-sm font-bold text-stone-500 uppercase">
+                  SOURCE: {studyPack.sourceDocumentName || studyPack.sourceDocName}
+                </div>
+                <h2 className="font-display font-black text-2xl sm:text-3xl uppercase tracking-tight text-[#161616]">
+                  {studyPack.title}
+                </h2>
+              </div>
 
+              {/* Overview */}
+              <div className="p-6 bg-[#FAF8F5] border border-stone-200 rounded-2xl space-y-2">
+                <div className="flex items-center gap-2 font-mono text-sm font-black uppercase tracking-wider text-stone-800">
+                  <BookOpen className="w-5 h-5 text-[#E63956]" />
+                  <span>EXECUTIVE OVERVIEW:</span>
+                </div>
+                <p className="font-sans text-base text-stone-800 leading-relaxed">
+                  {studyPack.overview || studyPack.documentOverview}
+                </p>
+              </div>
+
+              {/* High Yield Takeaways */}
+              {((studyPack.highYieldTakeaways && studyPack.highYieldTakeaways.length > 0) || (studyPack.highYieldRevisionPoints && studyPack.highYieldRevisionPoints.length > 0)) && (
+                <div className="space-y-4">
+                  <h3 className="font-display font-black text-xl uppercase tracking-tight text-[#161616] flex items-center gap-2">
+                    <Lightbulb className="w-6 h-6 text-amber-500" />
+                    <span>High-Yield Revision Points</span>
+                  </h3>
+                  <div className="space-y-3">
+                    {(studyPack.highYieldTakeaways || studyPack.highYieldRevisionPoints || []).map((point, idx) => (
+                      <div key={idx} className="p-4 bg-white border border-stone-200 rounded-xl font-sans text-base text-stone-800 flex items-start gap-3">
+                        <span className="font-mono text-base font-bold text-[#E63956]">{idx + 1}.</span>
+                        <span>{point}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Glossary */}
+              {studyPack.essentialGlossary && studyPack.essentialGlossary.length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="font-display font-black text-xl uppercase tracking-tight text-[#161616]">
+                    Key Terms & Essential Glossary
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {studyPack.essentialGlossary.map((g, idx) => (
+                      <div key={idx} className="p-5 bg-stone-50 border border-stone-200 rounded-xl space-y-1.5">
+                        <div className="font-mono text-sm font-black text-stone-900 uppercase">
+                          {g.term}
+                        </div>
+                        <div className="font-sans text-sm text-stone-700 leading-relaxed">
+                          {g.definition}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Self Check Questions */}
+              {studyPack.selfCheckQuestions && studyPack.selfCheckQuestions.length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="font-display font-black text-xl uppercase tracking-tight text-[#161616] flex items-center gap-2">
+                    <HelpCircle className="w-6 h-6 text-indigo-500" />
+                    <span>Self-Check Verification Questions</span>
+                  </h3>
+                  <div className="space-y-4">
+                    {studyPack.selfCheckQuestions.map((q, idx) => (
+                      <div key={idx} className="p-5 bg-stone-50 border border-stone-200 rounded-xl space-y-3">
+                        <div className="font-sans text-base font-bold text-stone-900">
+                          {idx + 1}. {q.question}
+                        </div>
+                        <div className="p-3.5 bg-white border border-emerald-200 rounded-lg font-sans text-sm text-emerald-900">
+                          <span className="font-mono font-bold uppercase mr-1">Answer:</span>
+                          {q.answer}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="bg-white border border-[#E5E0D8] rounded-3xl p-12 text-center flex flex-col items-center justify-center space-y-4 shadow-sm min-h-[350px]">
+              <div className="w-16 h-16 rounded-2xl bg-stone-100 border border-stone-200 text-stone-400 flex items-center justify-center">
+                <FileText className="w-8 h-8" />
+              </div>
+              <div className="max-w-md space-y-2">
+                <h3 className="font-display font-black text-xl text-[#161616] uppercase">
+                  Study Pack Preview
+                </h3>
+                <p className="font-sans text-base text-stone-500 leading-relaxed">
+                  Upload any textbook excerpt, lecture document, or syllabus above and click <strong>Generate Study Pack</strong> to synthesize an executive overview, glossary, and review items.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

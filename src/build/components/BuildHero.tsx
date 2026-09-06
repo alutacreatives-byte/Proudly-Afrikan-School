@@ -1,24 +1,24 @@
 import React from 'react';
-import { StudyToolType } from '../types';
+import { BuildToolType } from '../types';
 
-interface StudyHeroProps {
+interface BuildHeroProps {
   onStartClick: () => void;
-  onSelectSample: (sampleTopic: string, category: string, suggestedTool?: StudyToolType) => void;
+  onSelectSample: (sampleTopic: string, category: string, suggestedTool?: BuildToolType) => void;
   onUploadPdfClick?: () => void;
 }
 
-export const StudyHero: React.FC<StudyHeroProps> = ({ 
+export const BuildHero: React.FC<BuildHeroProps> = ({ 
   onStartClick, 
   onSelectSample,
   onUploadPdfClick,
 }) => {
-  const inspirationTopics: { label: string; topic: string; category: string; tool: StudyToolType }[] = [
-    { label: '👑 Kingdom of Kush & Meroë', topic: 'The Kingdom of Kush & Iron Metallurgy at Meroë', category: 'AFRICAN HISTORY', tool: 'study-guide' },
-    { label: '🌍 Great Rift Valley Ecosystems', topic: 'The Great Rift Valley Geography, Tectonics & Biodiversity', category: 'GEOGRAPHY & ENVIRONMENT', tool: 'flashcards' },
-    { label: '📚 African Oral Epics & Sundiata', topic: 'The Epic of Sundiata & West African Griot Traditions', category: 'LITERATURE & ARTS', tool: 'quiz' },
-    { label: '⚙️ Renewable Energy in Africa', topic: 'Solar Innovation & Geothermal Microgrids across Africa', category: 'SCIENCES & STEM', tool: 'presentation' },
-    { label: '🏛️ Swahili Maritime City-States', topic: 'Swahili Coast Trade Networks, Kilwa Kisiwani & Coral Architecture', category: 'AFRICAN HISTORY', tool: 'study-guide' },
-    { label: '🌾 Indigenous Agriculture & Crops', topic: 'Indigenous African Crops: Teff, Sorghum, Millet & Climate Resilience', category: 'SCIENCES & STEM', tool: 'learning-path' },
+  const inspirationTopics: { label: string; topic: string; category: string; tool: BuildToolType }[] = [
+    { label: '👑 Kingdom of Mali', topic: 'The Kingdom of Mali & Mansa Musa', category: 'History & Geography', tool: 'course-builder' },
+    { label: '🌍 Great Rift Valley', topic: 'The Great Rift Valley Geography & Ecology', category: 'History & Geography', tool: 'worksheet' },
+    { label: '📚 African Literature', topic: 'African Literature: Chinua Achebe & Things Fall Apart', category: 'Languages & Literature', tool: 'lesson-plan' },
+    { label: '⚙️ Solar In Africa', topic: 'Solar Energy Revolution & Geothermal Power in Africa', category: 'Sciences & STEM', tool: 'presentation' },
+    { label: '🌱 Sustainable Farming', topic: 'Sustainable Agriculture & Indigenous Crops in Africa', category: 'Sciences & STEM', tool: 'worksheet' },
+    { label: '🔬 Nubian Pyramids', topic: 'The Kingdom of Kush & Nubian Pyramids at Meroë', category: 'History & Geography', tool: 'exam' },
   ];
 
   return (
@@ -29,28 +29,28 @@ export const StudyHero: React.FC<StudyHeroProps> = ({
           {/* Edition Pill Badge */}
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white border border-stone-300/80 rounded-full shadow-xs text-xs sm:text-sm font-mono font-bold tracking-wider uppercase text-stone-800">
             <span className="w-2.5 h-2.5 rounded-full bg-[#E63956] inline-block animate-pulse"></span>
-            <span>PROUDLY AFRIKAN EDUCATION • ACTIVE STUDY SUITE</span>
+            <span>PROUDLY AFRIKAN EDUCATION • RESOURCE BUILDER</span>
           </div>
 
-          {/* Giant Oversized Display Headline matching Build and Quiz */}
+          {/* Giant Oversized Display Headline: Exact matching scale to Study and Quiz */}
           <h1 className="font-display font-black text-5xl sm:text-7xl md:text-8xl lg:text-[5.25rem] xl:text-[6rem] uppercase tracking-tighter text-[#161616] leading-[0.88] sm:leading-[0.9] lg:leading-[0.92] break-words">
-            STUDY<br />
-            SMARTER.<br />
-            <span className="text-[#E63956]">MASTER<br />ANYTHING.</span>
+            BUILD<br />
+            ANYTHING.<br />
+            <span className="text-[#E63956]">ABOUT<br />ANYTHING.</span>
           </h1>
 
           {/* Clear, comfortable, easy-to-read subtext */}
           <p className="text-base sm:text-lg lg:text-xl text-stone-700 font-normal leading-[1.6] max-w-2xl">
-            Synthesize any topic, lecture notes, or textbook PDF into structured study guides, active recall flashcards, grounded quizzes, and learning roadmaps in seconds.
+            Turn any topic, text notes, or educational PDF into sharp, classroom-ready exams, lesson plans, worksheets, and interactive courses in seconds.
           </p>
 
-          {/* Action Buttons */}
+          {/* Action Buttons - Fully Responsive */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
             <button
               onClick={onStartClick}
               className="px-7 sm:px-8 py-4 bg-gradient-to-r from-[#D92B8A] via-[#E03A6A] to-[#E63956] hover:opacity-95 text-white font-display text-xs sm:text-sm font-black uppercase tracking-wider rounded-full shadow-[0_6px_20px_rgba(230,57,86,0.35)] transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 whitespace-nowrap"
             >
-              <span>EXPLORE STUDY TOOLS</span>
+              <span>BUILD AN EXAM / WORKSHEET</span>
             </button>
 
             <button
@@ -69,7 +69,7 @@ export const StudyHero: React.FC<StudyHeroProps> = ({
             <div className="flex items-center justify-between border-b border-stone-100 pb-3.5">
               <div className="flex items-center gap-2 font-display text-xs sm:text-sm font-black uppercase tracking-wider text-stone-900">
                 <span className="text-[#E63956] text-sm">❖</span>
-                <span>INSTANT STUDY INSPIRATION</span>
+                <span>INSTANT INSPIRATION</span>
               </div>
               <span className="font-mono text-xs text-stone-400 font-bold uppercase tracking-wider">
                 TAP TO TRY
@@ -91,19 +91,19 @@ export const StudyHero: React.FC<StudyHeroProps> = ({
 
             <div className="pt-1 text-center">
               <span className="text-[11px] sm:text-xs font-mono text-stone-500 font-medium">
-                * Click any topic above to launch pre-filled study workbench.
+                * Click any topic above to launch pre-filled workbench.
               </span>
             </div>
           </div>
 
-          {/* Quick Metrics Bar */}
+          {/* Quick Metrics Bar in Rounded Pill Container */}
           <div className="grid grid-cols-3 gap-2 bg-white border border-stone-200/90 py-3.5 px-4 rounded-[1.5rem] shadow-xs">
             <div className="text-center border-r border-stone-200 pr-2">
               <div className="font-display text-lg sm:text-2xl font-black text-[#E63956]">
-                6
+                7
               </div>
               <div className="font-mono text-[10px] sm:text-xs font-bold text-stone-600 uppercase tracking-wider">
-                STUDY TOOLS
+                GENERATORS
               </div>
             </div>
 
@@ -118,10 +118,10 @@ export const StudyHero: React.FC<StudyHeroProps> = ({
 
             <div className="text-center pl-2">
               <div className="font-display text-lg sm:text-2xl font-black text-[#E63956]">
-                ACTIVE
+                CAPS
               </div>
               <div className="font-mono text-[10px] sm:text-xs font-bold text-stone-600 uppercase tracking-wider">
-                RECALL DRILLS
+                IEB ALIGNED
               </div>
             </div>
           </div>
@@ -130,3 +130,4 @@ export const StudyHero: React.FC<StudyHeroProps> = ({
     </section>
   );
 };
+

@@ -26,7 +26,7 @@ import { StudySessionView } from './components/StudySessionView';
 import { StudySetDetailView } from './components/StudySetDetailView';
 import { StudyTutorModal } from './components/StudyTutorModal';
 import { StorageService } from './services/storageService';
-import { getSavedResources } from './utils/storage';
+import { getSavedResources } from '../build/utils/storage';
 
 export interface StudyAppProps {
   initialSet?: StudySet | null;
@@ -65,14 +65,7 @@ export default function StudyApp({
   };
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'instant' });
-    const timer = setTimeout(() => {
-      const el = document.getElementById('active-study-tool-stage');
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }, 50);
-    return () => clearTimeout(timer);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [activeTool]);
 
   const handleSelectTool = (
@@ -106,25 +99,13 @@ export default function StudyApp({
       setActiveResource(null);
     }
     setActiveTool(toolId);
-    window.scrollTo({ top: 0, behavior: 'instant' });
-    setTimeout(() => {
-      const el = document.getElementById('active-study-tool-stage');
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }, 60);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleOpenSavedResource = (resource: any) => {
     setActiveResource(resource.data || resource);
     setActiveTool(resource.toolType as StudyToolType);
-    window.scrollTo({ top: 0, behavior: 'instant' });
-    setTimeout(() => {
-      const el = document.getElementById('active-study-tool-stage');
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }, 60);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleBackToGrid = () => {
@@ -149,7 +130,6 @@ export default function StudyApp({
     return (
       <StudyMyResources
         onBack={handleBackToGrid}
-        onGoHome={handleBackToGrid}
         onOpenResource={handleOpenSavedResource}
       />
     );
@@ -160,7 +140,6 @@ export default function StudyApp({
     return (
       <StudyGuideGenerator
         onBack={handleBackToGrid}
-        onGoHome={handleBackToGrid}
         onSaved={refreshSavedCount}
         existingResource={activeResource as StudyGuideResult}
       />
@@ -172,7 +151,6 @@ export default function StudyApp({
     return (
       <FlashcardGenerator
         onBack={handleBackToGrid}
-        onGoHome={handleBackToGrid}
         onSaved={refreshSavedCount}
         existingResource={activeResource as FlashcardsResult}
       />
@@ -184,7 +162,6 @@ export default function StudyApp({
     return (
       <StudyQuizGenerator
         onBack={handleBackToGrid}
-        onGoHome={handleBackToGrid}
         onSaved={refreshSavedCount}
         existingResource={activeResource as StudyQuizResult}
       />
@@ -196,7 +173,6 @@ export default function StudyApp({
     return (
       <PdfQuizGenerator
         onBack={handleBackToGrid}
-        onGoHome={handleBackToGrid}
         onSaved={refreshSavedCount}
         existingResource={activeResource as PdfQuizResult}
       />
@@ -208,7 +184,6 @@ export default function StudyApp({
     return (
       <StudyPresentationGenerator
         onBack={handleBackToGrid}
-        onGoHome={handleBackToGrid}
         onSaved={refreshSavedCount}
         existingResource={activeResource as PresentationResult}
       />
@@ -220,7 +195,6 @@ export default function StudyApp({
     return (
       <StudyCourseGenerator
         onBack={handleBackToGrid}
-        onGoHome={handleBackToGrid}
         onSaved={refreshSavedCount}
         existingResource={activeResource as CourseResult}
       />
@@ -232,7 +206,6 @@ export default function StudyApp({
     return (
       <StudyLearningPathGenerator
         onBack={handleBackToGrid}
-        onGoHome={handleBackToGrid}
         onSaved={refreshSavedCount}
         existingResource={activeResource as LearningPathResult}
       />

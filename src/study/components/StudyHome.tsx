@@ -21,7 +21,6 @@ import {
   FileQuestion,
   Presentation,
   Compass,
-  GraduationCap,
   ArrowRight,
   ShieldAlert,
   Image as ImageIcon,
@@ -208,8 +207,6 @@ export const StudyHome: React.FC<StudyHomeProps> = ({
         onStartClick={handleStartClick}
         onSelectSample={handleSelectSample}
         onUploadPdfClick={handleUploadPdfClick}
-        onOpenMyResources={onOpenMyResources}
-        savedCount={savedCount}
       />
 
       {/* 2. 4 Ways to Study Section (TYPE IT · PASTE IT · UPLOAD IT · CAPTURE IT) */}
@@ -237,38 +234,38 @@ export const StudyHome: React.FC<StudyHomeProps> = ({
             </h3>
           </div>
 
-          <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-stone-100/90 rounded-2xl sm:rounded-full border border-stone-200/70">
+          <div className="flex flex-wrap items-center gap-1.5 p-1 bg-stone-100/90 rounded-2xl sm:rounded-full border border-stone-200/70">
             <button
               type="button"
               id="workbench-tab-type"
               onClick={() => setActiveMethod('topic')}
-              className={`px-4 py-2.5 rounded-xl sm:rounded-full text-base font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
+              className={`px-3.5 py-2 rounded-xl sm:rounded-full text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
                 activeMethod === 'topic' ? 'bg-[#18181B] text-white shadow-xs' : 'text-stone-600 hover:text-stone-900'
               }`}
             >
-              <Type className="w-4 h-4" />
+              <Type className="w-3.5 h-3.5" />
               <span>TYPE IT</span>
             </button>
             <button
               type="button"
               id="workbench-tab-paste"
               onClick={() => setActiveMethod('text')}
-              className={`px-4 py-2.5 rounded-xl sm:rounded-full text-base font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
+              className={`px-3.5 py-2 rounded-xl sm:rounded-full text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
                 activeMethod === 'text' ? 'bg-[#18181B] text-white shadow-xs' : 'text-stone-600 hover:text-stone-900'
               }`}
             >
-              <ClipboardList className="w-4 h-4" />
+              <ClipboardList className="w-3.5 h-3.5" />
               <span>PASTE IT</span>
             </button>
             <button
               type="button"
               id="workbench-tab-upload"
               onClick={() => setActiveMethod('pdf')}
-              className={`px-4 py-2.5 rounded-xl sm:rounded-full text-base font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
+              className={`px-3.5 py-2 rounded-xl sm:rounded-full text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
                 activeMethod === 'pdf' ? 'bg-[#18181B] text-white shadow-xs' : 'text-stone-600 hover:text-stone-900'
               }`}
             >
-              <FileUp className="w-4 h-4" />
+              <FileUp className="w-3.5 h-3.5" />
               <span>UPLOAD IT</span>
             </button>
             <button
@@ -280,11 +277,11 @@ export const StudyHome: React.FC<StudyHomeProps> = ({
                   setIsCameraModalOpen(true);
                 }
               }}
-              className={`px-4 py-2.5 rounded-xl sm:rounded-full text-base font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer lg:hidden ${
+              className={`px-3.5 py-2 rounded-xl sm:rounded-full text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
                 activeMethod === 'capture' ? 'bg-[#D92B8A] text-white shadow-[0_4px_12px_rgba(217,43,138,0.35)]' : 'text-stone-700 hover:text-[#D92B8A]'
               }`}
             >
-              <Camera className="w-4 h-4" />
+              <Camera className="w-3.5 h-3.5" />
               <span>CAPTURE IT</span>
             </button>
           </div>
@@ -561,7 +558,7 @@ export const StudyHome: React.FC<StudyHomeProps> = ({
             )}
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2.5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
             <button
               type="button"
               id="action-create-study-guide"
@@ -629,19 +626,6 @@ export const StudyHome: React.FC<StudyHomeProps> = ({
 
             <button
               type="button"
-              id="action-create-course"
-              onClick={() => handleLaunchTool('course')}
-              className="p-3 bg-stone-50 hover:bg-stone-900 hover:text-white border border-stone-200 rounded-2xl text-left transition-all group cursor-pointer flex flex-col justify-between min-h-[90px]"
-            >
-              <GraduationCap className="w-4 h-4 text-[#D92B8A] mb-2" />
-              <div>
-                <span className="font-display font-black text-xs uppercase block">Curriculum</span>
-                <span className="text-[10px] font-mono text-stone-500 group-hover:text-stone-300">Course syllabus</span>
-              </div>
-            </button>
-
-            <button
-              type="button"
               id="action-create-roadmap"
               onClick={() => handleLaunchTool('learning-path')}
               className="p-3 bg-stone-50 hover:bg-stone-900 hover:text-white border border-stone-200 rounded-2xl text-left transition-all group cursor-pointer flex flex-col justify-between min-h-[90px]"
@@ -656,7 +640,7 @@ export const StudyHome: React.FC<StudyHomeProps> = ({
         </div>
       </section>
 
-      {/* 4. All 7 Study Tools Section */}
+      {/* 4. All 6 Study Tools Section */}
       <StudyGeneratorsSection
         onSelectTool={(toolId) => handleLaunchTool(toolId)}
       />

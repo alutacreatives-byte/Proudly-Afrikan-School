@@ -102,14 +102,6 @@ export const PresentationGenerator: React.FC<PresentationGeneratorProps> = ({
         saveResourceToStorage(generated);
         if (onSaved) onSaved();
         await consumeCredits('PRESENTATION', `Generated Presentation: ${topic}`);
-
-        // Smoothly scroll down to generated presentation
-        setTimeout(() => {
-          const el = document.getElementById('generated-presentation-result');
-          if (el) {
-            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }
-        }, 150);
       } else {
         throw new Error(resData.error || 'Server returned invalid presentation format.');
       }
@@ -278,7 +270,7 @@ export const PresentationGenerator: React.FC<PresentationGeneratorProps> = ({
               </label>
               <SourceMaterialUpload
                 currentFileName={sourceFileName}
-                onTextExtracted={(text, name) => {
+                onContentExtracted={(text, name) => {
                   setSourceMaterial(text);
                   setSourceFileName(name);
                 }}
@@ -302,13 +294,13 @@ export const PresentationGenerator: React.FC<PresentationGeneratorProps> = ({
               className="w-full py-4 rounded-full bg-gradient-to-r from-[#D92B8A] via-[#E03A6A] to-[#E63956] hover:opacity-95 text-white font-display text-base font-black uppercase tracking-wider shadow-[0_6px_20px_rgba(230,57,86,0.3)] transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 disabled:opacity-50"
             >
               <Sparkles className="w-5 h-5" />
-              <span>{isGenerating ? 'PRESENTATION LOADING…' : 'Generate Slide Deck'}</span>
+              <span>{isGenerating ? 'Drafting Slides...' : 'Generate Slide Deck'}</span>
             </button>
           </div>
         </div>
 
         {/* Section 2: GENERATED RESULT */}
-        <div id="generated-presentation-result" className="w-full space-y-4">
+        <div className="w-full space-y-4">
           <div className="flex items-center justify-between pb-3 border-b-2 border-stone-800">
             <h2 className="font-mono text-base sm:text-lg font-bold uppercase tracking-wider text-stone-900 flex items-center gap-2">
               <span className="w-3 h-3 rounded-full bg-emerald-600"></span>
@@ -324,7 +316,7 @@ export const PresentationGenerator: React.FC<PresentationGeneratorProps> = ({
           {presentation ? (
             <div className="bg-white border border-stone-200/90 rounded-[2rem] p-6 sm:p-10 shadow-sm space-y-8 print:border-none print:shadow-none print:p-0">
               <div className="border-b-2 border-stone-800 pb-5 space-y-2">
-                <div className="font-mono text-base font-bold text-stone-500 uppercase">
+                <div className="font-mono text-sm font-bold text-stone-500 uppercase">
                   SLIDE DECK: {presentation.slides.length} SLIDES
                 </div>
                 <h2 className="font-display font-black text-2xl sm:text-3xl uppercase tracking-tight text-[#161616]">
@@ -336,7 +328,7 @@ export const PresentationGenerator: React.FC<PresentationGeneratorProps> = ({
                 {presentation.slides.map((slide) => (
                   <div key={slide.slideNumber} className="p-6 bg-[#FAF8F5] border border-stone-200 rounded-2xl space-y-4">
                     <div className="flex items-center justify-between border-b border-stone-200/80 pb-3">
-                      <span className="font-mono text-base font-bold text-[#E63956]">
+                      <span className="font-mono text-sm font-bold text-[#E63956]">
                         SLIDE {slide.slideNumber}
                       </span>
                       <h3 className="font-display font-black text-lg sm:text-xl uppercase text-[#161616]">
@@ -351,7 +343,7 @@ export const PresentationGenerator: React.FC<PresentationGeneratorProps> = ({
                     </ul>
 
                     {slide.speakerNotes && (
-                      <div className="mt-3 p-4 bg-stone-100 rounded-xl font-mono text-base text-stone-600">
+                      <div className="mt-3 p-4 bg-stone-100 rounded-xl font-mono text-sm text-stone-600">
                         <span className="font-bold text-stone-800 uppercase mr-1.5">Speaker Notes:</span>
                         {slide.speakerNotes}
                       </div>

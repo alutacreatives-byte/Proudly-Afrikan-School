@@ -15,21 +15,18 @@ import {
 } from 'lucide-react';
 import { PresentationResult, StudyToolInput } from '../../types';
 import { generateStudyTool } from '../../services/aiService';
-import { SourceMaterialUpload } from '../SourceMaterialUpload';
-import { saveResourceToStorage } from '../../utils/storage';
+import { SourceMaterialUpload } from '../../../build/components/SourceMaterialUpload';
+import { saveResourceToStorage } from '../../../build/utils/storage';
 import { useAuthCredit } from '../../../context/AuthCreditContext';
-import { GlobalNavigationButtons } from '../../../components/GlobalNavigationButtons';
 
 interface StudyPresentationGeneratorProps {
   onBack: () => void;
-  onGoHome?: () => void;
   onSaved?: () => void;
   existingResource?: PresentationResult;
 }
 
 export const StudyPresentationGenerator: React.FC<StudyPresentationGeneratorProps> = ({
   onBack,
-  onGoHome,
   onSaved,
   existingResource,
 }) => {
@@ -125,7 +122,7 @@ export const StudyPresentationGenerator: React.FC<StudyPresentationGeneratorProp
     let text = `# ${presentation.title}\nSubtitle: ${presentation.subtitle || ''}\nSubject: ${presentation.subject || category}\n\n`;
     presentation.slides.forEach((s, idx) => {
       text += `## Slide ${idx + 1}: ${s.title}\n`;
-      (s.bullets || []).forEach((b) => (text += `- ${b}\n`));
+      s.bullets.forEach((b) => (text += `- ${b}\n`));
       if (s.speakerNotes) text += `\nSpeaker Notes: ${s.speakerNotes}\n`;
       if (s.discussionPrompt) text += `Discussion Prompt: ${s.discussionPrompt}\n`;
       text += '\n---\n\n';
@@ -149,25 +146,29 @@ export const StudyPresentationGenerator: React.FC<StudyPresentationGeneratorProp
   const currentSlide = presentation?.slides?.[activeSlideIndex];
 
   return (
-    <div id="active-study-tool-stage" className={`w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 ${isFullscreen ? 'fixed inset-0 z-50 bg-[#161616] p-8 max-w-none overflow-y-auto' : ''}`}>
-      {/* Top Navigation: [BACK] [HOME] */}
-      {!isFullscreen && (
-        <div className="flex items-center justify-between">
-          <GlobalNavigationButtons onBack={onBack} onGoHome={onGoHome} />
-        </div>
-      )}
-
+    <div className={`w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8 ${isFullscreen ? 'fixed inset-0 z-50 bg-[#161616] p-8 max-w-none overflow-y-auto' : ''}`}>
       {/* Top Header */}
       <div className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-5 border-b ${isFullscreen ? 'border-stone-800' : 'border-stone-200'}`}>
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="font-mono text-base font-bold text-[#E63956] uppercase tracking-wider">
-              STUDY TOOL 06
-            </span>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={onBack}
+            className={`p-2.5 rounded-full border transition-colors cursor-pointer ${
+              isFullscreen ? 'bg-stone-900 border-stone-800 text-white hover:bg-stone-800' : 'bg-white hover:bg-stone-100 border-stone-200 text-stone-700'
+            }`}
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-xs font-bold text-[#E63956] uppercase tracking-wider">
+                STUDY TOOL 06
+              </span>
+            </div>
+            <h1 className={`font-display font-black text-2xl sm:text-3xl uppercase tracking-tight ${isFullscreen ? 'text-white' : 'text-[#161616]'}`}>
+              PRESENTATION SLIDE GENERATOR
+            </h1>
           </div>
-          <h1 className={`font-display font-black text-2xl sm:text-3xl uppercase tracking-tight ${isFullscreen ? 'text-white' : 'text-[#161616]'}`}>
-            PRESENTATION SLIDE GENERATOR
-          </h1>
         </div>
 
         {presentation && Array.isArray(presentation.slides) && presentation.slides.length > 0 && (
@@ -175,49 +176,49 @@ export const StudyPresentationGenerator: React.FC<StudyPresentationGeneratorProp
             <button
               type="button"
               onClick={() => setIsFullscreen(!isFullscreen)}
-              className={`px-4 py-2.5 rounded-xl border font-mono text-base font-bold uppercase flex items-center gap-2 transition-colors cursor-pointer ${
+              className={`px-4 py-2 rounded-xl border font-mono text-xs font-bold uppercase flex items-center gap-1.5 transition-colors cursor-pointer ${
                 isFullscreen ? 'bg-stone-800 text-white border-stone-700' : 'bg-white border-stone-200 text-stone-800 hover:bg-stone-50'
               }`}
             >
-              {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+              {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
               {isFullscreen ? 'Exit Fullscreen' : 'Present'}
             </button>
             <button
               type="button"
               onClick={handleCopy}
-              className={`px-4 py-2.5 rounded-xl border font-mono text-base font-bold uppercase flex items-center gap-2 transition-colors cursor-pointer ${
+              className={`px-4 py-2 rounded-xl border font-mono text-xs font-bold uppercase flex items-center gap-1.5 transition-colors cursor-pointer ${
                 isFullscreen ? 'bg-stone-800 text-white border-stone-700' : 'bg-white border-stone-200 text-stone-800 hover:bg-stone-50'
               }`}
             >
-              {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+              {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
               {copied ? 'Copied' : 'Copy'}
             </button>
             <button
               type="button"
               onClick={handleExportJson}
-              className={`px-4 py-2.5 rounded-xl border font-mono text-base font-bold uppercase flex items-center gap-2 transition-colors cursor-pointer ${
+              className={`px-4 py-2 rounded-xl border font-mono text-xs font-bold uppercase flex items-center gap-1.5 transition-colors cursor-pointer ${
                 isFullscreen ? 'bg-stone-800 text-white border-stone-700' : 'bg-white border-stone-200 text-stone-800 hover:bg-stone-50'
               }`}
             >
-              <Download className="w-4 h-4" />
+              <Download className="w-3.5 h-3.5" />
               JSON
             </button>
             <button
               type="button"
               onClick={() => window.print()}
-              className={`px-4 py-2.5 rounded-xl border font-mono text-base font-bold uppercase flex items-center gap-2 transition-colors cursor-pointer ${
+              className={`px-4 py-2 rounded-xl border font-mono text-xs font-bold uppercase flex items-center gap-1.5 transition-colors cursor-pointer ${
                 isFullscreen ? 'bg-stone-800 text-white border-stone-700' : 'bg-white border-stone-200 text-stone-800 hover:bg-stone-50'
               }`}
             >
-              <Printer className="w-4 h-4" />
+              <Printer className="w-3.5 h-3.5" />
               Print
             </button>
             <button
               type="button"
               onClick={handleSave}
-              className="px-4 py-2.5 rounded-xl bg-[#E63956] hover:bg-[#D32F4C] text-white font-mono text-base font-bold uppercase flex items-center gap-2 transition-colors cursor-pointer shadow-xs"
+              className="px-4 py-2 rounded-xl bg-[#E63956] hover:bg-[#D32F4C] text-white font-mono text-xs font-bold uppercase flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
             >
-              <Bookmark className="w-4 h-4" />
+              <Bookmark className="w-3.5 h-3.5" />
               {saved ? 'Saved' : 'Save Deck'}
             </button>
           </div>
@@ -231,14 +232,14 @@ export const StudyPresentationGenerator: React.FC<StudyPresentationGeneratorProp
           <div className="lg:col-span-4 space-y-6">
             <div className="p-6 rounded-[2rem] bg-white border border-stone-200/90 shadow-[0_10px_30px_rgba(0,0,0,0.05)] space-y-5">
               <div className="flex items-center gap-2 pb-3 border-b border-stone-100">
-                <Sparkles className="w-5 h-5 text-[#E63956]" />
-                <h2 className="font-display font-black text-base uppercase text-[#161616] tracking-wider">
+                <Sparkles className="w-4 h-4 text-[#E63956]" />
+                <h2 className="font-display font-black text-sm uppercase text-[#161616] tracking-wider">
                   Deck Configuration
                 </h2>
               </div>
 
               <div>
-                <label className="block font-mono text-base font-bold text-stone-700 uppercase mb-2">
+                <label className="block font-mono text-xs font-bold text-stone-700 uppercase mb-2">
                   Presentation Topic *
                 </label>
                 <input
@@ -246,18 +247,18 @@ export const StudyPresentationGenerator: React.FC<StudyPresentationGeneratorProp
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
                   placeholder="e.g. Great Zimbabwe Architecture & Trade"
-                  className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:border-[#E63956] focus:ring-1 focus:ring-[#E63956] bg-stone-50 text-base font-medium outline-hidden"
+                  className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:border-[#E63956] focus:ring-1 focus:ring-[#E63956] bg-stone-50 text-sm font-medium outline-hidden"
                 />
               </div>
 
               <div>
-                <label className="block font-mono text-base font-bold text-stone-700 uppercase mb-2">
+                <label className="block font-mono text-xs font-bold text-stone-700 uppercase mb-2">
                   Subject
                 </label>
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:border-[#E63956] bg-stone-50 text-base font-medium outline-hidden"
+                  className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:border-[#E63956] bg-stone-50 text-sm font-medium outline-hidden"
                 >
                   <option value="AFRICAN HISTORY">African History</option>
                   <option value="SCIENCES & STEM">Sciences & STEM</option>
@@ -269,13 +270,13 @@ export const StudyPresentationGenerator: React.FC<StudyPresentationGeneratorProp
               </div>
 
               <div>
-                <label className="block font-mono text-base font-bold text-stone-700 uppercase mb-2">
+                <label className="block font-mono text-xs font-bold text-stone-700 uppercase mb-2">
                   Audience Level
                 </label>
                 <select
                   value={gradeLevel}
                   onChange={(e) => setGradeLevel(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:border-[#E63956] bg-stone-50 text-base font-medium outline-hidden"
+                  className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:border-[#E63956] bg-stone-50 text-sm font-medium outline-hidden"
                 >
                   <option value="Primary / Middle School">Primary / Middle School</option>
                   <option value="Secondary / High School">Secondary / High School</option>
@@ -285,13 +286,13 @@ export const StudyPresentationGenerator: React.FC<StudyPresentationGeneratorProp
               </div>
 
               <div>
-                <label className="block font-mono text-base font-bold text-stone-700 uppercase mb-2">
+                <label className="block font-mono text-xs font-bold text-stone-700 uppercase mb-2">
                   Slide Count
                 </label>
                 <select
                   value={count}
                   onChange={(e) => setCount(Number(e.target.value))}
-                  className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:border-[#E63956] bg-stone-50 text-base font-medium outline-hidden"
+                  className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:border-[#E63956] bg-stone-50 text-sm font-medium outline-hidden"
                 >
                   <option value={5}>5 Slides (Overview / Lightning)</option>
                   <option value={6}>6 Slides (Standard Lecture Deck)</option>
@@ -301,7 +302,7 @@ export const StudyPresentationGenerator: React.FC<StudyPresentationGeneratorProp
               </div>
 
               <div>
-                <label className="block font-mono text-base font-bold text-stone-700 uppercase mb-2">
+                <label className="block font-mono text-xs font-bold text-stone-700 uppercase mb-2">
                   Optional Source Material (PDF / DOC / Notes)
                 </label>
                 <SourceMaterialUpload
@@ -318,7 +319,7 @@ export const StudyPresentationGenerator: React.FC<StudyPresentationGeneratorProp
               </div>
 
               {error && (
-                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-base font-mono">
+                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs font-mono">
                   {error}
                 </div>
               )}
@@ -327,10 +328,10 @@ export const StudyPresentationGenerator: React.FC<StudyPresentationGeneratorProp
                 type="button"
                 disabled={isGenerating}
                 onClick={handleGenerate}
-                className="w-full py-4 rounded-xl bg-[#E63956] hover:bg-[#D32F4C] disabled:bg-stone-300 text-white font-display font-black text-base uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm"
+                className="w-full py-3.5 rounded-xl bg-[#E63956] hover:bg-[#D32F4C] disabled:bg-stone-300 text-white font-display font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm"
               >
-                <Sparkles className="w-5 h-5" />
-                {isGenerating ? 'PRESENTATION LOADING…' : 'Generate Slide Deck →'}
+                <Sparkles className="w-4 h-4" />
+                {isGenerating ? 'Designing Presentation...' : 'Generate Slide Deck →'}
               </button>
             </div>
           </div>
@@ -342,10 +343,10 @@ export const StudyPresentationGenerator: React.FC<StudyPresentationGeneratorProp
             <div className="space-y-6">
               {/* Slide Meta Bar */}
               <div className="flex items-center justify-between">
-                <span className={`font-mono text-base font-bold uppercase ${isFullscreen ? 'text-stone-400' : 'text-stone-500'}`}>
+                <span className={`font-mono text-xs font-bold uppercase ${isFullscreen ? 'text-stone-400' : 'text-stone-500'}`}>
                   Slide {activeSlideIndex + 1} of {presentation.slides.length}
                 </span>
-                <span className="px-3.5 py-1.5 bg-pink-50 border border-pink-200 text-[#E63956] text-base font-mono font-bold uppercase rounded-full">
+                <span className="px-3 py-1 bg-pink-50 border border-pink-200 text-[#E63956] text-[11px] font-mono font-bold uppercase rounded-full">
                   {presentation.subject || category}
                 </span>
               </div>
@@ -358,7 +359,7 @@ export const StudyPresentationGenerator: React.FC<StudyPresentationGeneratorProp
               }`}>
                 {/* Slide Header */}
                 <div className="space-y-2">
-                  <span className="text-base font-mono font-bold text-[#E63956] uppercase tracking-widest">
+                  <span className="text-xs font-mono font-bold text-[#E63956] uppercase tracking-widest">
                     SECTION {activeSlideIndex + 1}
                   </span>
                   <h3 className="font-display font-black text-2xl sm:text-4xl uppercase tracking-tight leading-tight">
@@ -368,7 +369,7 @@ export const StudyPresentationGenerator: React.FC<StudyPresentationGeneratorProp
 
                 {/* Bullets */}
                 <div className="space-y-4 my-auto py-4">
-                  {(currentSlide.bullets || []).map((bullet, bIdx) => (
+                  {currentSlide.bullets.map((bullet, bIdx) => (
                     <div key={bIdx} className="flex items-start gap-3">
                       <span className="w-2 h-2 rounded-full bg-[#E63956] mt-2.5 shrink-0" />
                       <p className={`text-base sm:text-xl font-normal leading-relaxed ${isFullscreen ? 'text-stone-200' : 'text-stone-700'}`}>
@@ -377,6 +378,16 @@ export const StudyPresentationGenerator: React.FC<StudyPresentationGeneratorProp
                     </div>
                   ))}
                 </div>
+
+                {/* Visual Cue */}
+                {currentSlide.visualCue && (
+                  <div className={`p-3 rounded-xl border text-xs font-mono flex items-center gap-2 ${
+                    isFullscreen ? 'bg-stone-800/80 border-stone-700 text-stone-300' : 'bg-stone-50 border-stone-200 text-stone-600'
+                  }`}>
+                    <span className="font-bold text-[#E63956]">🖼️ Visual Prompt:</span>
+                    <span>{currentSlide.visualCue}</span>
+                  </div>
+                )}
               </div>
 
               {/* Navigation Controls */}
@@ -384,11 +395,11 @@ export const StudyPresentationGenerator: React.FC<StudyPresentationGeneratorProp
                 <button
                   type="button"
                   onClick={handlePrevSlide}
-                  className={`px-6 py-3 rounded-2xl border font-display font-black text-base uppercase flex items-center gap-2 transition-colors cursor-pointer ${
+                  className={`px-6 py-3 rounded-2xl border font-display font-black text-xs uppercase flex items-center gap-2 transition-colors cursor-pointer ${
                     isFullscreen ? 'bg-stone-800 border-stone-700 text-white hover:bg-stone-700' : 'bg-white border-stone-200 hover:bg-stone-50 text-stone-800'
                   }`}
                 >
-                  <ArrowLeft className="w-5 h-5" />
+                  <ArrowLeft className="w-4 h-4" />
                   Previous Slide
                 </button>
 
@@ -409,29 +420,29 @@ export const StudyPresentationGenerator: React.FC<StudyPresentationGeneratorProp
                 <button
                   type="button"
                   onClick={handleNextSlide}
-                  className="px-6 py-3 rounded-2xl bg-[#E63956] hover:bg-[#D32F4C] text-white font-display font-black text-base uppercase flex items-center gap-2 transition-colors cursor-pointer shadow-xs"
+                  className="px-6 py-3 rounded-2xl bg-[#E63956] hover:bg-[#D32F4C] text-white font-display font-black text-xs uppercase flex items-center gap-2 transition-colors cursor-pointer shadow-xs"
                 >
                   Next Slide
-                  <ArrowRight className="w-5 h-5" />
+                  <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
 
               {/* Speaker Notes Drawer */}
               {currentSlide.speakerNotes && (
-                <div className={`p-6 rounded-2xl border space-y-2.5 ${
+                <div className={`p-6 rounded-2xl border space-y-2 ${
                   isFullscreen ? 'bg-stone-900 border-stone-800 text-stone-300' : 'bg-stone-50/90 border-stone-200 text-stone-700'
                 }`}>
                   <div className="flex items-center justify-between">
-                    <span className="font-mono text-base font-bold text-stone-900 uppercase flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-[#E63956]" />
+                    <span className="font-mono text-xs font-bold text-stone-900 uppercase flex items-center gap-2">
+                      <FileText className="w-3.5 h-3.5 text-[#E63956]" />
                       Speaker Notes & Presentation Guidance
                     </span>
                   </div>
-                  <p className="text-base font-normal leading-relaxed">
+                  <p className="text-xs sm:text-sm font-normal leading-relaxed">
                     {currentSlide.speakerNotes}
                   </p>
                   {currentSlide.discussionPrompt && (
-                    <div className="mt-2.5 pt-2.5 border-t border-stone-200/60 text-base font-mono text-stone-600">
+                    <div className="mt-2 pt-2 border-t border-stone-200/60 text-xs font-mono text-stone-600">
                       <span className="font-bold text-[#E63956]">💬 Discussion Trigger:</span> {currentSlide.discussionPrompt}
                     </div>
                   )}
@@ -443,11 +454,11 @@ export const StudyPresentationGenerator: React.FC<StudyPresentationGeneratorProp
               <div className="w-12 h-12 rounded-full bg-stone-100 text-stone-400 flex items-center justify-center">
                 <Presentation className="w-6 h-6" />
               </div>
-              <h3 className="font-display font-black text-xl uppercase text-stone-900">
+              <h3 className="font-display font-black text-lg uppercase text-stone-900">
                 Ready to Generate Slide Deck
               </h3>
-              <p className="text-base text-stone-500 max-w-md font-normal leading-relaxed">
-                Provide your presentation topic or attach curriculum materials to create structured, formatted lecture slides with speaker notes and key discussion points.
+              <p className="text-xs sm:text-sm text-stone-500 max-w-md font-normal leading-relaxed">
+                Provide your presentation topic or attach curriculum materials to create structured, formatted lecture slides with speaker notes and visual prompts.
               </p>
             </div>
           )}

@@ -308,7 +308,7 @@ export const LearningPathBuilder: React.FC<LearningPathBuilderProps> = ({
           {learningPath ? (
             <div className="bg-white border border-stone-200/90 rounded-[2rem] p-6 sm:p-10 shadow-sm space-y-8 print:border-none print:shadow-none print:p-0">
               <div className="border-b-2 border-stone-800 pb-5 space-y-2">
-                <div className="font-mono text-base font-bold text-stone-500 uppercase">
+                <div className="font-mono text-sm font-bold text-stone-500 uppercase">
                   PATHWAY: {learningPath.startingLevel} → {learningPath.targetLevel}
                 </div>
                 <h2 className="font-display font-black text-2xl sm:text-3xl uppercase tracking-tight text-[#161616]">
@@ -321,14 +321,14 @@ export const LearningPathBuilder: React.FC<LearningPathBuilderProps> = ({
                   <div key={milestone.stepNumber} className="p-6 bg-[#FAF8F5] border border-stone-200 rounded-2xl space-y-4">
                     <div className="flex items-center justify-between flex-wrap gap-2">
                       <div className="flex items-center gap-3">
-                        <span className="w-9 h-9 rounded-full bg-[#E63956] text-white font-mono text-base font-bold flex items-center justify-center">
+                        <span className="w-8 h-8 rounded-full bg-[#E63956] text-white font-mono text-sm font-bold flex items-center justify-center">
                           {milestone.stepNumber}
                         </span>
-                        <h4 className="font-display font-black text-xl sm:text-2xl uppercase text-[#161616]">
+                        <h4 className="font-display font-black text-lg sm:text-xl uppercase text-[#161616]">
                           {milestone.title}
                         </h4>
                       </div>
-                      <span className="font-mono text-base font-bold text-stone-600 bg-stone-100 px-4 py-1.5 rounded-full">
+                      <span className="font-mono text-sm font-bold text-stone-600 bg-stone-100 px-3 py-1 rounded-full">
                         ~{milestone.estimatedHours} hrs
                       </span>
                     </div>
@@ -338,12 +338,12 @@ export const LearningPathBuilder: React.FC<LearningPathBuilderProps> = ({
                     </p>
 
                     <div className="p-4 bg-white border border-stone-200 rounded-xl space-y-2">
-                      <div className="font-mono text-base font-bold text-stone-500 uppercase">
+                      <div className="font-mono text-xs font-bold text-stone-500 uppercase">
                         Skills to Acquire:
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {milestone.skillsAcquired.map((skill, sIdx) => (
-                          <span key={sIdx} className="px-3.5 py-1.5 bg-stone-100 rounded-full font-mono text-base text-stone-800 font-medium">
+                          <span key={sIdx} className="px-3 py-1 bg-stone-100 rounded-full font-mono text-xs text-stone-800 font-medium">
                             {skill}
                           </span>
                         ))}

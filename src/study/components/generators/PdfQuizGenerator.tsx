@@ -14,29 +14,25 @@ import {
 } from 'lucide-react';
 import { PdfQuizResult, StudyToolInput } from '../../types';
 import { generateStudyTool } from '../../services/aiService';
-import { SourceMaterialUpload } from '../SourceMaterialUpload';
-import { saveResourceToStorage } from '../../utils/storage';
+import { SourceMaterialUpload } from '../../../build/components/SourceMaterialUpload';
+import { saveResourceToStorage } from '../../../build/utils/storage';
 import { useAuthCredit } from '../../../context/AuthCreditContext';
-import { GlobalNavigationButtons } from '../../../components/GlobalNavigationButtons';
 
 interface PdfQuizGeneratorProps {
   onBack: () => void;
-  onGoHome?: () => void;
   onSaved?: () => void;
   existingResource?: PdfQuizResult;
 }
 
 export const PdfQuizGenerator: React.FC<PdfQuizGeneratorProps> = ({
   onBack,
-  onGoHome,
   onSaved,
   existingResource,
 }) => {
   const { canAfford, consumeCredits, openAuthModal } = useAuthCredit();
 
-  // Uploaded Source state vs Pasted Notes state
-  const [uploadedPdfText, setUploadedPdfText] = useState<string>('');
-  const [pastedNotes, setPastedNotes] = useState<string>(existingResource?.sourceSnippet || '');
+  // Uploaded Source state
+  const [sourceMaterial, setSourceMaterial] = useState<string>(existingResource?.sourceSnippet || '');
   const [sourceFileName, setSourceFileName] = useState<string>(existingResource?.documentName || '');
   const [count, setCount] = useState<number>(existingResource?.questions?.length || 5);
 
@@ -54,9 +50,8 @@ export const PdfQuizGenerator: React.FC<PdfQuizGeneratorProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   const handleGenerate = async () => {
-    const effectiveContent = uploadedPdfText.trim() || pastedNotes.trim();
-    if (!effectiveContent) {
-      setError('Please upload a PDF/document OR paste study notes to generate the quiz.');
+    if (!sourceMaterial.trim()) {
+      setError('Please upload a PDF or paste your study document first.');
       return;
     }
 
@@ -74,7 +69,7 @@ export const PdfQuizGenerator: React.FC<PdfQuizGeneratorProps> = ({
     try {
       const input: StudyToolInput = {
         topic: sourceFileName || 'Uploaded Document Notes',
-        sourceMaterial: effectiveContent,
+        sourceMaterial: sourceMaterial.trim(),
         fileName: sourceFileName || 'Document.pdf',
         count,
       };
@@ -139,13 +134,12 @@ export const PdfQuizGenerator: React.FC<PdfQuizGeneratorProps> = ({
   const handleCopy = () => {
     if (!quiz || !Array.isArray(quiz.questions)) return;
     let text = `# ${quiz.title}\nDocument: ${quiz.documentName || 'Uploaded Document'}\n\n`;
-    (quiz.questions || []).forEach((q, idx) => {
+    quiz.questions.forEach((q, idx) => {
       text += `Question ${idx + 1}: ${q.prompt}\n`;
-      (q.options || []).forEach((opt, oIdx) => {
+      q.options.forEach((opt, oIdx) => {
         text += `  ${String.fromCharCode(65 + oIdx)}. ${opt}\n`;
       });
-      const correctIdx = Number(q.correctAnswer) || 0;
-      text += `Correct Answer: ${String.fromCharCode(65 + correctIdx)} - ${(q.options || [])[correctIdx] || ''}\n`;
+      text += `Correct Answer: ${String.fromCharCode(65 + (Number(q.correctAnswer) || 0))} - ${q.options[Number(q.correctAnswer) || 0]}\n`;
       if (q.explanation) text += `Grounded Explanation: ${q.explanation}\n`;
       text += '\n';
     });
@@ -168,23 +162,27 @@ export const PdfQuizGenerator: React.FC<PdfQuizGeneratorProps> = ({
   const score = calculateScore();
 
   return (
-    <div id="active-study-tool-stage" className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-      {/* Top Navigation: [BACK] [HOME] */}
-      <div className="flex items-center justify-between">
-        <GlobalNavigationButtons onBack={onBack} onGoHome={onGoHome} />
-      </div>
-
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-5 border-b border-stone-200">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="font-mono text-base font-bold text-[#E63956] uppercase tracking-wider">
-              STUDY TOOL 05
-            </span>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={onBack}
+            className="p-2.5 rounded-full bg-white hover:bg-stone-100 border border-stone-200 text-stone-700 transition-colors cursor-pointer"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-xs font-bold text-[#E63956] uppercase tracking-wider">
+                STUDY TOOL 05
+              </span>
+            </div>
+            <h1 className="font-display font-black text-2xl sm:text-3xl text-[#161616] uppercase tracking-tight">
+              PDF & DOCUMENT QUIZ GENERATOR
+            </h1>
           </div>
-          <h1 className="font-display font-black text-2xl sm:text-3xl text-[#161616] uppercase tracking-tight">
-            PDF & DOCUMENT QUIZ GENERATOR
-          </h1>
         </div>
 
         {quiz && Array.isArray(quiz.questions) && quiz.questions.length > 0 && (
@@ -192,33 +190,33 @@ export const PdfQuizGenerator: React.FC<PdfQuizGeneratorProps> = ({
             <button
               type="button"
               onClick={handleCopy}
-              className="px-4 py-2.5 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-base font-bold uppercase text-stone-800 flex items-center gap-2 transition-colors cursor-pointer"
+              className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
             >
-              {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+              {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
               {copied ? 'Copied' : 'Copy'}
             </button>
             <button
               type="button"
               onClick={handleExportJson}
-              className="px-4 py-2.5 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-base font-bold uppercase text-stone-800 flex items-center gap-2 transition-colors cursor-pointer"
+              className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
             >
-              <Download className="w-4 h-4" />
+              <Download className="w-3.5 h-3.5" />
               JSON
             </button>
             <button
               type="button"
               onClick={() => window.print()}
-              className="px-4 py-2.5 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-base font-bold uppercase text-stone-800 flex items-center gap-2 transition-colors cursor-pointer"
+              className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
             >
-              <Printer className="w-4 h-4" />
+              <Printer className="w-3.5 h-3.5" />
               Print
             </button>
             <button
               type="button"
               onClick={handleSave}
-              className="px-4 py-2.5 rounded-xl bg-[#18181B] hover:bg-[#27272A] text-white font-mono text-base font-bold uppercase flex items-center gap-2 transition-colors cursor-pointer shadow-xs"
+              className="px-4 py-2 rounded-xl bg-[#18181B] hover:bg-[#27272A] text-white font-mono text-xs font-bold uppercase flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
             >
-              <Bookmark className="w-4 h-4" />
+              <Bookmark className="w-3.5 h-3.5" />
               {saved ? 'Saved' : 'Save Quiz'}
             </button>
           </div>
@@ -232,50 +230,49 @@ export const PdfQuizGenerator: React.FC<PdfQuizGeneratorProps> = ({
           <div className="p-6 rounded-[2rem] bg-white border border-stone-200/90 shadow-[0_10px_30px_rgba(0,0,0,0.05)] space-y-5">
             <div className="flex items-center gap-2 pb-3 border-b border-stone-100">
               <Sparkles className="w-4 h-4 text-[#E63956]" />
-              <h2 className="font-display font-black text-base uppercase text-[#161616] tracking-wider">
+              <h2 className="font-display font-black text-sm uppercase text-[#161616] tracking-wider">
                 Upload & Grounding
               </h2>
             </div>
 
             <div>
-              <label className="block font-mono text-base font-bold text-stone-700 uppercase mb-2">
-                Upload Document (PDF / DOCX / TXT)
+              <label className="block font-mono text-xs font-bold text-stone-700 uppercase mb-2">
+                Upload Document (PDF / DOCX / TXT) *
               </label>
               <SourceMaterialUpload
                 currentFileName={sourceFileName}
                 onTextExtracted={(text, name) => {
-                  setUploadedPdfText(text);
+                  setSourceMaterial(text);
                   setSourceFileName(name);
-                  // Keep pastedNotes blank!
                 }}
                 onClear={() => {
-                  setUploadedPdfText('');
+                  setSourceMaterial('');
                   setSourceFileName('');
                 }}
               />
             </div>
 
             <div>
-              <label className="block font-mono text-base font-bold text-stone-700 uppercase mb-2">
+              <label className="block font-mono text-xs font-bold text-stone-700 uppercase mb-2">
                 Or Paste Document Notes
               </label>
               <textarea
                 rows={4}
-                value={pastedNotes}
-                onChange={(e) => setPastedNotes(e.target.value)}
+                value={sourceMaterial}
+                onChange={(e) => setSourceMaterial(e.target.value)}
                 placeholder="Paste chapter notes, lecture transcript or book excerpt..."
-                className="w-full p-3.5 rounded-xl border border-stone-200 focus:border-[#E63956] bg-stone-50 text-base font-mono outline-hidden"
+                className="w-full p-3.5 rounded-xl border border-stone-200 focus:border-[#E63956] bg-stone-50 text-xs font-mono outline-hidden"
               />
             </div>
 
             <div>
-              <label className="block font-mono text-base font-bold text-stone-700 uppercase mb-2">
+              <label className="block font-mono text-xs font-bold text-stone-700 uppercase mb-2">
                 Questions Count
               </label>
               <select
                 value={count}
                 onChange={(e) => setCount(Number(e.target.value))}
-                className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:border-[#E63956] bg-stone-50 text-base font-medium outline-hidden"
+                className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:border-[#E63956] bg-stone-50 text-sm font-medium outline-hidden"
               >
                 <option value={5}>5 Questions (Rapid Grounded Drill)</option>
                 <option value={8}>8 Questions (Standard Assessment)</option>
@@ -284,19 +281,19 @@ export const PdfQuizGenerator: React.FC<PdfQuizGeneratorProps> = ({
             </div>
 
             {error && (
-              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-base font-mono">
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs font-mono">
                 {error}
               </div>
             )}
 
             <button
               type="button"
-              disabled={isGenerating || (!uploadedPdfText.trim() && !pastedNotes.trim())}
+              disabled={isGenerating || !sourceMaterial.trim()}
               onClick={handleGenerate}
-              className="w-full py-4 rounded-xl bg-[#E63956] hover:bg-[#D32F4C] disabled:bg-stone-300 text-white font-display font-black text-base uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm"
+              className="w-full py-3.5 rounded-xl bg-[#E63956] hover:bg-[#D32F4C] disabled:bg-stone-300 text-white font-display font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm"
             >
-              <Sparkles className="w-5 h-5" />
-              {isGenerating ? 'PDF QUIZ LOADING…' : 'Generate PDF Quiz →'}
+              <Sparkles className="w-4 h-4" />
+              {isGenerating ? 'Extracting & Generating...' : 'Generate PDF Quiz →'}
             </button>
           </div>
         </div>
@@ -309,10 +306,10 @@ export const PdfQuizGenerator: React.FC<PdfQuizGeneratorProps> = ({
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-stone-100">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="px-3.5 py-1.5 bg-pink-50 border border-pink-200 text-[#E63956] text-base font-mono font-bold uppercase rounded-full">
+                    <span className="px-3 py-1 bg-pink-50 border border-pink-200 text-[#E63956] text-[11px] font-mono font-bold uppercase rounded-full">
                       DOCUMENT GROUNDED
                     </span>
-                    <span className="font-mono text-base text-stone-500 truncate max-w-xs">
+                    <span className="font-mono text-xs text-stone-500 truncate max-w-xs">
                       {quiz.documentName}
                     </span>
                   </div>
@@ -325,10 +322,10 @@ export const PdfQuizGenerator: React.FC<PdfQuizGeneratorProps> = ({
                   <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center gap-3">
                     <Award className="w-6 h-6 text-emerald-600 shrink-0" />
                     <div>
-                      <div className="font-mono text-base font-bold text-emerald-900 uppercase">
+                      <div className="font-mono text-xs font-bold text-emerald-900 uppercase">
                         Document Mastery
                       </div>
-                      <div className="font-display font-black text-2xl text-emerald-700">
+                      <div className="font-display font-black text-xl text-emerald-700">
                         {score.correct} / {score.total} ({score.percent}%)
                       </div>
                     </div>
@@ -354,14 +351,14 @@ export const PdfQuizGenerator: React.FC<PdfQuizGeneratorProps> = ({
                           : 'bg-stone-50/70 border-stone-200'
                       }`}
                     >
-                      <h3 className="font-mono text-base sm:text-lg font-bold text-[#161616] leading-relaxed">
+                      <h3 className="font-mono text-sm sm:text-base font-bold text-[#161616] leading-relaxed">
                         <span className="text-[#E63956] mr-2">Q{qIdx + 1}.</span>
                         {q.prompt}
                       </h3>
 
                       {/* Options Grid */}
                       <div className="grid grid-cols-1 gap-2.5">
-                        {(q.options || []).map((opt, oIdx) => {
+                        {q.options.map((opt, oIdx) => {
                           const isOptionSelected = selectedOpt === oIdx;
                           const isRightOption = q.correctAnswer === oIdx;
 
@@ -384,16 +381,16 @@ export const PdfQuizGenerator: React.FC<PdfQuizGeneratorProps> = ({
                               type="button"
                               disabled={isSubmitted}
                               onClick={() => handleSelectOption(qIdx, oIdx)}
-                              className={`w-full p-4 rounded-xl border text-left text-base transition-all flex items-center justify-between gap-3 cursor-pointer ${optionStyle}`}
+                              className={`w-full p-3.5 rounded-xl border text-left text-xs sm:text-sm transition-all flex items-center justify-between gap-3 cursor-pointer ${optionStyle}`}
                             >
-                              <div className="flex items-center gap-3">
-                                <span className="w-7 h-7 rounded-lg bg-stone-100/80 text-stone-700 flex items-center justify-center font-mono text-base font-bold shrink-0">
+                              <div className="flex items-center gap-2.5">
+                                <span className="w-6 h-6 rounded-lg bg-stone-100/80 text-stone-700 flex items-center justify-center font-mono text-xs font-bold shrink-0">
                                   {String.fromCharCode(65 + oIdx)}
                                 </span>
                                 <span>{opt}</span>
                               </div>
                               {isSubmitted && isRightOption && (
-                                <Check className="w-5 h-5 text-emerald-600 shrink-0" />
+                                <Check className="w-4 h-4 text-emerald-600 shrink-0" />
                               )}
                             </button>
                           );
@@ -402,7 +399,7 @@ export const PdfQuizGenerator: React.FC<PdfQuizGeneratorProps> = ({
 
                       {/* Grounded Citation */}
                       {isSubmitted && q.explanation && (
-                        <div className="p-4 rounded-xl bg-white border border-stone-200 text-base text-stone-700 font-normal leading-relaxed space-y-1">
+                        <div className="p-4 rounded-xl bg-white border border-stone-200 text-xs text-stone-700 font-normal leading-relaxed space-y-1">
                           <span className="font-mono font-bold text-stone-900 block">
                             📖 Grounded Source Citation:
                           </span>
@@ -421,23 +418,23 @@ export const PdfQuizGenerator: React.FC<PdfQuizGeneratorProps> = ({
                     type="button"
                     onClick={handleGradeQuiz}
                     disabled={Object.keys(userAnswers).length === 0}
-                    className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-[#E63956] hover:bg-[#D32F4C] disabled:bg-stone-300 text-white font-display font-black text-base uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
+                    className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-[#E63956] hover:bg-[#D32F4C] disabled:bg-stone-300 text-white font-display font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
                   >
-                    <FileCheck2 className="w-5 h-5" />
+                    <FileCheck2 className="w-4 h-4" />
                     Submit & Grade Document Quiz ({Object.keys(userAnswers).length}/{quiz.questions.length})
                   </button>
                 ) : (
                   <button
                     type="button"
                     onClick={handleResetQuiz}
-                    className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-[#18181B] hover:bg-[#27272A] text-white font-display font-black text-base uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
+                    className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-[#18181B] hover:bg-[#27272A] text-white font-display font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
                   >
-                    <RotateCcw className="w-5 h-5" />
+                    <RotateCcw className="w-4 h-4" />
                     Retake Document Quiz
                   </button>
                 )}
 
-                <span className="font-mono text-base text-stone-500 font-bold">
+                <span className="font-mono text-xs text-stone-400">
                   {Object.keys(userAnswers).length} of {quiz.questions.length} answered
                 </span>
               </div>
@@ -447,10 +444,10 @@ export const PdfQuizGenerator: React.FC<PdfQuizGeneratorProps> = ({
               <div className="w-12 h-12 rounded-full bg-stone-100 text-stone-400 flex items-center justify-center">
                 <FileText className="w-6 h-6" />
               </div>
-              <h3 className="font-display font-black text-xl uppercase text-stone-900">
+              <h3 className="font-display font-black text-lg uppercase text-stone-900">
                 Upload File to Generate Grounded Quiz
               </h3>
-              <p className="text-base text-stone-500 max-w-md font-normal leading-relaxed">
+              <p className="text-xs sm:text-sm text-stone-500 max-w-md font-normal leading-relaxed">
                 Upload any syllabus, reading material, or lecture PDF to generate a quiz with explanations cited directly from the document.
               </p>
             </div>

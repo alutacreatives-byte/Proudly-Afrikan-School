@@ -1,6 +1,6 @@
 import { SavedResource } from '../types';
 
-const STORAGE_KEY = 'pas_saved_resources_v1';
+const STORAGE_KEY = 'proudly_afrikan_build_resources_v1';
 
 export function getSavedResources(): SavedResource[] {
   try {
@@ -9,39 +9,45 @@ export function getSavedResources(): SavedResource[] {
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed : [];
   } catch (err) {
-    console.warn('[Storage] Error reading saved resources:', err);
+    console.error('Failed to load saved resources from storage:', err);
     return [];
   }
 }
 
-export function saveResourceToStorage(resource: SavedResource): void {
+export function saveResourceToStorage(resource: SavedResource): boolean {
   try {
-    const list = getSavedResources();
-    const existingIndex = list.findIndex((item) => item.id === resource.id);
-    if (existingIndex >= 0) {
-      list[existingIndex] = { ...list[existingIndex], ...resource };
+    const existing = getSavedResources();
+    const index = existing.findIndex((r) => r.id === resource.id);
+    let updated: SavedResource[];
+
+    if (index >= 0) {
+      updated = [...existing];
+      updated[index] = resource;
     } else {
-      list.unshift(resource);
+      updated = [resource, ...existing];
     }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    return true;
   } catch (err) {
-    console.warn('[Storage] Error saving resource:', err);
+    console.error('Failed to save resource to storage:', err);
+    return false;
   }
 }
 
-export function deleteResourceFromStorage(id: string): void {
+export function deleteResourceFromStorage(id: string): boolean {
   try {
-    const list = getSavedResources().filter((item) => item.id !== id);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    const existing = getSavedResources();
+    const filtered = existing.filter((r) => r.id !== id);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+    return true;
   } catch (err) {
-    console.warn('[Storage] Error deleting resource:', err);
+    console.error('Failed to delete resource from storage:', err);
+    return false;
   }
 }
 
-export function clearAllSavedResources(): void {
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch (err) {
-    console.warn('[Storage] Error clearing resources:', err);
-  }
+export function getResourceById(id: string): SavedResource | undefined {
+  const existing = getSavedResources();
+  return existing.find((r) => r.id === id);
 }

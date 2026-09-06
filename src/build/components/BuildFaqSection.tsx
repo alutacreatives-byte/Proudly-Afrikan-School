@@ -11,35 +11,35 @@ interface FaqItem {
 const FAQS: FaqItem[] = [
   {
     id: 'faq-1',
-    question: 'HOW DOES THE STUDY SUITE ACCELERATE ACTIVE RECALL?',
+    question: 'HOW DOES PROUDLY AFRIKAN BUILD USE GEMINI 3.7 FLASH?',
     answer:
-      'The Study Suite generates structured flashcards, self-grading diagnostic quizzes, and progressive mastery guides tailored specifically to high-yield syllabus concepts, forcing active cognitive retrieval rather than passive re-reading.',
+      "Proudly Afrikan Build leverages Google's state-of-the-art Gemini models to rapidly analyze topics, extract pedagogical hierarchies, formulate rigorous questions, and synthesize curriculum-aligned worksheets and lesson plans with high factual accuracy.",
     icon: Sparkles,
   },
   {
     id: 'faq-2',
-    question: 'CAN I UPLOAD MY OWN LECTURE SLIDES OR CHAPTER PDFS?',
+    question: 'CAN I USE MY OWN PDF, DOC, OR DOCX DOCUMENTS AS SOURCE MATERIAL?',
     answer:
-      'Yes. You can upload textbook chapters, lecture transcripts, syllabus documents, or research papers directly. Our system parses the text and generates grounded quizzes and study guides with citations directly referencing your uploaded material.',
+      'Yes. You can upload textbook chapters, curriculum outlines, lecture notes, or syllabus docs directly. Our client-side document processing securely parses your document text and injects verified context into the builder.',
     icon: FileText,
   },
   {
     id: 'faq-3',
-    question: 'CAN I PRINT OR EXPORT MY FLASHCARDS AND STUDY GUIDES?',
+    question: 'CAN I PRINT OR EXPORT THE GENERATED WORKSHEETS AND EXAMS?',
     answer:
-      'Absolutely. Every study tool provides clean JSON exports, clipboard copying, and printer-ready formats designed for offline study sheets, handouts, or review binders.',
+      'Absolutely. Every generated worksheet, exam, lesson plan, and mind map includes instant one-click Print/PDF export formatted specifically for standard paper printing and classroom handouts, as well as clipboard copying.',
     icon: Printer,
   },
   {
     id: 'faq-4',
-    question: 'WHERE ARE MY FLASHCARDS AND QUIZZES STORED?',
+    question: 'IS MY SAVED WORK PRESERVED BETWEEN SESSIONS?',
     answer:
-      'All generated study guides, active decks, diagnostic quizzes, and learning roadmaps are automatically indexed and saved in your local library, accessible at any time under "My Study Library" or the "MY SETS" tab.',
+      "Yes! All created worksheets, exams, mind maps, and curriculum resources are automatically indexed and saved to your local storage, accessible at any time under the 'My Saved Builds' or 'MY SETS' navigation.",
     icon: BookmarkCheck,
   },
 ];
 
-export const StudyFaqSection: React.FC = () => {
+export const BuildFaqSection: React.FC = () => {
   const [openId, setOpenId] = useState<string | null>('faq-1');
 
   const toggleFaq = (id: string) => {
@@ -59,7 +59,7 @@ export const StudyFaqSection: React.FC = () => {
           </h2>
         </div>
         <p className="font-mono text-xs sm:text-sm text-stone-600 max-w-md leading-relaxed">
-          Everything you need to know about active recall, document-grounded quizzes, and personalized study roadmaps.
+          Everything you need to know about generating exams, worksheets, lesson plans, and classroom resources.
         </p>
       </div>
 
@@ -79,7 +79,6 @@ export const StudyFaqSection: React.FC = () => {
               }`}
             >
               <button
-                type="button"
                 onClick={() => toggleFaq(faq.id)}
                 className="w-full px-6 sm:px-8 py-5 sm:py-6 flex items-center justify-between text-left gap-4 cursor-pointer"
                 aria-expanded={isOpen}
@@ -101,13 +100,13 @@ export const StudyFaqSection: React.FC = () => {
                     isOpen ? 'rotate-180 bg-stone-100 text-[#E63956]' : 'text-stone-400 bg-stone-50'
                   }`}
                 >
-                  <ChevronDown className="w-4 h-4" />
+                  <ChevronDown className="w-5 h-5" />
                 </div>
               </button>
 
               {isOpen && (
-                <div className="px-6 sm:px-8 pb-6 pt-1 text-sm sm:text-base text-stone-600 leading-relaxed border-t border-stone-100 font-normal">
-                  {faq.answer}
+                <div className="px-6 sm:px-8 pb-6 sm:pb-7 pt-1 border-t border-stone-100 text-stone-700 text-sm sm:text-base leading-relaxed animate-in fade-in-50 duration-150">
+                  <p className="pl-14">{faq.answer}</p>
                 </div>
               )}
             </div>

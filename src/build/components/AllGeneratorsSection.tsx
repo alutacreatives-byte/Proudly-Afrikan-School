@@ -2,16 +2,16 @@ import React from 'react';
 import { 
   FileText, 
   Layers, 
-  CheckSquare, 
-  FileCheck2, 
-  Presentation, 
   GitBranch, 
+  BookOpen, 
+  Presentation, 
+  GraduationCap, 
   ArrowUpRight
 } from 'lucide-react';
-import { StudyToolType } from '../types';
+import { BuildToolType } from '../types';
 
 interface ToolItem {
-  id: StudyToolType;
+  id: BuildToolType;
   toolNumber: string;
   tag: string;
   title: string;
@@ -20,79 +20,88 @@ interface ToolItem {
   btnText: string;
 }
 
-const STUDY_TOOLS: ToolItem[] = [
+const TOOLS: ToolItem[] = [
   {
-    id: 'learning-path',
+    id: 'course-builder',
     toolNumber: '01',
-    tag: 'PROGRESSIVE ROADMAP',
-    title: 'LEARNING ROADMAP BUILDER',
-    subtitle: 'Construct step-by-step competency milestones and skill progression roadmaps tailored to your goals.',
-    icon: GitBranch,
-    btnText: 'CREATE ROADMAP →',
+    tag: 'CURRICULUM & MODULES',
+    title: 'COURSE SYLLABUS BUILDER',
+    subtitle: 'Design multi-week academic course modules with learning outcomes, pacing, and capstone projects.',
+    icon: GraduationCap,
+    btnText: 'CREATE COURSE →',
   },
   {
-    id: 'study-guide',
+    id: 'exam',
     toolNumber: '02',
-    tag: 'STRUCTURED REVIEW',
-    title: 'STUDY GUIDE GENERATOR',
-    subtitle: 'Generate comprehensive revision notes with core principles, vocabulary breakdowns, and high-yield takeaways.',
+    tag: 'ASSESSMENT & TESTING',
+    title: 'EXAM & QUIZ GENERATOR',
+    subtitle: 'Build structured exams with multiple choice, essays, mark breakdowns, and teacher answer keys.',
     icon: FileText,
-    btnText: 'CREATE STUDY GUIDE →',
+    btnText: 'CREATE EXAM →',
   },
   {
-    id: 'flashcards',
+    id: 'worksheet',
     toolNumber: '03',
-    tag: 'ACTIVE RECALL',
-    title: 'FLASHCARD GENERATOR',
-    subtitle: 'Build interactive active-recall flashcard decks with instant flip animations, spaced hints, and shuffle drills.',
+    tag: 'PRACTICE & EXERCISES',
+    title: 'WORKSHEET GENERATOR',
+    subtitle: 'Create engaging classroom worksheets with matching activities, fill-in-blanks, and full answer solutions.',
     icon: Layers,
-    btnText: 'CREATE FLASHCARDS →',
+    btnText: 'CREATE WORKSHEET →',
   },
   {
-    id: 'quiz',
+    id: 'mind-map',
     toolNumber: '04',
-    tag: 'MASTERY CHECK',
-    title: 'PRACTICE QUIZ GENERATOR',
-    subtitle: 'Generate interactive multiple-choice practice tests with instant scoring, timer feedback, and deep explanations.',
-    icon: CheckSquare,
-    btnText: 'BUILD PRACTICE QUIZ →',
+    tag: 'VISUAL HIERARCHY',
+    title: 'MIND MAP GENERATOR',
+    subtitle: 'Transform topics, notes, or uploaded documents into interactive, editable visual mind maps with branching concepts.',
+    icon: GitBranch,
+    btnText: 'CREATE MIND MAP →',
   },
   {
-    id: 'pdf-quiz',
+    id: 'lesson-plan',
     toolNumber: '05',
-    tag: 'DOCUMENT GROUNDED',
-    title: 'PDF & DOCUMENT QUIZ',
-    subtitle: 'Upload any reading PDF or syllabus to generate a diagnostic quiz grounded directly in your uploaded text.',
-    icon: FileCheck2,
+    tag: 'TEACHING & PEDAGOGY',
+    title: 'LESSON PLAN GENERATOR',
+    subtitle: "Create pedagogical lesson plans with timed phases, Bloom's taxonomy objectives, and assessment checks.",
+    icon: BookOpen,
+    btnText: 'CREATE LESSON PLAN →',
+  },
+  {
+    id: 'pdf-studypack',
+    toolNumber: '06',
+    tag: 'DOCUMENT ANALYSIS',
+    title: 'PDF TO STUDY PACK',
+    subtitle: 'Upload course PDFs or textbook chapters to produce executive summaries, core pillars, and flashpoints.',
+    icon: FileText,
     btnText: 'UPLOAD PDF / DOC →',
   },
   {
     id: 'presentation',
-    toolNumber: '06',
+    toolNumber: '07',
     tag: 'SLIDES & LECTURE',
     title: 'PRESENTATION GENERATOR',
-    subtitle: 'Generate structured slide decks with presenter notes, visual prompts, and interactive discussion starters.',
+    subtitle: 'Generate structured slide outlines with presenter notes, discussion prompts, and visual cues.',
     icon: Presentation,
-    btnText: 'CREATE SLIDE DECK →',
+    btnText: 'CREATE SLIDES →',
   },
 ];
 
-interface StudyGeneratorsSectionProps {
-  onSelectTool: (toolId: StudyToolType) => void;
+interface AllGeneratorsSectionProps {
+  onSelectTool: (toolId: BuildToolType) => void;
 }
 
-export const StudyGeneratorsSection: React.FC<StudyGeneratorsSectionProps> = ({
+export const AllGeneratorsSection: React.FC<AllGeneratorsSectionProps> = ({
   onSelectTool,
 }) => {
   return (
-    <section id="study-generators-section" className="space-y-6 pt-4 border-t border-stone-200/80">
+    <section id="all-generators-section" className="space-y-6 pt-4 border-t border-stone-200/80">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 pb-2">
         <div>
           <span className="text-xs sm:text-sm font-mono font-bold text-[#E63956] uppercase tracking-widest block mb-1.5">
-            LEARNING & STUDY SUITE
+            RESOURCE GENERATOR SUITE
           </span>
           <h2 className="font-display font-black text-3xl sm:text-5xl lg:text-6xl text-[#161616] tracking-tighter uppercase leading-[0.92]">
-            ALL 6 STUDY TOOLS.
+            ALL 7 GENERATORS.
           </h2>
         </div>
         <span className="text-xs sm:text-sm font-mono font-bold text-stone-500 uppercase tracking-wider">
@@ -100,9 +109,9 @@ export const StudyGeneratorsSection: React.FC<StudyGeneratorsSectionProps> = ({
         </span>
       </div>
 
-      {/* 6 Generator Cards in responsive grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
-        {STUDY_TOOLS.map((gen) => {
+      {/* 7 Generator Cards in responsive grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
+        {TOOLS.map((gen) => {
           const Icon = gen.icon;
           return (
             <div

@@ -150,14 +150,6 @@ export const CourseBuilder: React.FC<CourseBuilderProps> = ({
         saveResourceToStorage(generatedCourse);
         if (onSaved) onSaved();
         await consumeCredits('COURSE', `Generated Course: ${topic}`);
-
-        // Smoothly scroll down to generated result
-        setTimeout(() => {
-          const el = document.getElementById('generated-course-result');
-          if (el) {
-            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }
-        }, 150);
       } else {
         throw new Error(resData.error || 'Server returned invalid course format.');
       }
@@ -438,7 +430,7 @@ export const CourseBuilder: React.FC<CourseBuilderProps> = ({
               </label>
               <SourceMaterialUpload
                 currentFileName={sourceFileName}
-                onTextExtracted={(text, name) => {
+                onContentExtracted={(text, name) => {
                   setSourceMaterial(text);
                   setSourceFileName(name);
                 }}
@@ -462,13 +454,13 @@ export const CourseBuilder: React.FC<CourseBuilderProps> = ({
               className="w-full py-4 rounded-full bg-gradient-to-r from-[#D92B8A] via-[#E03A6A] to-[#E63956] hover:opacity-95 text-white font-display text-base font-black uppercase tracking-wider shadow-[0_6px_20px_rgba(230,57,86,0.3)] transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 disabled:opacity-50"
             >
               <Sparkles className="w-5 h-5" />
-              <span>{isGenerating ? 'COURSE CURRICULUM LOADING…' : 'Generate Course Syllabus'}</span>
+              <span>{isGenerating ? 'Architecting Syllabus...' : 'Generate Course Syllabus'}</span>
             </button>
           </div>
         </div>
 
         {/* Section 2: GENERATED RESULT */}
-        <div id="generated-course-result" className="w-full space-y-4">
+        <div className="w-full space-y-4">
           <div className="flex items-center justify-between pb-3 border-b-2 border-stone-800">
             <h2 className="font-mono text-base sm:text-lg font-bold uppercase tracking-wider text-stone-900 flex items-center gap-2">
               <span className="w-3 h-3 rounded-full bg-emerald-600"></span>
@@ -486,20 +478,20 @@ export const CourseBuilder: React.FC<CourseBuilderProps> = ({
               {/* Top Banner */}
               <div className="border-b-2 border-stone-800 pb-5 space-y-3">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="px-3.5 py-1.5 bg-stone-100 rounded-full font-mono text-base font-bold text-stone-700 uppercase">
+                  <span className="px-3.5 py-1.5 bg-stone-100 rounded-full font-mono text-sm font-bold text-stone-700 uppercase">
                     {course.subject}
                   </span>
-                  <span className="px-3.5 py-1.5 bg-pink-50 border border-pink-200 rounded-full font-mono text-base font-bold text-[#E63956] uppercase">
+                  <span className="px-3.5 py-1.5 bg-pink-50 border border-pink-200 rounded-full font-mono text-sm font-bold text-[#E63956] uppercase">
                     {course.totalWeeksOrHours}
                   </span>
-                  <span className="px-3.5 py-1.5 bg-stone-100 rounded-full font-mono text-base font-bold text-stone-700 uppercase">
+                  <span className="px-3.5 py-1.5 bg-stone-100 rounded-full font-mono text-sm font-bold text-stone-700 uppercase">
                     {course.targetAudience}
                   </span>
                 </div>
                 <h2 className="font-display font-black text-2xl sm:text-3xl uppercase tracking-tight text-[#161616]">
                   {course.title}
                 </h2>
-                <div className="flex flex-wrap gap-4 text-base font-mono text-stone-600 pt-1">
+                <div className="flex flex-wrap gap-4 text-sm font-mono text-stone-600 pt-1">
                   <div><strong>Pedagogy:</strong> {course.pedagogicalStyle || 'Applied Learning'}</div>
                   <div><strong>Assessment:</strong> {course.assessmentStrategy || 'Capstone & Quizzes'}</div>
                 </div>
@@ -508,8 +500,8 @@ export const CourseBuilder: React.FC<CourseBuilderProps> = ({
               {/* Course Overview */}
               {(course.courseOverview || (course as any).courseDescription) && (
                 <div className="p-6 bg-[#FAF8F5] border border-stone-200 rounded-2xl space-y-2">
-                  <div className="flex items-center gap-2 font-mono text-base font-black uppercase tracking-wider text-stone-800">
-                    <BookOpen className="w-5 h-5 text-[#E63956]" />
+                  <div className="flex items-center gap-2 font-mono text-sm font-black uppercase tracking-wider text-stone-800">
+                    <BookOpen className="w-4 h-4 text-[#E63956]" />
                     <span>COURSE OVERVIEW & PHILOSOPHY:</span>
                   </div>
                   <p className="font-sans text-base text-stone-800 leading-relaxed">
@@ -521,8 +513,8 @@ export const CourseBuilder: React.FC<CourseBuilderProps> = ({
               {/* Learning Objectives */}
               {(course as any).learningObjectives && (course as any).learningObjectives.length > 0 && (
                 <div className="p-6 bg-stone-50 border border-stone-200 rounded-2xl space-y-2">
-                  <div className="flex items-center gap-2 font-mono text-base font-black uppercase tracking-wider text-stone-800">
-                    <Target className="w-5 h-5 text-[#E63956]" />
+                  <div className="flex items-center gap-2 font-mono text-sm font-black uppercase tracking-wider text-stone-800">
+                    <Target className="w-4 h-4 text-[#E63956]" />
                     <span>PROGRAM LEARNING OBJECTIVES:</span>
                   </div>
                   <ul className="list-disc list-inside space-y-1.5 font-mono text-base text-stone-700">
@@ -535,17 +527,17 @@ export const CourseBuilder: React.FC<CourseBuilderProps> = ({
 
               {/* Modules List */}
               <div className="space-y-6">
-                <h3 className="font-display font-black text-2xl uppercase tracking-tight text-[#161616] border-b border-stone-200 pb-3">
+                <h3 className="font-display font-black text-xl uppercase tracking-tight text-[#161616] border-b border-stone-200 pb-3">
                   Curricular Modules & Lessons
                 </h3>
                 {course.modules.map((mod) => (
                   <div key={mod.moduleNumber} className="p-6 bg-[#FAF8F5] border border-stone-200 rounded-2xl space-y-4">
                     <div className="flex items-center justify-between border-b border-stone-200/80 pb-3">
                       <div>
-                        <span className="font-mono text-base font-bold text-[#E63956] uppercase">
+                        <span className="font-mono text-sm font-bold text-[#E63956] uppercase">
                           MODULE {mod.moduleNumber} • {mod.estimatedHours ? `${mod.estimatedHours} hrs` : (mod as any).durationOrHours || ''}
                         </span>
-                        <h4 className="font-display font-black text-xl sm:text-2xl uppercase text-[#161616]">
+                        <h4 className="font-display font-black text-lg sm:text-xl uppercase text-[#161616]">
                           {mod.title || (mod as any).moduleTitle}
                         </h4>
                       </div>
@@ -557,23 +549,23 @@ export const CourseBuilder: React.FC<CourseBuilderProps> = ({
 
                     {mod.lessons && mod.lessons.length > 0 && (
                       <div className="space-y-3 pt-2">
-                        <div className="font-mono text-base font-bold uppercase tracking-wider text-stone-600">
+                        <div className="font-mono text-sm font-bold uppercase tracking-wider text-stone-600">
                           Lessons Breakdown:
                         </div>
                         <div className="grid grid-cols-1 gap-3">
                           {mod.lessons.map((les, lIdx) => (
                             <div key={lIdx} className="p-4 bg-white border border-stone-200/80 rounded-xl text-base space-y-1.5">
                               <div className="font-bold text-stone-900 flex items-center gap-2">
-                                <span className="w-2.5 h-2.5 rounded-full bg-[#E63956]"></span>
+                                <span className="w-2 h-2 rounded-full bg-[#E63956]"></span>
                                 <span>{les.lessonTitle}</span>
                               </div>
                               {les.learningObjective && (
-                                <p className="text-stone-600 text-base pl-4">
+                                <p className="text-stone-600 text-sm pl-4">
                                   <strong>Objective:</strong> {les.learningObjective}
                                 </p>
                               )}
                               {les.recommendedActivity && (
-                                <p className="text-stone-600 text-base pl-4">
+                                <p className="text-stone-600 text-sm pl-4">
                                   <strong>Activity:</strong> {les.recommendedActivity}
                                 </p>
                               )}
@@ -584,8 +576,8 @@ export const CourseBuilder: React.FC<CourseBuilderProps> = ({
                     )}
 
                     {mod.practicalProjectOrTask && (
-                      <div className="p-4 bg-pink-50/50 border border-pink-200/80 rounded-xl text-base space-y-1">
-                        <div className="font-mono text-base font-bold text-[#E63956] uppercase">
+                      <div className="p-4 bg-pink-50/50 border border-pink-200/80 rounded-xl text-sm space-y-1">
+                        <div className="font-mono text-xs font-bold text-[#E63956] uppercase">
                           Module Practical Task / Lab:
                         </div>
                         <p className="font-sans text-stone-800 text-base">
@@ -600,8 +592,8 @@ export const CourseBuilder: React.FC<CourseBuilderProps> = ({
               {/* Capstone Project / Final Assessment */}
               {course.capstoneProject && (
                 <div className="p-6 bg-gradient-to-br from-[#161616] to-stone-900 text-white rounded-3xl space-y-3 shadow-md">
-                  <div className="flex items-center gap-2 text-[#E63956] font-mono text-base font-bold uppercase tracking-wider">
-                    <Award className="w-5 h-5" />
+                  <div className="flex items-center gap-2 text-[#E63956] font-mono text-sm font-bold uppercase tracking-wider">
+                    <Award className="w-4 h-4" />
                     <span>Integrative Capstone Defense & Project</span>
                   </div>
                   <h4 className="font-display font-black text-xl uppercase">
