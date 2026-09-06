@@ -67,17 +67,8 @@ const TOOLS: ToolItem[] = [
     btnText: 'CREATE LESSON PLAN →',
   },
   {
-    id: 'pdf-studypack',
-    toolNumber: '06',
-    tag: 'DOCUMENT ANALYSIS',
-    title: 'PDF TO STUDY PACK',
-    subtitle: 'Upload course PDFs or textbook chapters to produce executive summaries, core pillars, and flashpoints.',
-    icon: FileText,
-    btnText: 'UPLOAD PDF / DOC →',
-  },
-  {
     id: 'presentation',
-    toolNumber: '07',
+    toolNumber: '06',
     tag: 'SLIDES & LECTURE',
     title: 'PRESENTATION GENERATOR',
     subtitle: 'Generate structured slide outlines with presenter notes, discussion prompts, and visual cues.',
@@ -101,7 +92,7 @@ export const AllGeneratorsSection: React.FC<AllGeneratorsSectionProps> = ({
             RESOURCE GENERATOR SUITE
           </span>
           <h2 className="font-display font-black text-3xl sm:text-5xl lg:text-6xl text-[#161616] tracking-tighter uppercase leading-[0.92]">
-            ALL 7 GENERATORS.
+            ALL 6 GENERATORS.
           </h2>
         </div>
         <span className="text-xs sm:text-sm font-mono font-bold text-stone-500 uppercase tracking-wider">
@@ -109,7 +100,7 @@ export const AllGeneratorsSection: React.FC<AllGeneratorsSectionProps> = ({
         </span>
       </div>
 
-      {/* 7 Generator Cards in responsive grid */}
+      {/* 6 Generator Cards in responsive grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
         {TOOLS.map((gen) => {
           const Icon = gen.icon;

@@ -7,6 +7,9 @@ interface SourceMaterialUploadProps {
   onTextExtracted?: (text: string, fileName: string) => void;
   onClear: () => void;
   currentFileName?: string;
+  sourceFileName?: string;
+  sourceMaterial?: string;
+  extractedPreview?: string;
   className?: string;
 }
 

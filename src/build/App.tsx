@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { BuildToolType, SavedResource, ExamPaper, WorksheetResource, MindMapResource, StudyPackResource, LessonPlanResource, PresentationResource, CourseResource, LearningPathResource } from './types';
+import { BuildToolType, SavedResource, ExamPaper, WorksheetResource, MindMapResource, LessonPlanResource, PresentationResource, CourseResource, LearningPathResource } from './types';
 import { BuildHome } from './components/BuildHome';
 import { ExamGenerator } from './components/generators/ExamGenerator';
 import { WorksheetGenerator } from './components/generators/WorksheetGenerator';
 import { MindMapGenerator } from './components/generators/MindMapGenerator';
-import { PdfStudyPackGenerator } from './components/generators/PdfStudyPackGenerator';
 import { LessonPlanGenerator } from './components/generators/LessonPlanGenerator';
 import { PresentationGenerator } from './components/generators/PresentationGenerator';
 import { CourseBuilder } from './components/generators/CourseBuilder';
@@ -72,6 +71,11 @@ export const BuildApp: React.FC<BuildAppProps> = ({
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Normalize resource so inner .data is merged at top-level
+  const normalizedResource = activeResource && (activeResource as any).data 
+    ? { ...(activeResource as any).data, ...activeResource } 
+    : activeResource;
+
   // Render sub-view
   if (activeTool === 'my-resources') {
     return (
@@ -89,7 +93,7 @@ export const BuildApp: React.FC<BuildAppProps> = ({
         onBack={handleBackToGrid}
         onGoHome={onGoHome || handleBackToGrid}
         onSaved={refreshSavedCount}
-        existingResource={activeResource?.toolType === 'exam' ? (activeResource as ExamPaper) : undefined}
+        existingResource={normalizedResource?.toolType === 'exam' ? (normalizedResource as ExamPaper) : undefined}
       />
     );
   }
@@ -100,7 +104,7 @@ export const BuildApp: React.FC<BuildAppProps> = ({
         onBack={handleBackToGrid}
         onGoHome={onGoHome || handleBackToGrid}
         onSaved={refreshSavedCount}
-        existingResource={activeResource?.toolType === 'worksheet' ? (activeResource as WorksheetResource) : undefined}
+        existingResource={normalizedResource?.toolType === 'worksheet' ? (normalizedResource as WorksheetResource) : undefined}
       />
     );
   }
@@ -111,18 +115,7 @@ export const BuildApp: React.FC<BuildAppProps> = ({
         onBack={handleBackToGrid}
         onGoHome={onGoHome || handleBackToGrid}
         onSaved={refreshSavedCount}
-        existingResource={activeResource?.toolType === 'mind-map' ? (activeResource as MindMapResource) : undefined}
-      />
-    );
-  }
-
-  if (activeTool === 'pdf-studypack') {
-    return (
-      <PdfStudyPackGenerator
-        onBack={handleBackToGrid}
-        onGoHome={onGoHome || handleBackToGrid}
-        onSaved={refreshSavedCount}
-        existingResource={activeResource?.toolType === 'pdf-studypack' ? (activeResource as StudyPackResource) : undefined}
+        existingResource={normalizedResource?.toolType === 'mind-map' ? (normalizedResource as MindMapResource) : undefined}
       />
     );
   }
@@ -133,7 +126,7 @@ export const BuildApp: React.FC<BuildAppProps> = ({
         onBack={handleBackToGrid}
         onGoHome={onGoHome || handleBackToGrid}
         onSaved={refreshSavedCount}
-        existingResource={activeResource?.toolType === 'lesson-plan' ? (activeResource as LessonPlanResource) : undefined}
+        existingResource={normalizedResource?.toolType === 'lesson-plan' ? (normalizedResource as LessonPlanResource) : undefined}
       />
     );
   }
@@ -144,7 +137,7 @@ export const BuildApp: React.FC<BuildAppProps> = ({
         onBack={handleBackToGrid}
         onGoHome={onGoHome || handleBackToGrid}
         onSaved={refreshSavedCount}
-        existingResource={activeResource?.toolType === 'presentation' ? (activeResource as PresentationResource) : undefined}
+        existingResource={normalizedResource?.toolType === 'presentation' ? (normalizedResource as PresentationResource) : undefined}
       />
     );
   }
@@ -155,7 +148,7 @@ export const BuildApp: React.FC<BuildAppProps> = ({
         onBack={handleBackToGrid}
         onGoHome={onGoHome || handleBackToGrid}
         onSaved={refreshSavedCount}
-        existingResource={(activeResource?.toolType === 'course-builder' || activeResource?.toolType === 'course') ? (activeResource as CourseResource) : undefined}
+        existingResource={(normalizedResource?.toolType === 'course-builder' || normalizedResource?.toolType === 'course') ? (normalizedResource as CourseResource) : undefined}
       />
     );
   }
@@ -166,7 +159,7 @@ export const BuildApp: React.FC<BuildAppProps> = ({
         onBack={handleBackToGrid}
         onGoHome={onGoHome || handleBackToGrid}
         onSaved={refreshSavedCount}
-        existingResource={activeResource?.toolType === 'learning-path' ? (activeResource as LearningPathResource) : undefined}
+        existingResource={normalizedResource?.toolType === 'learning-path' ? (normalizedResource as LearningPathResource) : undefined}
       />
     );
   }

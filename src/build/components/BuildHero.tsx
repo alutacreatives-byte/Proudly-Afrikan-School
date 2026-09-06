@@ -100,7 +100,7 @@ export const BuildHero: React.FC<BuildHeroProps> = ({
           <div className="grid grid-cols-3 gap-2 bg-white border border-stone-200/90 py-3.5 px-4 rounded-[1.5rem] shadow-xs">
             <div className="text-center border-r border-stone-200 pr-2">
               <div className="font-display text-lg sm:text-2xl font-black text-[#E63956]">
-                7
+                6
               </div>
               <div className="font-mono text-[10px] sm:text-xs font-bold text-stone-600 uppercase tracking-wider">
                 GENERATORS

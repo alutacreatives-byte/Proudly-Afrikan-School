@@ -12,7 +12,8 @@ import {
   ArrowRight,
   GraduationCap,
   Zap,
-  ChevronDown
+  ChevronDown,
+  Bookmark
 } from 'lucide-react';
 import { StorageService } from '../study/services/storageService';
 import { getRecentQuizzes, saveRecentQuiz } from '../quiz/utils/quizShare';
@@ -20,8 +21,10 @@ import { getSavedResources, saveResourceToStorage, deleteResourceFromStorage } f
 import { StudySet } from '../study/types';
 import { Quiz } from '../quiz/types';
 import { SavedResource } from '../build/types';
+import { SavedResultViewer } from './SavedResultViewer';
+import { saveSearchResult } from './savedSearchService';
 
-export type ContentKind = 'all' | 'study-set' | 'quiz' | 'build';
+export type ContentKind = 'all' | 'study-set' | 'quiz' | 'build' | 'search-result';
 
 export interface UnifiedItem {
   id: string;
@@ -61,6 +64,7 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSubject, setSelectedSubject] = useState<string>('ALL');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'title'>('newest');
+  const [viewingItem, setViewingItem] = useState<UnifiedItem | null>(null);
 
   // Loaded items
   const [studySets, setStudySets] = useState<StudySet[]>([]);
@@ -98,6 +102,17 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
   const showToast = (msg: string) => {
     setNotification(msg);
     setTimeout(() => setNotification(null), 3000);
+  };
+
+  const handleSaveCurrentSearch = () => {
+    if (!searchQuery.trim()) return;
+    saveSearchResult({
+      query: searchQuery.trim(),
+      title: searchQuery.trim(),
+      category: selectedSubject !== 'ALL' ? selectedSubject : 'Curriculum Search',
+    });
+    loadAllContent();
+    showToast(`Search "${searchQuery.trim()}" saved to MY SETS!`);
   };
 
   // Convert all distinct data types into Unified Items
@@ -138,27 +153,41 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
       });
     });
 
-    // Build Resources (Exams, Worksheets, Lesson Plans, Courses, etc.)
+    // Build Resources (Exams, Worksheets, Lesson Plans, Courses, Saved Searches, etc.)
     buildResources.forEach((res) => {
+      let kind: ContentKind = 'build';
       let kindLabel = 'BUILD RESOURCE';
       let itemCountLabel = '1 Document';
+
       if (res.toolType === 'exam') kindLabel = 'EXAM PAPER';
       else if (res.toolType === 'worksheet') kindLabel = 'WORKSHEET';
       else if (res.toolType === 'mind-map') kindLabel = 'MIND MAP';
       else if (res.toolType === 'lesson-plan') kindLabel = 'LESSON PLAN';
-      else if (res.toolType === 'pdf-studypack') kindLabel = 'STUDY PACK';
       else if (res.toolType === 'presentation') kindLabel = 'SLIDE DECK';
       else if (res.toolType === 'course-builder' || res.toolType === 'course') kindLabel = 'CURRICULUM COURSE';
       else if (res.toolType === 'learning-path') kindLabel = 'LEARNING PATH';
+      else if (res.toolType === 'study-guide') kindLabel = 'STUDY GUIDE';
+      else if (res.toolType === 'flashcards') kindLabel = 'FLASHCARD DECK';
+      else if (res.toolType === 'quiz' || (res as any).toolType === 'study-quiz') kindLabel = 'PRACTICE QUIZ';
+      else if (res.toolType === 'search-result') {
+        kind = 'search-result';
+        kindLabel = 'SAVED SEARCH';
+        itemCountLabel = 'Research Archive';
+      }
 
       const anyRes = res as any;
+      const desc = anyRes.data?.summary || anyRes.data?.content || 
+        (res.toolType === 'search-result' 
+          ? `Archived research query: "${anyRes.topic || anyRes.data?.query || res.title}"`
+          : `${anyRes.gradeLevel ? `${anyRes.gradeLevel} · ` : ''}${anyRes.topic ? `Topic: ${anyRes.topic}` : 'Created with Proudly Afrikan.'}`);
+
       items.push({
-        id: `build-${res.id}`,
-        kind: 'build',
+        id: `${kind}-${res.id}`,
+        kind,
         kindLabel,
         title: res.title,
-        description: `${anyRes.gradeLevel ? `${anyRes.gradeLevel} · ` : ''}${anyRes.topic ? `Topic: ${anyRes.topic}` : 'Created with Proudly Afrikan Build.'}`,
-        categoryOrSubject: anyRes.subject || 'Curriculum',
+        description: desc,
+        categoryOrSubject: anyRes.subject || anyRes.data?.category || 'Curriculum',
         createdAt: res.createdAt || new Date().toISOString(),
         itemCount: 1,
         itemCountLabel,
@@ -283,19 +312,9 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
     showToast('Exported JSON file.');
   };
 
-  // Open item
+  // Open item - Opens the actual saved result in the working archive viewer
   const handleOpenItem = (item: UnifiedItem) => {
-    if (item.kind === 'study-set' && item.originalStudySet) {
-      onOpenStudySet(item.originalStudySet, 'study');
-    } else if (item.kind === 'quiz' && item.originalQuiz) {
-      onOpenQuiz(item.originalQuiz);
-    } else if (item.kind === 'build' && item.originalBuildResource) {
-      if (onOpenBuildResource) {
-        onOpenBuildResource(item.originalBuildResource);
-      } else if (onNavigateToBuild) {
-        onNavigateToBuild();
-      }
-    }
+    setViewingItem(item);
   };
 
   // Badge Color Style
@@ -307,6 +326,8 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
         return 'bg-[#FFF0E6] text-[#E05A2B] border-[#FFD5C0]';
       case 'build':
         return 'bg-[#FFF0F2] text-[#E6425E] border-[#FFCCD4]';
+      case 'search-result':
+        return 'bg-[#F0FDF4] text-[#16A34A] border-[#BBF7D0]';
       default:
         return 'bg-stone-100 text-stone-700 border-stone-200';
     }
@@ -320,6 +341,8 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
         return <GraduationCap className="w-3.5 h-3.5 text-[#E05A2B]" />;
       case 'build':
         return <Layers className="w-3.5 h-3.5 text-[#E6425E]" />;
+      case 'search-result':
+        return <Search className="w-3.5 h-3.5 text-[#16A34A]" />;
       default:
         return <Layers className="w-3.5 h-3.5 text-[#C92A45]" />;
     }
@@ -408,8 +431,28 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
                 placeholder="Search all sets, quizzes, exams, or topics..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-[#F2ECE1] border border-[#E3D9C9] rounded-2xl pl-10 pr-4 py-2.5 text-xs sm:text-[13px] font-mono font-medium text-[#161616] focus:outline-none focus:bg-white focus:border-[#D92B8A] transition-all placeholder:text-stone-400"
+                className="w-full bg-[#F2ECE1] border border-[#E3D9C9] rounded-2xl pl-10 pr-24 py-2.5 text-xs sm:text-[13px] font-mono font-medium text-[#161616] focus:outline-none focus:bg-white focus:border-[#D92B8A] transition-all placeholder:text-stone-400"
               />
+              {searchQuery.trim() && (
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={handleSaveCurrentSearch}
+                    className="px-2 py-1 bg-[#D92B8A] hover:bg-[#c02479] text-white text-[10px] font-mono font-bold uppercase rounded-lg shadow-xs transition-colors cursor-pointer flex items-center gap-1"
+                    title="Save this search to My Sets"
+                  >
+                    <Bookmark className="w-3 h-3" />
+                    <span>SAVE</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="px-1.5 py-1 bg-stone-200 hover:bg-stone-300 text-stone-700 text-[10px] font-mono font-bold uppercase rounded-lg transition-colors cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-end">
@@ -452,6 +495,7 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
               { id: 'study-set', label: 'Study Sets' },
               { id: 'quiz', label: 'Quizzes' },
               { id: 'build', label: 'Build Resources' },
+              { id: 'search-result', label: 'Saved Searches' },
             ].map((tab) => {
               const count = tab.id === 'all' 
                 ? unifiedItems.length 
@@ -487,9 +531,20 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
             <FolderOpen className="w-12 h-12 text-stone-300 mx-auto" />
             <h3 className="text-lg font-display font-black uppercase text-[#161616]">No Content Found</h3>
             <p className="text-xs sm:text-sm font-mono text-stone-500 max-w-md mx-auto">
-              No matching resources found for this filter. Create a new study set, generate an interactive quiz, or create a build resource.
+              {searchQuery.trim()
+                ? `No existing items matched "${searchQuery}". You can save this query as a research note in your archive.`
+                : 'No matching resources found for this filter. Create a new study set, generate an interactive quiz, or create a build resource.'}
             </p>
             <div className="flex flex-wrap justify-center gap-3 pt-2">
+              {searchQuery.trim() && (
+                <button
+                  onClick={handleSaveCurrentSearch}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-full text-xs font-mono font-bold uppercase shadow-md cursor-pointer transition-colors flex items-center gap-1.5"
+                >
+                  <Bookmark className="w-3.5 h-3.5" />
+                  <span>Save "{searchQuery}" To My Sets</span>
+                </button>
+              )}
               <button
                 onClick={onNavigateToStudy}
                 className="bg-[#D92B8A] text-white px-5 py-2.5 rounded-full text-xs font-mono font-bold uppercase shadow-md cursor-pointer hover:bg-[#C92255] transition-colors"
@@ -554,7 +609,7 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
                         <button
                           type="button"
                           onClick={(e) => handleDuplicateItem(item, e)}
-                          className="p-1.5 rounded-full bg-white border border-[#EAE3D6] hover:bg-stone-100 text-stone-600 hover:text-stone-900 transition-colors shadow-xs"
+                          className="p-1.5 rounded-full bg-white border border-[#EAE3D6] hover:bg-stone-100 text-stone-600 hover:text-stone-900 transition-colors shadow-xs cursor-pointer"
                           title="Duplicate Item"
                         >
                           <Copy className="w-3.5 h-3.5" />
@@ -562,7 +617,7 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
                         <button
                           type="button"
                           onClick={(e) => handleExportJson(item, e)}
-                          className="p-1.5 rounded-full bg-white border border-[#EAE3D6] hover:bg-stone-100 text-stone-600 hover:text-stone-900 transition-colors shadow-xs"
+                          className="p-1.5 rounded-full bg-white border border-[#EAE3D6] hover:bg-stone-100 text-stone-600 hover:text-stone-900 transition-colors shadow-xs cursor-pointer"
                           title="Export as JSON"
                         >
                           <Download className="w-3.5 h-3.5" />
@@ -570,7 +625,7 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
                         <button
                           type="button"
                           onClick={(e) => handleDeleteItem(item, e)}
-                          className="p-1.5 rounded-full bg-white border border-[#EAE3D6] hover:bg-red-50 text-stone-400 hover:text-red-600 transition-colors shadow-xs"
+                          className="p-1.5 rounded-full bg-white border border-[#EAE3D6] hover:bg-red-50 text-stone-400 hover:text-red-600 transition-colors shadow-xs cursor-pointer"
                           title="Delete Item"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -591,6 +646,36 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
         )}
 
       </div>
+
+      {/* Actual Saved Result Viewer Modal */}
+      {viewingItem && (
+        <SavedResultViewer
+          item={viewingItem}
+          onClose={() => setViewingItem(null)}
+          onLaunchPractice={(mode) => {
+            const current = viewingItem;
+            setViewingItem(null);
+            if (current.originalStudySet) {
+              onOpenStudySet(current.originalStudySet, mode);
+            }
+          }}
+          onOpenInWorkbench={() => {
+            const current = viewingItem;
+            setViewingItem(null);
+            if (current.kind === 'study-set' && current.originalStudySet) {
+              onOpenStudySet(current.originalStudySet, 'study');
+            } else if (current.kind === 'quiz' && current.originalQuiz) {
+              onOpenQuiz(current.originalQuiz);
+            } else if ((current.kind === 'build' || current.kind === 'search-result') && current.originalBuildResource) {
+              if (onOpenBuildResource) {
+                onOpenBuildResource(current.originalBuildResource);
+              } else if (onNavigateToBuild) {
+                onNavigateToBuild();
+              }
+            }
+          }}
+        />
+      )}
     </div>
   );
 };

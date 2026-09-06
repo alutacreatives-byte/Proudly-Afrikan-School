@@ -7,7 +7,8 @@ export type BuildToolType =
   | 'course'
   | 'course-builder'
   | 'learning-path'
-  | 'pdf-studypack';
+  | 'pdf-studypack'
+  | 'pdf-quiz';
 
 // 1. Exam Generator Types
 export interface ExamQuestion {
@@ -46,7 +47,10 @@ export interface ExamPaper {
   sourceDocName?: string;
   createdAt: string;
   toolType: 'exam';
+  data?: any;
 }
+
+export type ExamResult = ExamPaper;
 
 // 2. Worksheet Generator Types
 export interface WorksheetItem {
@@ -81,7 +85,10 @@ export interface WorksheetResource {
   sourceDocName?: string;
   createdAt: string;
   toolType: 'worksheet';
+  data?: any;
 }
+
+export type WorksheetResult = WorksheetResource;
 
 // 3. Lesson Plan Types
 export interface LessonPhase {
@@ -109,7 +116,10 @@ export interface LessonPlanResource {
   sourceDocName?: string;
   createdAt: string;
   toolType: 'lesson-plan';
+  data?: any;
 }
+
+export type LessonPlanResult = LessonPlanResource;
 
 // 4. Mind Map Types
 export interface MindMapNode {
@@ -132,6 +142,8 @@ export interface MindMapResource {
   toolType: 'mind-map';
 }
 
+export type MindMapResult = MindMapResource;
+
 // 5. Presentation / Slide Deck Types
 export interface PresentationSlide {
   slideNumber: number;
@@ -152,7 +164,11 @@ export interface PresentationResource {
   sourceDocName?: string;
   createdAt: string;
   toolType: 'presentation';
+  data?: any;
 }
+
+export type PresentationBuildResult = PresentationResource;
+export type PresentationBuildSlide = PresentationSlide;
 
 // 6. Course Builder Types
 export interface CourseLessonItem {
@@ -188,7 +204,10 @@ export interface CourseResource {
   sourceDocName?: string;
   createdAt: string;
   toolType: 'course' | 'course-builder';
+  data?: any;
 }
+
+export type CourseBuildResult = CourseResource;
 
 // 7. Learning Path Builder Types
 export interface LearningPathMilestone {
@@ -214,7 +233,11 @@ export interface LearningPathResource {
   sourceDocName?: string;
   createdAt: string;
   toolType: 'learning-path';
+  topic?: string;
+  data?: any;
 }
+
+export type LearningPathBuildResult = LearningPathResource;
 
 // 8. PDF Study Pack Types
 export interface GlossaryTerm {
@@ -243,10 +266,41 @@ export interface StudyPackResource {
   selfCheckQuestions: SelfCheckQuestion[];
   createdAt: string;
   toolType: 'pdf-studypack';
+  data?: any;
 }
 
+// 9. PDF Quiz Types
+export interface PdfQuizBuildQuestion {
+  id: string;
+  number?: number;
+  questionNumber?: number;
+  question: string;
+  prompt?: string;
+  type?: string;
+  options: string[];
+  correctAnswer: string;
+  explanation: string;
+  sourceReferenceQuote?: string;
+}
+
+export interface PdfQuizBuildResult {
+  id: string;
+  title: string;
+  sourceDocumentName?: string;
+  sourceDocName?: string;
+  gradeLevel: string;
+  difficulty: string;
+  totalQuestions: number;
+  questions: PdfQuizBuildQuestion[];
+  createdAt?: string;
+  toolType?: 'pdf-quiz';
+  data?: any;
+}
+
+export type PdfQuizData = PdfQuizBuildResult;
+
 // Generic Union for Saved Resources
-export type SavedResource =
+export type SavedResource<T = any> =
   | ExamPaper
   | WorksheetResource
   | LessonPlanResource
@@ -254,4 +308,6 @@ export type SavedResource =
   | PresentationResource
   | CourseResource
   | LearningPathResource
-  | StudyPackResource;
+  | StudyPackResource
+  | PdfQuizBuildResult
+  | T;

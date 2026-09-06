@@ -32,18 +32,17 @@ export const BuildHome: React.FC<BuildHomeProps> = ({
 
   const handleUploadPdfClick = () => {
     setActiveMethod('pdf');
-    onSelectTool('pdf-studypack');
+    const el = document.getElementById('all-generators-section');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   const handleSelectMethod = (method: BuildCreationMethod) => {
     setActiveMethod(method);
-    if (method === 'pdf') {
-      onSelectTool('pdf-studypack');
-    } else {
-      const el = document.getElementById('all-generators-section');
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth' });
-      }
+    const el = document.getElementById('all-generators-section');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
