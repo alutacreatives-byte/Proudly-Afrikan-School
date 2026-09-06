@@ -100,8 +100,8 @@ export const AllGeneratorsSection: React.FC<AllGeneratorsSectionProps> = ({
         </span>
       </div>
 
-      {/* 6 Generator Cards in responsive grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
+      {/* 6 Generator Cards in responsive 3x2 grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
         {TOOLS.map((gen) => {
           const Icon = gen.icon;
           return (

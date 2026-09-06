@@ -1,95 +1,68 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Calendar, 
   Clock, 
-  Flame, 
   Sparkles, 
   CheckCircle2, 
   Play, 
   Plus, 
   BookOpen, 
   GraduationCap, 
-  Layers, 
   Target, 
   TrendingUp, 
   ChevronRight, 
   RotateCcw,
-  Bell,
   Check,
-  Pause,
   AlertCircle,
-  Zap
+  Zap,
+  ArrowRight,
+  CalendarDays,
+  BookmarkCheck,
+  RefreshCw
 } from 'lucide-react';
 import { StorageService } from '../study/services/storageService';
-import { StudySet, StudyConcept } from '../study/types';
+import { StudySet } from '../study/types';
 import { Quiz } from '../quiz/types';
 import { getRecentQuizzes } from '../quiz/utils/quizShare';
 
+export type LearningGoal = 
+  | 'Learn a New Topic' 
+  | 'Exam Preparation' 
+  | 'Improve Weak Areas' 
+  | 'Rapid Spaced Repetition';
+
+export type StudyDurationOption = {
+  label: string;
+  minutes: 10 | 30 | 60;
+  desc: string;
+};
+
+export const STUDY_DURATION_OPTIONS: StudyDurationOption[] = [
+  { label: 'Quick Sprint', minutes: 10, desc: '10 min rapid focus' },
+  { label: 'Standard Session', minutes: 30, desc: '30 min core study' },
+  { label: 'Deep Mastery', minutes: 60, desc: '1 hour comprehensive review' },
+];
+
+export const LEARNING_GOALS: LearningGoal[] = [
+  'Learn a New Topic',
+  'Exam Preparation',
+  'Improve Weak Areas',
+  'Rapid Spaced Repetition',
+];
+
 export interface PlannedBlock {
   id: string;
-  title: string;
   subject: string;
-  durationMinutes: number;
-  scheduledTime: string;
-  dayOfWeek: string;
+  topic: string;
+  goal: LearningGoal;
+  timing: string; // 'Today / Now', 'Tomorrow', or YYYY-MM-DD
+  durationMinutes: 10 | 30 | 60;
   mode: 'study' | 'flashcards' | 'quiz' | 'practice';
   isCompleted: boolean;
   linkedSetId?: string;
   linkedQuizId?: string;
+  createdAt: string;
 }
-
-const DEFAULT_SCHEDULE: PlannedBlock[] = [
-  {
-    id: 'block-1',
-    title: 'Mansa Musa & Mali Empire Active Recall',
-    subject: 'African History',
-    durationMinutes: 25,
-    scheduledTime: '09:00 AM',
-    dayOfWeek: 'Today',
-    mode: 'flashcards',
-    isCompleted: false,
-  },
-  {
-    id: 'block-2',
-    title: 'Swahili Grammatical Structure & Pronouns',
-    subject: 'African Languages',
-    durationMinutes: 15,
-    scheduledTime: '11:30 AM',
-    dayOfWeek: 'Today',
-    mode: 'study',
-    isCompleted: false,
-  },
-  {
-    id: 'block-3',
-    title: 'Great Zimbabwe Architecture & Trade Routes',
-    subject: 'African History',
-    durationMinutes: 20,
-    scheduledTime: '02:00 PM',
-    dayOfWeek: 'Today',
-    mode: 'quiz',
-    isCompleted: false,
-  },
-  {
-    id: 'block-4',
-    title: 'African Geography & Major River Basins',
-    subject: 'Geography',
-    durationMinutes: 30,
-    scheduledTime: '04:30 PM',
-    dayOfWeek: 'Tomorrow',
-    mode: 'practice',
-    isCompleted: false,
-  },
-  {
-    id: 'block-5',
-    title: 'Ancient Nubia & Kingdom of Kush',
-    subject: 'African History',
-    durationMinutes: 45,
-    scheduledTime: '10:00 AM',
-    dayOfWeek: 'This Week',
-    mode: 'study',
-    isCompleted: false,
-  },
-];
 
 interface CentralPlannerViewProps {
   onStartStudySet: (set: StudySet, mode?: 'study' | 'flashcards' | 'practice') => void;
@@ -102,32 +75,37 @@ export const CentralPlannerView: React.FC<CentralPlannerViewProps> = ({
   onStartQuiz,
   onExploreSets,
 }) => {
+  // Storage for user study sessions (no hardcoded fake sessions or fake streaks)
   const [schedule, setSchedule] = useState<PlannedBlock[]>(() => {
     try {
-      const raw = localStorage.getItem('proudly_afrikan_planner_schedule_v2');
+      const raw = localStorage.getItem('proudly_afrikan_learning_planner_v3');
       if (raw) return JSON.parse(raw);
     } catch (e) {}
-    return DEFAULT_SCHEDULE;
+    return [];
   });
 
   const [studySets, setStudySets] = useState<StudySet[]>([]);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  // Time-boxing Active Timer State
-  const [selectedDuration, setSelectedDuration] = useState<number>(25);
-  const [activeSessionBlock, setActiveSessionBlock] = useState<PlannedBlock | null>(null);
-  const [timerSecondsLeft, setTimerSecondsLeft] = useState<number>(25 * 60);
-  const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false);
+  // Active View Tab: PLAN | SCHEDULE | TRACK | REVIEW
+  const [activeTab, setActiveTab] = useState<'plan' | 'schedule' | 'track' | 'review'>('plan');
 
-  // Form State for new plan
-  const [newTitle, setNewTitle] = useState('');
-  const [newSubject, setNewSubject] = useState('African History');
-  const [newDuration, setNewDuration] = useState(25);
-  const [newTime, setNewTime] = useState('09:00 AM');
-  const [newDay, setNewDay] = useState('Today');
-  const [newMode, setNewMode] = useState<'study' | 'flashcards' | 'quiz' | 'practice'>('study');
+  // PLAN state
+  const [planSubject, setPlanSubject] = useState<string>('African History');
+  const [planTopic, setPlanTopic] = useState<string>('');
+  const [planGoal, setPlanGoal] = useState<LearningGoal>('Learn a New Topic');
   const [selectedSetId, setSelectedSetId] = useState<string>('');
+  const [selectedQuizId, setSelectedQuizId] = useState<string>('');
+
+  // SCHEDULE state
+  const [scheduleTiming, setScheduleTiming] = useState<string>('Today / Now');
+  const [customDate, setCustomDate] = useState<string>('');
+  const [scheduleDuration, setScheduleDuration] = useState<10 | 30 | 60>(30);
+  const [scheduleMode, setScheduleMode] = useState<'study' | 'flashcards' | 'quiz' | 'practice'>('study');
+
+  // Reschedule Modal State
+  const [rescheduleBlock, setRescheduleBlock] = useState<PlannedBlock | null>(null);
+  const [newTimingInput, setNewTimingInput] = useState<string>('Tomorrow');
 
   useEffect(() => {
     try {
@@ -138,46 +116,45 @@ export const CentralPlannerView: React.FC<CentralPlannerViewProps> = ({
 
   useEffect(() => {
     try {
-      localStorage.setItem('proudly_afrikan_planner_schedule_v2', JSON.stringify(schedule));
+      localStorage.setItem('proudly_afrikan_learning_planner_v3', JSON.stringify(schedule));
     } catch (e) {}
   }, [schedule]);
 
-  // Active Timer Tick
-  useEffect(() => {
-    let interval: any = null;
-    if (isTimerRunning && timerSecondsLeft > 0) {
-      interval = setInterval(() => {
-        setTimerSecondsLeft((prev) => {
-          if (prev <= 1) {
-            setIsTimerRunning(false);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [isTimerRunning, timerSecondsLeft]);
+  // Handle building and scheduling the plan
+  const handleCreatePlanAndSchedule = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!planTopic.trim()) return;
 
-  const formatTimer = (seconds: number) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    const newBlock: PlannedBlock = {
+      id: `plan-${Date.now()}`,
+      subject: planSubject,
+      topic: planTopic.trim(),
+      goal: planGoal,
+      timing: scheduleTiming === 'Custom Date' && customDate ? customDate : scheduleTiming,
+      durationMinutes: scheduleDuration,
+      mode: scheduleMode,
+      isCompleted: false,
+      linkedSetId: selectedSetId || undefined,
+      linkedQuizId: selectedQuizId || undefined,
+      createdAt: new Date().toISOString(),
+    };
+
+    setSchedule((prev) => [newBlock, ...prev]);
+    // Switch to TRACK view to see upcoming sessions
+    setActiveTab('track');
+    setPlanTopic('');
   };
 
+  // Toggle completion status (TRACK requirement)
   const handleToggleComplete = (id: string) => {
     setSchedule((prev) =>
       prev.map((b) => (b.id === id ? { ...b, isCompleted: !b.isCompleted } : b))
     );
   };
 
-  const handleLaunchBlock = (block: PlannedBlock) => {
-    setActiveSessionBlock(block);
-    setTimerSecondsLeft(block.durationMinutes * 60);
-    setIsTimerRunning(true);
-
-    // Find linked set or fallback
-    if (block.mode === 'quiz') {
+  // Launch STUDY session (STUDY requirement: take learner directly to relevant existing Study Set, Flashcards, Practice or Quiz)
+  const handleLaunchSession = (block: PlannedBlock) => {
+    if (block.linkedQuizId || block.mode === 'quiz') {
       const q = quizzes.find((quiz) => quiz.id === block.linkedQuizId) || quizzes[0];
       if (q) {
         onStartQuiz(q);
@@ -187,274 +164,149 @@ export const CentralPlannerView: React.FC<CentralPlannerViewProps> = ({
 
     const set = studySets.find((s) => s.id === block.linkedSetId) || studySets[0];
     if (set) {
-      const studyMode = block.mode === 'quiz' ? 'study' : block.mode;
-      onStartStudySet(set, studyMode);
+      const mode = block.mode === 'quiz' ? 'study' : block.mode;
+      onStartStudySet(set, mode);
+    } else {
+      // If no linked set, prompt user to explore or pick set
+      onExploreSets();
     }
   };
 
-  const handleCreateBlock = (e: React.FormEvent) => {
+  // Reschedule missed / unfinished session (REVIEW requirement)
+  const handleSaveReschedule = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTitle.trim()) return;
+    if (!rescheduleBlock) return;
 
-    const block: PlannedBlock = {
-      id: `block-${Date.now()}`,
-      title: newTitle.trim(),
-      subject: newSubject,
-      durationMinutes: newDuration,
-      scheduledTime: newTime,
-      dayOfWeek: newDay,
-      mode: newMode,
-      isCompleted: false,
-      linkedSetId: selectedSetId || undefined,
-    };
-
-    setSchedule((prev) => [block, ...prev]);
-    setIsAddModalOpen(false);
-    setNewTitle('');
+    setSchedule((prev) =>
+      prev.map((b) => (b.id === rescheduleBlock.id ? { ...b, timing: newTimingInput } : b))
+    );
+    setRescheduleBlock(null);
   };
 
-  const completedCount = schedule.filter((b) => b.isCompleted).length;
-  const totalMinutesPlanned = schedule.reduce((sum, b) => sum + b.durationMinutes, 0);
+  // Computed lists for TRACK and REVIEW
+  const upcomingSessions = schedule.filter((b) => !b.isCompleted);
+  const completedSessions = schedule.filter((b) => b.isCompleted);
+  // Unfinished / Missed (e.g. scheduled for past dates or Today/Tomorrow not completed)
+  const unfinishedSessions = schedule.filter((b) => !b.isCompleted);
 
   return (
     <div className="min-h-screen bg-[#FAF7F0] py-6 sm:py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="max-w-6xl mx-auto space-y-8">
 
-        {/* Header Hero matching Study and Revision Planner.jpeg */}
+        {/* Header Hero */}
         <div className="bg-[#FDFBF7] border border-[#EAE3D6] rounded-[32px] p-6 sm:p-8 shadow-[0_8px_30px_rgba(0,0,0,0.03)] flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <div className="flex items-center gap-1.5 text-xs font-mono font-bold uppercase tracking-wider text-[#D92B8A]">
               <Zap className="w-3.5 h-3.5 fill-[#D92B8A]/20" />
-              <span>CENTRALISED LEARNING PLANNER</span>
+              <span>LEARNING PLANNER & WORKFLOW</span>
             </div>
             <h1 className="text-2xl sm:text-4xl font-display font-black tracking-tight text-[#161616] uppercase">
-              STUDY & REVISION PLANNER
+              PLAN → SCHEDULE → STUDY → TRACK → REVIEW
             </h1>
             <p className="text-stone-700 text-xs sm:text-[13px] max-w-2xl font-normal leading-relaxed">
-              Time-box your study sessions, schedule active recall reviews, and keep your curriculum progress on track with integrated Pomodoro and deep-focus timers.
+              Design structured learning sessions using your existing Study Sets, Flashcards, Practice, and Quizzes. No duplicate content, just pure focused progression.
             </p>
           </div>
 
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
             <button
-              onClick={() => setIsAddModalOpen(true)}
-              className="bg-[#1A0B14] hover:bg-[#2A1020] active:scale-95 text-[#F48FB1] hover:text-white border border-[#D92B8A]/50 rounded-full px-6 py-3 font-mono font-bold text-xs uppercase tracking-wider shadow-[0_4px_18px_rgba(217,43,138,0.4)] flex items-center gap-1.5 transition-all cursor-pointer"
+              onClick={() => setActiveTab('plan')}
+              className={`px-5 py-3 rounded-full font-mono font-bold text-xs uppercase tracking-wider transition-all cursor-pointer ${
+                activeTab === 'plan' || activeTab === 'schedule'
+                  ? 'bg-[#161616] text-white shadow-md'
+                  : 'bg-white border border-stone-300 text-stone-700 hover:bg-stone-100'
+              }`}
             >
-              <span>+ + SCHEDULE SESSION</span>
+              + Create New Plan
             </button>
           </div>
         </div>
 
-        {/* Active Focus Time-Box Bar matching reference */}
-        <div className="bg-[#0D0D0E] border border-stone-800/80 rounded-[28px] sm:rounded-[32px] p-6 sm:p-7 text-white shadow-[0_12px_36px_rgba(0,0,0,0.18)]">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="space-y-1">
-              <div className="flex items-center gap-1.5 text-[11px] font-mono font-bold uppercase text-[#D92B8A] tracking-wider">
-                <Clock className="w-3.5 h-3.5" />
-                <span>TIME-BOXED FOCUS ENGINE</span>
-              </div>
-              <h2 className="text-lg sm:text-xl font-display font-black tracking-tight text-white">
-                {activeSessionBlock ? activeSessionBlock.title : 'Ready for a Focused Study Block'}
-              </h2>
-              <p className="text-stone-400 text-xs font-mono">
-                {activeSessionBlock
-                  ? `Active session in ${activeSessionBlock.subject} • ${activeSessionBlock.mode.toUpperCase()} MODE`
-                  : 'Select a time preset below or launch any scheduled session directly.'}
-              </p>
-            </div>
-
-            {/* Timer & Controls */}
-            <div className="flex items-center gap-3">
-              <div className="bg-[#202022] border border-stone-700/70 px-5 py-2 rounded-2xl flex flex-col items-center justify-center min-w-[120px]">
-                <div className="text-[10px] font-mono uppercase text-[#D92B8A] font-bold">Focus Timer</div>
-                <div className="text-2xl sm:text-3xl font-mono font-bold tracking-widest text-white">
-                  {formatTimer(timerSecondsLeft).replace(':', ' : ')}
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setIsTimerRunning(!isTimerRunning)}
-                  className="w-11 h-11 rounded-full bg-gradient-to-r from-[#E02D68] via-[#D92B8A] to-[#C92255] text-white flex items-center justify-center shadow-[0_0_22px_rgba(217,43,138,0.7)] hover:scale-105 active:scale-95 transition-all cursor-pointer shrink-0"
-                  title={isTimerRunning ? 'Pause' : 'Start Focus'}
-                >
-                  {isTimerRunning ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 fill-current ml-0.5" />}
-                </button>
-                <button
-                  onClick={() => {
-                    setIsTimerRunning(false);
-                    setTimerSecondsLeft(selectedDuration * 60);
-                  }}
-                  className="w-11 h-11 rounded-full bg-[#202022] hover:bg-stone-700 text-stone-300 border border-stone-700/80 flex items-center justify-center transition-all cursor-pointer shrink-0"
-                  title="Reset"
-                >
-                  <RotateCcw className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Presets with glowing magenta active pill */}
-          <div className="mt-5 pt-4 border-t border-stone-800/80 flex flex-wrap items-center gap-2.5">
-            <span className="text-xs font-mono text-stone-400 uppercase font-bold mr-2">QUICK PRESETS:</span>
-            {[
-              { label: '15 MIN SPRINT', mins: 15 },
-              { label: '25 MIN POMODORO', mins: 25 },
-              { label: '45 MIN DEEP DIVE', mins: 45 },
-              { label: '60 MIN MASTERY', mins: 60 },
-            ].map((preset) => (
-              <button
-                key={preset.mins}
-                onClick={() => {
-                  setSelectedDuration(preset.mins);
-                  setTimerSecondsLeft(preset.mins * 60);
-                  setIsTimerRunning(false);
-                }}
-                className={`px-4 py-1.5 rounded-full text-xs font-mono font-bold uppercase transition-all cursor-pointer ${
-                  selectedDuration === preset.mins
-                    ? 'bg-[#3E0E27] text-white border-2 border-[#D92B8A] shadow-[0_0_16px_rgba(217,43,138,0.65)]'
-                    : 'bg-[#202022] text-stone-300 border border-stone-700/80 hover:bg-stone-700'
-                }`}
-              >
-                {preset.label}
-              </button>
-            ))}
+        {/* Workflow Navigation Bar */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 bg-white border border-[#EAE3D6] p-2 rounded-2xl shadow-xs">
+          <button
+            onClick={() => setActiveTab('plan')}
+            className={`py-3 px-4 rounded-xl font-mono text-xs font-bold uppercase flex items-center justify-center gap-2 transition-all cursor-pointer ${
+              activeTab === 'plan'
+                ? 'bg-[#D92B8A] text-white shadow-sm'
+                : 'text-stone-700 hover:bg-stone-100'
+            }`}
+          >
+            <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-[10px]">1</span>
+            <span>PLAN</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('schedule')}
+            className={`py-3 px-4 rounded-xl font-mono text-xs font-bold uppercase flex items-center justify-center gap-2 transition-all cursor-pointer ${
+              activeTab === 'schedule'
+                ? 'bg-[#D92B8A] text-white shadow-sm'
+                : 'text-stone-700 hover:bg-stone-100'
+            }`}
+          >
+            <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-[10px]">2</span>
+            <span>SCHEDULE</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('track')}
+            className={`py-3 px-4 rounded-xl font-mono text-xs font-bold uppercase flex items-center justify-center gap-2 transition-all cursor-pointer ${
+              activeTab === 'track'
+                ? 'bg-[#D92B8A] text-white shadow-sm'
+                : 'text-stone-700 hover:bg-stone-100'
+            }`}
+          >
+            <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-[10px]">3</span>
+            <span>TRACK</span>
+            {upcomingSessions.length > 0 && (
+              <span className="px-1.5 py-0.2 bg-white text-[#D92B8A] rounded-full text-[10px] font-black">
+                {upcomingSessions.length}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab('review')}
+            className={`py-3 px-4 rounded-xl font-mono text-xs font-bold uppercase flex items-center justify-center gap-2 transition-all cursor-pointer ${
+              activeTab === 'review'
+                ? 'bg-[#D92B8A] text-white shadow-sm'
+                : 'text-stone-700 hover:bg-stone-100'
+            }`}
+          >
+            <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-[10px]">4</span>
+            <span>REVIEW</span>
+            {unfinishedSessions.length > 0 && (
+              <span className="px-1.5 py-0.2 bg-rose-500 text-white rounded-full text-[10px] font-black">
+                {unfinishedSessions.length}
+              </span>
+            )}
+          </button>
+          <div className="col-span-2 sm:col-span-1 py-3 px-4 rounded-xl bg-stone-50 border border-stone-200 flex items-center justify-center gap-2 font-mono text-xs font-bold text-stone-600">
+            <Play className="w-3.5 h-3.5 text-[#D92B8A]" />
+            <span>STUDY ACTIVE</span>
           </div>
         </div>
 
-        {/* Stats Strip matching reference */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="bg-white border border-[#EAE3D6] p-5 rounded-[24px] shadow-[0_4px_16px_rgba(0,0,0,0.02)]">
-            <div className="text-[11px] font-mono font-bold text-stone-500 uppercase tracking-wider">SESSIONS PLANNED</div>
-            <div className="text-3xl font-display font-black text-[#161616] mt-1">{schedule.length}</div>
-          </div>
-          <div className="bg-white border border-[#EAE3D6] p-5 rounded-[24px] shadow-[0_4px_16px_rgba(0,0,0,0.02)]">
-            <div className="text-[11px] font-mono font-bold text-stone-500 uppercase tracking-wider">COMPLETED TODAY</div>
-            <div className="text-3xl font-display font-black text-[#161616] mt-1">{completedCount}</div>
-          </div>
-          <div className="bg-white border border-[#EAE3D6] p-5 rounded-[24px] shadow-[0_4px_16px_rgba(0,0,0,0.02)]">
-            <div className="text-[11px] font-mono font-bold text-stone-500 uppercase tracking-wider">PLANNED TIME</div>
-            <div className="text-3xl font-display font-black text-[#161616] mt-1">{totalMinutesPlanned}m</div>
-          </div>
-          <div className="bg-white border border-[#EAE3D6] p-5 rounded-[24px] shadow-[0_4px_16px_rgba(0,0,0,0.02)]">
-            <div className="text-[11px] font-mono font-bold text-stone-500 uppercase tracking-wider">STUDY STREAK</div>
-            <div className="text-3xl font-display font-black text-[#161616] mt-1 flex items-center gap-1.5">
-              <span>7 Days</span>
-              <Flame className="w-6 h-6 text-orange-500 fill-orange-500" />
-            </div>
-          </div>
-        </div>
+        {/* MAIN CONTENT AREA ACCORDING TO TABS */}
 
-        {/* Schedule List matching reference */}
-        <div className="bg-white border border-[#EAE3D6] rounded-[32px] p-6 sm:p-7 shadow-[0_8px_30px_rgba(0,0,0,0.03)] space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-display font-black text-base sm:text-lg text-[#161616] uppercase tracking-tight">
-              YOUR STUDY TIMETABLE & TASKS
-            </h3>
-            <span className="text-xs font-mono font-bold text-stone-500 uppercase">
-              {completedCount} OF {schedule.length} COMPLETED
-            </span>
-          </div>
-
-          <div className="space-y-3">
-            {schedule.map((block) => (
-              <div
-                key={block.id}
-                className={`rounded-[24px] p-4 sm:p-5 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 border ${
-                  block.isCompleted
-                    ? 'bg-stone-50 border-stone-200 opacity-60'
-                    : 'bg-[#FDFBF7] border-[#EAE3D6] shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-md'
-                }`}
-              >
-                <div className="flex items-start gap-3.5">
-                  {/* Completion Checkbox */}
-                  <button
-                    onClick={() => handleToggleComplete(block.id)}
-                    className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all cursor-pointer shrink-0 ${
-                      block.isCompleted
-                        ? 'bg-emerald-500 border-emerald-600 text-white'
-                        : 'border-stone-400 bg-white hover:border-stone-600'
-                    }`}
-                  >
-                    {block.isCompleted && <Check className="w-4 h-4 stroke-[3]" />}
-                  </button>
-
-                  <div className="space-y-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-[10px] font-mono font-bold uppercase px-2.5 py-0.5 rounded-full bg-[#EFEBE4] text-stone-700">
-                        {block.dayOfWeek} • {block.scheduledTime}
-                      </span>
-                      <span className="text-[10px] font-mono font-bold uppercase px-2.5 py-0.5 rounded-full bg-[#FCE8F3] text-[#D92B8A]">
-                        {block.subject}
-                      </span>
-                      <span className="text-[10px] font-mono font-bold uppercase text-stone-500">
-                        {block.durationMinutes} MINS
-                      </span>
-                    </div>
-
-                    <h4 className={`font-display font-black text-base sm:text-lg uppercase tracking-tight ${block.isCompleted ? 'line-through text-stone-400' : 'text-[#161616]'}`}>
-                      {block.title}
-                    </h4>
-                  </div>
-                </div>
-
-                {/* Right Glowing Magenta Action Button */}
-                <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-                  <button
-                    onClick={() => handleLaunchBlock(block)}
-                    className="px-5 py-2.5 rounded-full bg-gradient-to-r from-[#E02D68] via-[#D92B8A] to-[#C92255] text-white font-mono font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-[0_4px_18px_rgba(217,43,138,0.5)] hover:shadow-[0_4px_24px_rgba(217,43,138,0.65)] hover:scale-[1.02] active:scale-95 transition-all cursor-pointer"
-                  >
-                    <Play className="w-3.5 h-3.5 fill-current" />
-                    <span>START ({block.mode.toUpperCase()})</span>
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-      </div>
-
-      {/* Add Plan Modal */}
-      {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-[#FAF7F0] border border-[#EAE3D6] rounded-[32px] p-6 sm:p-8 max-w-lg w-full shadow-[0_20px_50px_rgba(0,0,0,0.2)] space-y-5 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-stone-200 pb-3">
-              <h3 className="font-display font-black text-lg uppercase text-[#161616]">
-                Schedule New Study Block
-              </h3>
-              <button
-                onClick={() => setIsAddModalOpen(false)}
-                className="w-8 h-8 rounded-full bg-white hover:bg-stone-200 text-stone-600 flex items-center justify-center font-mono font-bold text-sm cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateBlock} className="space-y-4">
-              <div>
-                <label className="block text-xs font-mono font-bold uppercase text-stone-700 mb-1">
-                  Session Topic or Goal
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Master Great Zimbabwe architecture & stone masonry"
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                  className="w-full bg-[#FAF7F0] border-2 border-[#1A1A1A] rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-mono text-[#161616] focus:outline-none"
-                />
+        {(activeTab === 'plan' || activeTab === 'schedule') && (
+          <form onSubmit={handleCreatePlanAndSchedule} className="bg-white border border-[#EAE3D6] rounded-[32px] p-6 sm:p-10 shadow-[0_8px_30px_rgba(0,0,0,0.03)] space-y-8 animate-in fade-in">
+            
+            {/* STEP 1: PLAN */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 pb-2 border-b border-stone-200">
+                <span className="w-6 h-6 rounded-full bg-[#161616] text-white flex items-center justify-center font-mono text-xs font-bold">1</span>
+                <h2 className="font-display font-black text-lg uppercase text-[#161616]">
+                  PLAN: Subject, Topic & Learning Goal
+                </h2>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-mono font-bold uppercase text-stone-700 mb-1">
+                  <label className="block text-xs font-mono font-bold uppercase text-stone-700 mb-1.5">
                     Subject Domain
                   </label>
                   <select
-                    value={newSubject}
-                    onChange={(e) => setNewSubject(e.target.value)}
-                    className="w-full bg-[#FAF7F0] border-2 border-[#1A1A1A] rounded-xl px-3 py-2 text-xs font-mono font-bold text-[#161616] focus:outline-none cursor-pointer"
+                    value={planSubject}
+                    onChange={(e) => setPlanSubject(e.target.value)}
+                    className="w-full bg-[#FAF7F0] border-2 border-[#1A1A1A] rounded-xl px-4 py-3 text-sm font-mono font-bold text-[#161616] focus:outline-none cursor-pointer"
                   >
                     <option value="African History">African History</option>
                     <option value="African Languages">African Languages</option>
@@ -466,46 +318,169 @@ export const CentralPlannerView: React.FC<CentralPlannerViewProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-mono font-bold uppercase text-stone-700 mb-1">
-                    Duration (Minutes)
+                  <label className="block text-xs font-mono font-bold uppercase text-stone-700 mb-1.5">
+                    Specific Topic / Focus
                   </label>
-                  <select
-                    value={newDuration}
-                    onChange={(e) => setNewDuration(Number(e.target.value))}
-                    className="w-full bg-[#FAF7F0] border-2 border-[#1A1A1A] rounded-xl px-3 py-2 text-xs font-mono font-bold text-[#161616] focus:outline-none cursor-pointer"
-                  >
-                    <option value={15}>15 Minutes</option>
-                    <option value={25}>25 Minutes (Pomodoro)</option>
-                    <option value={45}>45 Minutes (Deep Focus)</option>
-                    <option value={60}>60 Minutes (Mastery)</option>
-                  </select>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Swahili Noun Classes & Agreement"
+                    value={planTopic}
+                    onChange={(e) => setPlanTopic(e.target.value)}
+                    className="w-full bg-[#FAF7F0] border-2 border-[#1A1A1A] rounded-xl px-4 py-3 text-sm font-mono text-[#161616] focus:outline-none"
+                  />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              {/* Learning Goal Selector */}
+              <div>
+                <label className="block text-xs font-mono font-bold uppercase text-stone-700 mb-2">
+                  Choose Learning Goal
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {LEARNING_GOALS.map((goal) => (
+                    <button
+                      key={goal}
+                      type="button"
+                      onClick={() => setPlanGoal(goal)}
+                      className={`p-4 rounded-2xl border-2 text-left font-mono transition-all cursor-pointer flex flex-col justify-between gap-2 ${
+                        planGoal === goal
+                          ? 'bg-[#1A0B14] text-white border-[#D92B8A] shadow-sm'
+                          : 'bg-[#FAF7F0] text-stone-800 border-stone-200 hover:border-stone-400'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <Target className={`w-4 h-4 ${planGoal === goal ? 'text-[#D92B8A]' : 'text-stone-500'}`} />
+                        {planGoal === goal && <Check className="w-4 h-4 text-[#D92B8A]" />}
+                      </div>
+                      <span className="text-xs font-bold uppercase">{goal}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Link Existing Content (No duplicate content rule) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                 <div>
-                  <label className="block text-xs font-mono font-bold uppercase text-stone-700 mb-1">
-                    Target Day
+                  <label className="block text-xs font-mono font-bold uppercase text-stone-700 mb-1.5">
+                    Link Existing Study Set / Flashcards
                   </label>
                   <select
-                    value={newDay}
-                    onChange={(e) => setNewDay(e.target.value)}
-                    className="w-full bg-[#FAF7F0] border-2 border-[#1A1A1A] rounded-xl px-3 py-2 text-xs font-mono font-bold text-[#161616] focus:outline-none cursor-pointer"
+                    value={selectedSetId}
+                    onChange={(e) => {
+                      setSelectedSetId(e.target.value);
+                      if (e.target.value) {
+                        const s = studySets.find(st => st.id === e.target.value);
+                        if (s) {
+                          setPlanTopic(s.title);
+                          setPlanSubject(s.category || planSubject);
+                        }
+                      }
+                    }}
+                    className="w-full bg-[#FAF7F0] border-2 border-[#1A1A1A] rounded-xl px-3.5 py-2.5 text-xs font-mono text-[#161616] focus:outline-none cursor-pointer"
                   >
-                    <option value="Today">Today</option>
-                    <option value="Tomorrow">Tomorrow</option>
-                    <option value="This Week">This Week</option>
+                    <option value="">-- None (General Topic) --</option>
+                    {studySets.map((set) => (
+                      <option key={set.id} value={set.id}>
+                        📚 {set.title} ({set.concepts.length} concepts)
+                      </option>
+                    ))}
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-mono font-bold uppercase text-stone-700 mb-1">
+                  <label className="block text-xs font-mono font-bold uppercase text-stone-700 mb-1.5">
+                    Link Existing Quiz
+                  </label>
+                  <select
+                    value={selectedQuizId}
+                    onChange={(e) => {
+                      setSelectedQuizId(e.target.value);
+                      if (e.target.value) {
+                        const q = quizzes.find(qz => qz.id === e.target.value);
+                        if (q) {
+                          setPlanTopic(q.title);
+                          setScheduleMode('quiz');
+                        }
+                      }
+                    }}
+                    className="w-full bg-[#FAF7F0] border-2 border-[#1A1A1A] rounded-xl px-3.5 py-2.5 text-xs font-mono text-[#161616] focus:outline-none cursor-pointer"
+                  >
+                    <option value="">-- None (Standard Study) --</option>
+                    {quizzes.map((quiz) => (
+                      <option key={quiz.id} value={quiz.id}>
+                        🎯 {quiz.title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* STEP 2: SCHEDULE */}
+            <div className="space-y-4 pt-6 border-t border-stone-200">
+              <div className="flex items-center gap-2 pb-2 border-b border-stone-200">
+                <span className="w-6 h-6 rounded-full bg-[#161616] text-white flex items-center justify-center font-mono text-xs font-bold">2</span>
+                <h2 className="font-display font-black text-lg uppercase text-[#161616]">
+                  SCHEDULE: Timing & Duration
+                </h2>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-mono font-bold uppercase text-stone-700 mb-1.5">
+                    When to Study
+                  </label>
+                  <select
+                    value={scheduleTiming}
+                    onChange={(e) => setScheduleTiming(e.target.value)}
+                    className="w-full bg-[#FAF7F0] border-2 border-[#1A1A1A] rounded-xl px-3.5 py-2.5 text-xs font-mono font-bold text-[#161616] focus:outline-none cursor-pointer"
+                  >
+                    <option value="Today / Now">Today / Now</option>
+                    <option value="Tomorrow">Tomorrow</option>
+                    <option value="Custom Date">Choose Custom Date...</option>
+                  </select>
+                  {scheduleTiming === 'Custom Date' && (
+                    <input
+                      type="date"
+                      value={customDate}
+                      onChange={(e) => setCustomDate(e.target.value)}
+                      className="mt-2 w-full bg-[#FAF7F0] border-2 border-[#1A1A1A] rounded-xl px-3 py-2 text-xs font-mono text-[#161616]"
+                    />
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-mono font-bold uppercase text-stone-700 mb-1.5">
+                    Study Duration
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {STUDY_DURATION_OPTIONS.map((opt) => (
+                      <button
+                        key={opt.minutes}
+                        type="button"
+                        onClick={() => setScheduleDuration(opt.minutes)}
+                        className={`py-2 px-2 rounded-xl border-2 font-mono text-center transition-all cursor-pointer flex flex-col items-center justify-center ${
+                          scheduleDuration === opt.minutes
+                            ? 'bg-[#1A0B14] text-white border-[#D92B8A]'
+                            : 'bg-[#FAF7F0] text-stone-800 border-stone-300 hover:border-stone-500'
+                        }`}
+                      >
+                        <span className="text-xs font-black">{opt.minutes}m</span>
+                        <span className="text-[9px] uppercase tracking-tighter opacity-80">{opt.label.split(' ')[0]}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-mono font-bold uppercase text-stone-700 mb-1.5">
                     Learning Mode
                   </label>
                   <select
-                    value={newMode}
-                    onChange={(e) => setNewMode(e.target.value as any)}
-                    className="w-full bg-[#FAF7F0] border-2 border-[#1A1A1A] rounded-xl px-3 py-2 text-xs font-mono font-bold text-[#161616] focus:outline-none cursor-pointer"
+                    value={scheduleMode}
+                    onChange={(e) => setScheduleMode(e.target.value as any)}
+                    className="w-full bg-[#FAF7F0] border-2 border-[#1A1A1A] rounded-xl px-3.5 py-2.5 text-xs font-mono font-bold text-[#161616] focus:outline-none cursor-pointer"
                   >
                     <option value="study">Deep Study Hub</option>
                     <option value="flashcards">Tactile Flashcards</option>
@@ -515,40 +490,267 @@ export const CentralPlannerView: React.FC<CentralPlannerViewProps> = ({
                 </div>
               </div>
 
-              {/* Link Existing Set Option */}
-              {studySets.length > 0 && (
-                <div>
-                  <label className="block text-xs font-mono font-bold uppercase text-stone-700 mb-1">
-                    Attach Study Set (Optional)
-                  </label>
-                  <select
-                    value={selectedSetId}
-                    onChange={(e) => setSelectedSetId(e.target.value)}
-                    className="w-full bg-[#FAF7F0] border-2 border-[#1A1A1A] rounded-xl px-3 py-2 text-xs font-mono text-[#161616] focus:outline-none cursor-pointer"
-                  >
-                    <option value="">-- No specific set --</option>
-                    {studySets.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.title} ({s.concepts.length} concepts)
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
+              <div className="pt-4 flex justify-end gap-3">
+                <button
+                  type="submit"
+                  className="w-full sm:w-auto px-8 py-4 rounded-full bg-gradient-to-r from-[#E02D68] via-[#D92B8A] to-[#C92255] text-white font-display text-sm font-black uppercase tracking-wider shadow-[0_4px_20px_rgba(217,43,138,0.4)] hover:scale-[1.02] active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  <span>Save Plan & Add to Schedule</span>
+                </button>
+              </div>
+            </div>
 
-              <div className="flex justify-end gap-3 pt-3">
+          </form>
+        )}
+
+        {/* TRACK VIEW (Step 3) */}
+        {activeTab === 'track' && (
+          <div className="bg-white border border-[#EAE3D6] rounded-[32px] p-6 sm:p-8 shadow-[0_8px_30px_rgba(0,0,0,0.03)] space-y-6 animate-in fade-in">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200 pb-4">
+              <div>
+                <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#D92B8A] uppercase">
+                  <span>STEP 3: TRACK PROGRESS</span>
+                </div>
+                <h2 className="font-display font-black text-xl uppercase tracking-tight text-[#161616]">
+                  Your Upcoming Study Sessions
+                </h2>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-mono font-bold text-stone-600 uppercase bg-stone-100 px-3 py-1.5 rounded-full">
+                  {completedSessions.length} COMPLETED / {schedule.length} TOTAL
+                </span>
+                <button
+                  onClick={() => setActiveTab('plan')}
+                  className="px-4 py-2 bg-[#161616] text-white rounded-xl text-xs font-mono font-bold uppercase cursor-pointer"
+                >
+                  + New Plan
+                </button>
+              </div>
+            </div>
+
+            {schedule.length === 0 ? (
+              <div className="text-center py-16 space-y-4">
+                <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto text-stone-400">
+                  <CalendarDays className="w-8 h-8" />
+                </div>
+                <h3 className="font-display font-black text-lg text-stone-800 uppercase">No Study Sessions Planned Yet</h3>
+                <p className="text-sm font-mono text-stone-500 max-w-md mx-auto">
+                  Start by creating a learning plan in the PLAN tab to schedule your study blocks and track mastery.
+                </p>
+                <button
+                  onClick={() => setActiveTab('plan')}
+                  className="px-6 py-3 bg-[#D92B8A] text-white font-mono font-bold text-xs uppercase rounded-xl cursor-pointer"
+                >
+                  Go to Plan
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {schedule.map((block) => (
+                  <div
+                    key={block.id}
+                    className={`rounded-[24px] p-5 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 border ${
+                      block.isCompleted
+                        ? 'bg-stone-50 border-stone-200 opacity-70'
+                        : 'bg-[#FDFBF7] border-[#EAE3D6] shadow-xs hover:shadow-md'
+                    }`}
+                  >
+                    <div className="flex items-start gap-4">
+                      {/* Checkbox to mark completed */}
+                      <button
+                        onClick={() => handleToggleComplete(block.id)}
+                        className={`mt-1 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all cursor-pointer shrink-0 ${
+                          block.isCompleted
+                            ? 'bg-emerald-500 border-emerald-600 text-white'
+                            : 'border-stone-400 bg-white hover:border-stone-600'
+                        }`}
+                        title={block.isCompleted ? 'Mark incomplete' : 'Mark completed'}
+                      >
+                        {block.isCompleted && <Check className="w-4 h-4 stroke-[3]" />}
+                      </button>
+
+                      <div className="space-y-1.5">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-[10px] font-mono font-bold uppercase px-2.5 py-0.5 rounded-full bg-[#EFEBE4] text-stone-700">
+                            🕒 {block.timing}
+                          </span>
+                          <span className="text-[10px] font-mono font-bold uppercase px-2.5 py-0.5 rounded-full bg-[#FCE8F3] text-[#D92B8A]">
+                            {block.subject}
+                          </span>
+                          <span className="text-[10px] font-mono font-bold uppercase px-2.5 py-0.5 rounded-full bg-stone-200 text-stone-700">
+                            🎯 {block.goal}
+                          </span>
+                          <span className="text-[10px] font-mono font-bold uppercase text-stone-500">
+                            ⏱️ {block.durationMinutes} MINS
+                          </span>
+                        </div>
+
+                        <h4 className={`font-display font-black text-lg uppercase tracking-tight ${block.isCompleted ? 'line-through text-stone-400' : 'text-[#161616]'}`}>
+                          {block.topic}
+                        </h4>
+                      </div>
+                    </div>
+
+                    {/* STUDY ACTION BUTTON */}
+                    <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                      <button
+                        onClick={() => handleLaunchSession(block)}
+                        className="px-5 py-2.5 rounded-full bg-gradient-to-r from-[#E02D68] via-[#D92B8A] to-[#C92255] text-white font-mono font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-[0_4px_18px_rgba(217,43,138,0.5)] hover:scale-[1.02] active:scale-95 transition-all cursor-pointer"
+                      >
+                        <Play className="w-3.5 h-3.5 fill-current" />
+                        <span>STUDY ({block.mode.toUpperCase()})</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* REVIEW VIEW (Step 4 / 5) */}
+        {activeTab === 'review' && (
+          <div className="bg-white border border-[#EAE3D6] rounded-[32px] p-6 sm:p-8 shadow-[0_8px_30px_rgba(0,0,0,0.03)] space-y-6 animate-in fade-in">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200 pb-4">
+              <div>
+                <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#D92B8A] uppercase">
+                  <span>STEP 4 & 5: REVIEW & RESCHEDULE</span>
+                </div>
+                <h2 className="font-display font-black text-xl uppercase tracking-tight text-[#161616]">
+                  Missed or Unfinished Sessions
+                </h2>
+              </div>
+              <span className="text-xs font-mono font-bold text-stone-600 uppercase bg-rose-50 border border-rose-200 text-rose-700 px-3 py-1.5 rounded-full">
+                {unfinishedSessions.length} UNFINISHED SESSIONS
+              </span>
+            </div>
+
+            {unfinishedSessions.length === 0 ? (
+              <div className="text-center py-16 space-y-4">
+                <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto text-emerald-600">
+                  <BookmarkCheck className="w-8 h-8" />
+                </div>
+                <h3 className="font-display font-black text-lg text-stone-800 uppercase">All Study Sessions Completed!</h3>
+                <p className="text-sm font-mono text-stone-500 max-w-md mx-auto">
+                  You have no missed or unfinished study sessions. Excellent dedication!
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-xs font-mono text-stone-600">
+                  Review your unfinished study targets below. You can immediately launch into them or reschedule them for a future date.
+                </p>
+
+                {unfinishedSessions.map((block) => (
+                  <div
+                    key={block.id}
+                    className="bg-[#FAF7F0] border border-stone-300 rounded-[24px] p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs"
+                  >
+                    <div className="space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-[10px] font-mono font-bold uppercase px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800">
+                          Scheduled: {block.timing}
+                        </span>
+                        <span className="text-[10px] font-mono font-bold uppercase px-2.5 py-0.5 rounded-full bg-[#FCE8F3] text-[#D92B8A]">
+                          {block.subject}
+                        </span>
+                      </div>
+                      <h4 className="font-display font-black text-lg uppercase text-[#161616]">
+                        {block.topic}
+                      </h4>
+                      <p className="text-xs font-mono text-stone-500">
+                        Goal: {block.goal} • Duration: {block.durationMinutes} mins
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        onClick={() => setRescheduleBlock(block)}
+                        className="px-4 py-2.5 rounded-xl bg-white border border-stone-400 text-stone-800 font-mono font-bold text-xs uppercase hover:bg-stone-100 cursor-pointer flex items-center gap-1.5"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5" />
+                        <span>Reschedule</span>
+                      </button>
+                      <button
+                        onClick={() => handleLaunchSession(block)}
+                        className="px-5 py-2.5 rounded-full bg-[#161616] text-white font-mono font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 hover:bg-stone-800 cursor-pointer"
+                      >
+                        <Play className="w-3.5 h-3.5 fill-current" />
+                        <span>Study Now</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+      </div>
+
+      {/* Reschedule Modal */}
+      {rescheduleBlock && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-[#FAF7F0] border border-[#EAE3D6] rounded-[32px] p-6 max-w-md w-full shadow-xl space-y-4">
+            <div className="flex items-center justify-between border-b border-stone-200 pb-3">
+              <h3 className="font-display font-black text-base uppercase text-[#161616]">
+                Reschedule Session
+              </h3>
+              <button
+                onClick={() => setRescheduleBlock(null)}
+                className="w-8 h-8 rounded-full bg-white hover:bg-stone-200 text-stone-600 flex items-center justify-center font-mono font-bold text-sm cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveReschedule} className="space-y-4">
+              <div>
+                <label className="block text-xs font-mono font-bold uppercase text-stone-700 mb-1">
+                  Session Topic
+                </label>
+                <div className="font-display font-bold text-sm text-[#161616]">
+                  {rescheduleBlock.topic}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-mono font-bold uppercase text-stone-700 mb-1">
+                  New Timing / Date
+                </label>
+                <select
+                  value={newTimingInput}
+                  onChange={(e) => setNewTimingInput(e.target.value)}
+                  className="w-full bg-[#FAF7F0] border-2 border-[#1A1A1A] rounded-xl px-3.5 py-2.5 text-xs font-mono font-bold text-[#161616] focus:outline-none cursor-pointer"
+                >
+                  <option value="Today / Now">Today / Now</option>
+                  <option value="Tomorrow">Tomorrow</option>
+                  <option value="Next Week">Next Week</option>
+                  <option value="Custom Date">Choose Custom Date</option>
+                </select>
+                {newTimingInput === 'Custom Date' && (
+                  <input
+                    type="date"
+                    onChange={(e) => setNewTimingInput(e.target.value)}
+                    className="mt-2 w-full bg-[#FAF7F0] border-2 border-[#1A1A1A] rounded-xl px-3 py-2 text-xs font-mono text-[#161616]"
+                  />
+                )}
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
-                  onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-stone-300 text-xs font-mono font-bold text-stone-600 hover:bg-stone-100 cursor-pointer"
+                  onClick={() => setRescheduleBlock(null)}
+                  className="px-4 py-2 rounded-xl border border-stone-300 text-xs font-mono text-stone-600 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="tactile-btn bg-[#161616] text-white px-5 py-2 rounded-xl text-xs font-display font-black uppercase cursor-pointer"
+                  className="px-5 py-2 rounded-xl bg-[#161616] text-white text-xs font-display font-black uppercase cursor-pointer"
                 >
-                  Add to Schedule
+                  Save New Schedule
                 </button>
               </div>
             </form>

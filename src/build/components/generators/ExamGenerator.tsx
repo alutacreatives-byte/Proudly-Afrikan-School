@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   FileCheck, 
   Sparkles, 
@@ -56,6 +56,7 @@ export const ExamGenerator: React.FC<ExamGeneratorProps> = ({
   const [copied, setCopied] = useState<boolean>(false);
   const [saved, setSaved] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const resultRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (existingResource) {
@@ -120,6 +121,9 @@ export const ExamGenerator: React.FC<ExamGeneratorProps> = ({
         saveResourceToStorage(generatedExam);
         if (onSaved) onSaved();
         await consumeCredits('EXAM', `Generated Exam: ${topic}`);
+        setTimeout(() => {
+          resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 150);
       } else {
         throw new Error(resData.error || 'Server returned invalid exam format.');
       }
@@ -440,7 +444,7 @@ export const ExamGenerator: React.FC<ExamGeneratorProps> = ({
       )}
 
         {/* Section 2: GENERATED RESULT */}
-        <div className="w-full space-y-4">
+        <div ref={resultRef} className="w-full space-y-4">
           <div className="flex items-center justify-between pb-3 border-b-2 border-stone-800">
             <h2 className="font-mono text-base sm:text-lg font-bold uppercase tracking-wider text-stone-900 flex items-center gap-2">
               <span className="w-3 h-3 rounded-full bg-emerald-600"></span>
