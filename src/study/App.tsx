@@ -395,23 +395,23 @@ export default function StudyApp({
 
   return (
     <div className="w-full">
-      {/* Universal Top Navigation Header in STUDY: [Back] and [Home] */}
-      <div className="w-full bg-[#FAF7F0] border-b border-stone-200/80 sticky top-0 z-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between">
-          <GlobalNavigationButtons
-            onBack={handleBack}
-            onGoHome={handleGoHome}
-            backLabel="Back"
-            homeLabel="Home"
-          />
+      {/* Top Navigation Header in STUDY: [Back] and [Home] - displayed ONLY when a user opens a module */}
+      {activeTool !== null && (
+        <div className="w-full bg-[#FAF7F0] border-b border-stone-200/80 sticky top-0 z-20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between">
+            <GlobalNavigationButtons
+              onBack={handleBack}
+              onGoHome={handleGoHome}
+              backLabel="Back"
+              homeLabel="Home"
+            />
 
-          <div className="text-xs font-mono font-bold text-stone-500 uppercase tracking-wider hidden sm:block">
-            {activeTool 
-              ? `STUDY • ${String(activeTool).replace('-', ' ').toUpperCase()}` 
-              : 'STUDY SUITE • HOME'}
+            <div className="text-xs font-mono font-bold text-stone-500 uppercase tracking-wider hidden sm:block">
+              {`STUDY • ${String(activeTool).replace('-', ' ').toUpperCase()}`}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Active Study View */}
       {renderActiveContent()}
