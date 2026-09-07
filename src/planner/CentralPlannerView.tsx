@@ -87,8 +87,8 @@ export const CentralPlannerView: React.FC<CentralPlannerViewProps> = ({
   const [studySets, setStudySets] = useState<StudySet[]>([]);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
 
-  // Active View Tab: PLAN | SCHEDULE | TRACK | REVIEW
-  const [activeTab, setActiveTab] = useState<'plan' | 'schedule' | 'track' | 'review'>('plan');
+  // Active View Tab: PLAN | STUDY | TRACK | REVIEW
+  const [activeTab, setActiveTab] = useState<'plan' | 'study' | 'track' | 'review'>('plan');
 
   // PLAN state
   const [planSubject, setPlanSubject] = useState<string>('African History');
@@ -201,7 +201,7 @@ export const CentralPlannerView: React.FC<CentralPlannerViewProps> = ({
               <span>LEARNING PLANNER & WORKFLOW</span>
             </div>
             <h1 className="text-2xl sm:text-4xl font-display font-black tracking-tight text-[#161616] uppercase">
-              PLAN → SCHEDULE → STUDY → TRACK → REVIEW
+              PLAN → STUDY → TRACK → REVIEW
             </h1>
             <p className="text-stone-700 text-xs sm:text-[13px] max-w-2xl font-normal leading-relaxed">
               Design structured learning sessions using your existing Study Sets, Flashcards, Practice, and Quizzes. No duplicate content, just pure focused progression.
@@ -212,7 +212,7 @@ export const CentralPlannerView: React.FC<CentralPlannerViewProps> = ({
             <button
               onClick={() => setActiveTab('plan')}
               className={`px-5 py-3 rounded-full font-mono font-bold text-xs uppercase tracking-wider transition-all cursor-pointer ${
-                activeTab === 'plan' || activeTab === 'schedule'
+                activeTab === 'plan'
                   ? 'bg-[#161616] text-white shadow-md'
                   : 'bg-white border border-stone-300 text-stone-700 hover:bg-stone-100'
               }`}
@@ -223,7 +223,7 @@ export const CentralPlannerView: React.FC<CentralPlannerViewProps> = ({
         </div>
 
         {/* Workflow Navigation Bar */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 bg-white border border-[#EAE3D6] p-2 rounded-2xl shadow-xs">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-white border border-[#EAE3D6] p-2 rounded-2xl shadow-xs">
           <button
             onClick={() => setActiveTab('plan')}
             className={`py-3 px-4 rounded-xl font-mono text-xs font-bold uppercase flex items-center justify-center gap-2 transition-all cursor-pointer ${
@@ -236,15 +236,20 @@ export const CentralPlannerView: React.FC<CentralPlannerViewProps> = ({
             <span>PLAN</span>
           </button>
           <button
-            onClick={() => setActiveTab('schedule')}
+            onClick={() => setActiveTab('study')}
             className={`py-3 px-4 rounded-xl font-mono text-xs font-bold uppercase flex items-center justify-center gap-2 transition-all cursor-pointer ${
-              activeTab === 'schedule'
+              activeTab === 'study'
                 ? 'bg-[#D92B8A] text-white shadow-sm'
                 : 'text-stone-700 hover:bg-stone-100'
             }`}
           >
             <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-[10px]">2</span>
-            <span>SCHEDULE</span>
+            <span>STUDY</span>
+            {upcomingSessions.length > 0 && (
+              <span className="px-1.5 py-0.2 bg-white text-[#D92B8A] rounded-full text-[10px] font-black">
+                {upcomingSessions.length}
+              </span>
+            )}
           </button>
           <button
             onClick={() => setActiveTab('track')}
@@ -278,15 +283,11 @@ export const CentralPlannerView: React.FC<CentralPlannerViewProps> = ({
               </span>
             )}
           </button>
-          <div className="col-span-2 sm:col-span-1 py-3 px-4 rounded-xl bg-stone-50 border border-stone-200 flex items-center justify-center gap-2 font-mono text-xs font-bold text-stone-600">
-            <Play className="w-3.5 h-3.5 text-[#D92B8A]" />
-            <span>STUDY ACTIVE</span>
-          </div>
         </div>
 
         {/* MAIN CONTENT AREA ACCORDING TO TABS */}
 
-        {(activeTab === 'plan' || activeTab === 'schedule') && (
+        {activeTab === 'plan' && (
           <form onSubmit={handleCreatePlanAndSchedule} className="bg-white border border-[#EAE3D6] rounded-[32px] p-6 sm:p-10 shadow-[0_8px_30px_rgba(0,0,0,0.03)] space-y-8 animate-in fade-in">
             
             {/* STEP 1: PLAN */}
@@ -504,6 +505,213 @@ export const CentralPlannerView: React.FC<CentralPlannerViewProps> = ({
           </form>
         )}
 
+        {/* STUDY VIEW (Step 2) */}
+        {activeTab === 'study' && (
+          <div className="bg-white border border-[#EAE3D6] rounded-[32px] p-6 sm:p-8 shadow-[0_8px_30px_rgba(0,0,0,0.03)] space-y-6 animate-in fade-in">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200 pb-4">
+              <div>
+                <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#D92B8A] uppercase">
+                  <span>STEP 2: STUDY</span>
+                </div>
+                <h2 className="font-display font-black text-xl uppercase tracking-tight text-[#161616]">
+                  Launch Your Study Sessions
+                </h2>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-mono font-bold text-stone-600 uppercase bg-stone-100 px-3 py-1.5 rounded-full">
+                  {upcomingSessions.length} READY TO STUDY
+                </span>
+                <button
+                  onClick={() => setActiveTab('plan')}
+                  className="px-4 py-2 bg-[#161616] text-white rounded-xl text-xs font-mono font-bold uppercase cursor-pointer"
+                >
+                  + New Plan
+                </button>
+              </div>
+            </div>
+
+            {upcomingSessions.length === 0 ? (
+              <div className="text-center py-16 space-y-4">
+                <div className="w-16 h-16 bg-[#FCE8F3] rounded-full flex items-center justify-center mx-auto text-[#D92B8A]">
+                  <Play className="w-8 h-8 fill-[#D92B8A]" />
+                </div>
+                <h3 className="font-display font-black text-lg text-stone-800 uppercase">No Active Sessions Scheduled</h3>
+                <p className="text-sm font-mono text-stone-500 max-w-md mx-auto">
+                  Create a learning plan in the PLAN tab to schedule sessions, or jump directly into any of your study resources.
+                </p>
+                <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                  <button
+                    onClick={() => setActiveTab('plan')}
+                    className="px-6 py-3 bg-[#D92B8A] text-white font-mono font-bold text-xs uppercase rounded-xl cursor-pointer shadow-xs hover:opacity-90 transition-opacity"
+                  >
+                    Go to Plan
+                  </button>
+                  <button
+                    onClick={onExploreSets}
+                    className="px-6 py-3 bg-white border border-stone-300 text-stone-700 font-mono font-bold text-xs uppercase rounded-xl cursor-pointer hover:bg-stone-50 transition-colors"
+                  >
+                    Explore Study Sets
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* Next Up Hero Card */}
+                {upcomingSessions[0] && (
+                  <div className="bg-gradient-to-r from-[#1A0B14] to-[#2B0E20] text-white rounded-[24px] p-6 sm:p-8 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-6 border border-[#D92B8A]/30">
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-[10px] font-mono font-bold uppercase px-2.5 py-0.5 rounded-full bg-[#D92B8A] text-white">
+                          NEXT UP
+                        </span>
+                        <span className="text-[10px] font-mono font-bold uppercase px-2.5 py-0.5 rounded-full bg-white/10 text-stone-300">
+                          🕒 {upcomingSessions[0].timing}
+                        </span>
+                        <span className="text-[10px] font-mono font-bold uppercase text-stone-300">
+                          ⏱️ {upcomingSessions[0].durationMinutes} MINS
+                        </span>
+                      </div>
+                      <h3 className="font-display font-black text-2xl uppercase tracking-tight text-white">
+                        {upcomingSessions[0].topic}
+                      </h3>
+                      <p className="text-xs font-mono text-stone-300">
+                        Subject: {upcomingSessions[0].subject} • Goal: {upcomingSessions[0].goal} • Mode: {upcomingSessions[0].mode.toUpperCase()}
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={() => handleLaunchSession(upcomingSessions[0])}
+                      className="px-8 py-4 rounded-full bg-gradient-to-r from-[#E02D68] via-[#D92B8A] to-[#C92255] text-white font-mono font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 shadow-[0_4px_25px_rgba(217,43,138,0.6)] hover:scale-[1.03] active:scale-95 transition-all cursor-pointer shrink-0"
+                    >
+                      <Play className="w-4 h-4 fill-current" />
+                      <span>Start Studying Now</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* All Upcoming Sessions List */}
+                <div className="space-y-3 pt-2">
+                  <h4 className="font-mono text-xs font-bold uppercase tracking-wider text-stone-600">
+                    All Scheduled Study Blocks ({upcomingSessions.length})
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {upcomingSessions.map((block) => (
+                      <div
+                        key={block.id}
+                        className="bg-[#FDFBF7] border border-[#EAE3D6] rounded-[20px] p-4 flex flex-col justify-between gap-3 shadow-2xs hover:shadow-xs transition-shadow"
+                      >
+                        <div className="space-y-1.5">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-full bg-[#EFEBE4] text-stone-700">
+                              🕒 {block.timing}
+                            </span>
+                            <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-full bg-[#FCE8F3] text-[#D92B8A]">
+                              {block.subject}
+                            </span>
+                            <span className="text-[10px] font-mono font-bold uppercase text-stone-500">
+                              ⏱️ {block.durationMinutes}m
+                            </span>
+                          </div>
+                          <h5 className="font-display font-black text-base uppercase text-[#161616] line-clamp-1">
+                            {block.topic}
+                          </h5>
+                          <p className="text-[11px] font-mono text-stone-500 line-clamp-1">
+                            {block.goal}
+                          </p>
+                        </div>
+
+                        <div className="pt-2 border-t border-stone-200 flex items-center justify-between">
+                          <span className="text-[10px] font-mono uppercase font-bold text-stone-500">
+                            Mode: {block.mode}
+                          </span>
+                          <button
+                            onClick={() => handleLaunchSession(block)}
+                            className="px-4 py-1.5 rounded-full bg-[#161616] text-white font-mono font-bold text-xs uppercase hover:bg-stone-800 transition-colors cursor-pointer flex items-center gap-1.5"
+                          >
+                            <Play className="w-3 h-3 fill-current" />
+                            <span>Launch</span>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Direct Study Resources Row */}
+                {(studySets.length > 0 || quizzes.length > 0) && (
+                  <div className="pt-6 border-t border-stone-200 space-y-3">
+                    <h4 className="font-mono text-xs font-bold uppercase tracking-wider text-stone-600">
+                      Or Launch Directly from Your Resources
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {studySets.slice(0, 3).map((set) => (
+                        <div
+                          key={set.id}
+                          className="p-3.5 bg-stone-50 border border-stone-200 rounded-xl space-y-2 flex flex-col justify-between"
+                        >
+                          <div>
+                            <span className="text-[10px] font-mono font-bold text-[#D92B8A] uppercase">
+                              📚 Study Set
+                            </span>
+                            <div className="font-display font-bold text-xs uppercase text-[#161616] line-clamp-1">
+                              {set.title}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1.5 pt-1">
+                            <button
+                              onClick={() => onStartStudySet(set, 'study')}
+                              className="px-2.5 py-1 bg-white border border-stone-300 rounded-lg text-[10px] font-mono font-bold uppercase text-stone-700 hover:bg-stone-100 cursor-pointer"
+                            >
+                              Hub
+                            </button>
+                            <button
+                              onClick={() => onStartStudySet(set, 'flashcards')}
+                              className="px-2.5 py-1 bg-white border border-stone-300 rounded-lg text-[10px] font-mono font-bold uppercase text-stone-700 hover:bg-stone-100 cursor-pointer"
+                            >
+                              Cards
+                            </button>
+                            <button
+                              onClick={() => onStartStudySet(set, 'practice')}
+                              className="px-2.5 py-1 bg-white border border-stone-300 rounded-lg text-[10px] font-mono font-bold uppercase text-stone-700 hover:bg-stone-100 cursor-pointer"
+                            >
+                              Practice
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+
+                      {quizzes.slice(0, 3).map((quiz) => (
+                        <div
+                          key={quiz.id}
+                          className="p-3.5 bg-stone-50 border border-stone-200 rounded-xl space-y-2 flex flex-col justify-between"
+                        >
+                          <div>
+                            <span className="text-[10px] font-mono font-bold text-[#D92B8A] uppercase">
+                              🎯 Quiz
+                            </span>
+                            <div className="font-display font-bold text-xs uppercase text-[#161616] line-clamp-1">
+                              {quiz.title}
+                            </div>
+                          </div>
+                          <div className="pt-1">
+                            <button
+                              onClick={() => onStartQuiz(quiz)}
+                              className="w-full px-2.5 py-1 bg-[#161616] text-white rounded-lg text-[10px] font-mono font-bold uppercase hover:bg-stone-800 cursor-pointer flex items-center justify-center gap-1"
+                            >
+                              <Play className="w-2.5 h-2.5 fill-current" />
+                              <span>Take Quiz</span>
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* TRACK VIEW (Step 3) */}
         {activeTab === 'track' && (
           <div className="bg-white border border-[#EAE3D6] rounded-[32px] p-6 sm:p-8 shadow-[0_8px_30px_rgba(0,0,0,0.03)] space-y-6 animate-in fade-in">
@@ -609,13 +817,13 @@ export const CentralPlannerView: React.FC<CentralPlannerViewProps> = ({
           </div>
         )}
 
-        {/* REVIEW VIEW (Step 4 / 5) */}
+        {/* REVIEW VIEW (Step 4) */}
         {activeTab === 'review' && (
           <div className="bg-white border border-[#EAE3D6] rounded-[32px] p-6 sm:p-8 shadow-[0_8px_30px_rgba(0,0,0,0.03)] space-y-6 animate-in fade-in">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200 pb-4">
               <div>
                 <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#D92B8A] uppercase">
-                  <span>STEP 4 & 5: REVIEW & RESCHEDULE</span>
+                  <span>STEP 4: REVIEW & RESCHEDULE</span>
                 </div>
                 <h2 className="font-display font-black text-xl uppercase tracking-tight text-[#161616]">
                   Missed or Unfinished Sessions
