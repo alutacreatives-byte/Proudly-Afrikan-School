@@ -25,6 +25,8 @@ const isMobileOrTabletDevice = (): boolean => {
   return false;
 };
 
+export const isMobileOrTablet = isMobileOrTabletDevice;
+
 export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
   isOpen,
   onClose,
