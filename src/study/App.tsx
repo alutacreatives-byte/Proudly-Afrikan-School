@@ -262,6 +262,7 @@ export default function StudyApp({
     if (activeTool === 'study-guide') {
       return (
         <StudyGuideGenerator
+          key="gen-study-guide"
           onBack={handleBack}
           onSaved={refreshSavedCount}
           existingResource={activeResource as StudyGuideResult}
@@ -273,6 +274,7 @@ export default function StudyApp({
     if (activeTool === 'flashcards') {
       return (
         <FlashcardGenerator
+          key="gen-flashcards"
           onBack={handleBack}
           onSaved={refreshSavedCount}
           existingResource={activeResource as FlashcardsResult}
@@ -284,6 +286,7 @@ export default function StudyApp({
     if (activeTool === 'quiz') {
       return (
         <StudyQuizGenerator
+          key="gen-quiz"
           onBack={handleBack}
           onSaved={refreshSavedCount}
           existingResource={activeResource as StudyQuizResult}
@@ -295,6 +298,7 @@ export default function StudyApp({
     if (activeTool === 'pdf-quiz') {
       return (
         <PdfQuizGenerator
+          key="gen-pdf-quiz"
           onBack={handleBack}
           onSaved={refreshSavedCount}
           existingResource={activeResource as PdfQuizResult}
@@ -306,6 +310,7 @@ export default function StudyApp({
     if (activeTool === 'presentation') {
       return (
         <StudyPresentationGenerator
+          key="gen-presentation"
           onBack={handleBack}
           onSaved={refreshSavedCount}
           existingResource={activeResource as PresentationResult}
@@ -317,6 +322,7 @@ export default function StudyApp({
     if (activeTool === 'course') {
       return (
         <StudyCourseGenerator
+          key="gen-course"
           onBack={handleBack}
           onSaved={refreshSavedCount}
           existingResource={activeResource as CourseResult}
@@ -328,6 +334,7 @@ export default function StudyApp({
     if (activeTool === 'learning-path') {
       return (
         <StudyLearningPathGenerator
+          key="gen-learning-path"
           onBack={handleBack}
           onSaved={refreshSavedCount}
           existingResource={activeResource as LearningPathResult}

@@ -42,11 +42,7 @@ export const StudyCourseGenerator: React.FC<StudyCourseGeneratorProps> = ({
 
   // Course generation state
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
-  const [course, setCourse] = useState<CourseResult | null>(
-    existingResource && Array.isArray(existingResource.modules) && existingResource.modules.length > 0
-      ? existingResource
-      : null
-  );
+  const [course, setCourse] = useState<CourseResult | null>(null);
   const [activeModuleIdx, setActiveModuleIdx] = useState<number>(0);
   const [saved, setSaved] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);

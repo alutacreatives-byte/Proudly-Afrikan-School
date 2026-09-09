@@ -134,10 +134,7 @@ export const ToolsView: React.FC<ToolsViewProps> = ({
 
   return (
     <div id="tools-view-root" className="space-y-8 pb-20 max-w-7xl mx-auto">
-      {/* Global Navigation: BACK + HOME */}
-      <div className="flex items-center justify-between">
-        <GlobalNavigationButtons onBack={onBack} onGoHome={onGoHome} />
-      </div>
+
 
       {/* Header Banner */}
       <section className="bg-white border border-stone-200/90 rounded-3xl p-6 sm:p-10 shadow-sm">

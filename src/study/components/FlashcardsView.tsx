@@ -142,8 +142,6 @@ export const FlashcardsView: React.FC<FlashcardsViewProps> = ({
       {/* Top Header & Progress */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <GlobalNavigationButtons onBack={onBack} onGoHome={onGoHome} />
-
           <div className="flex items-center gap-2 font-mono text-xs font-bold text-stone-800">
             <span className="px-3 py-1 bg-white border border-stone-200 rounded-full shadow-sm">
               Card {currentIndex + 1} of {totalCards}

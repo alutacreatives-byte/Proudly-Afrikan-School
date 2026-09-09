@@ -42,11 +42,7 @@ export const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({
 
   // Generation & Active Play State
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
-  const [flashcards, setFlashcards] = useState<FlashcardResult | null>(
-    existingResource && Array.isArray(existingResource.cards) && existingResource.cards.length > 0
-      ? existingResource
-      : null
-  );
+  const [flashcards, setFlashcards] = useState<FlashcardResult | null>(null);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [isFlipped, setIsFlipped] = useState<boolean>(false);
   const [showHint, setShowHint] = useState<boolean>(false);

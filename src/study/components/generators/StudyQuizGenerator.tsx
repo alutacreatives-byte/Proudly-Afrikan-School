@@ -43,11 +43,7 @@ export const StudyQuizGenerator: React.FC<StudyQuizGeneratorProps> = ({
 
   // Execution state
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
-  const [quiz, setQuiz] = useState<QuizResult | null>(
-    existingResource && Array.isArray(existingResource.questions) && existingResource.questions.length > 0
-      ? existingResource
-      : null
-  );
+  const [quiz, setQuiz] = useState<QuizResult | null>(null);
   const [userAnswers, setUserAnswers] = useState<Record<number, number>>({});
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
   const [saved, setSaved] = useState<boolean>(false);

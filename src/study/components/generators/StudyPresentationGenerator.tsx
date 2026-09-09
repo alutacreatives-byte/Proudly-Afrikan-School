@@ -42,11 +42,7 @@ export const StudyPresentationGenerator: React.FC<StudyPresentationGeneratorProp
 
   // Generation & Active Deck State
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
-  const [presentation, setPresentation] = useState<PresentationResult | null>(
-    existingResource && Array.isArray(existingResource.slides) && existingResource.slides.length > 0
-      ? existingResource
-      : null
-  );
+  const [presentation, setPresentation] = useState<PresentationResult | null>(null);
   const [activeSlideIndex, setActiveSlideIndex] = useState<number>(0);
   const [showSpeakerNotes, setShowSpeakerNotes] = useState<boolean>(true);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);

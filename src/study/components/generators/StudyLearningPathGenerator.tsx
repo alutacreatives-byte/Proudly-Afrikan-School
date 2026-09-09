@@ -42,11 +42,7 @@ export const StudyLearningPathGenerator: React.FC<StudyLearningPathGeneratorProp
 
   // Path Generation State
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
-  const [path, setPath] = useState<LearningPathResult | null>(
-    existingResource && Array.isArray(existingResource.stages) && existingResource.stages.length > 0
-      ? existingResource
-      : null
-  );
+  const [path, setPath] = useState<LearningPathResult | null>(null);
   const [completedStages, setCompletedStages] = useState<Record<number, boolean>>({});
   const [saved, setSaved] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);

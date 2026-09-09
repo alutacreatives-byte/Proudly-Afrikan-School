@@ -614,13 +614,7 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
 
   return (
     <div id="study-plan-view-root" className="max-w-4xl mx-auto space-y-8 pb-16">
-      {/* Top Global Navigation: Always show both BACK and HOME */}
-      <div className="flex items-center justify-between">
-        <GlobalNavigationButtons onBack={onBack} onGoHome={onGoHome} />
-        <span className="font-mono text-xs font-bold text-stone-500 uppercase">
-          STUDY PLANNER
-        </span>
-      </div>
+
 
       {/* Header Banner */}
       <div className="bg-white border border-stone-200/90 rounded-3xl p-6 sm:p-8 shadow-sm space-y-3">

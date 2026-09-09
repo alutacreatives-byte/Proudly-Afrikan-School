@@ -42,11 +42,7 @@ export const StudyGuideGenerator: React.FC<StudyGuideGeneratorProps> = ({
 
   // Output States
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
-  const [guide, setGuide] = useState<StudyGuideResult | null>(
-    existingResource && Array.isArray(existingResource.sections) && existingResource.sections.length > 0
-      ? existingResource
-      : null
-  );
+  const [guide, setGuide] = useState<StudyGuideResult | null>(null);
   const [copied, setCopied] = useState<boolean>(false);
   const [saved, setSaved] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);

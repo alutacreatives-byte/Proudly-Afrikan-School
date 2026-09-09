@@ -30,6 +30,17 @@ export const GeneratorModal: React.FC<GeneratorModalProps> = ({
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [generatedResult, setGeneratedResult] = useState<any | null>(null);
 
+  React.useEffect(() => {
+    if (isOpen) {
+      setGeneratorType(initialGeneratorType || 'exam');
+      setTopicInput(initialTopic || '');
+      setGeneratedResult(null);
+      setGenerationError(null);
+      setSourceText('');
+      setSourceFileName('');
+    }
+  }, [isOpen, initialGeneratorType, initialTopic]);
+
   if (!isOpen) return null;
 
   const handleGenerate = async () => {

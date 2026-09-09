@@ -38,11 +38,7 @@ export const PdfQuizGenerator: React.FC<PdfQuizGeneratorProps> = ({
 
   // Active quiz state
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
-  const [quiz, setQuiz] = useState<PdfQuizResult | null>(
-    existingResource && Array.isArray(existingResource.questions) && existingResource.questions.length > 0
-      ? existingResource
-      : null
-  );
+  const [quiz, setQuiz] = useState<PdfQuizResult | null>(null);
   const [userAnswers, setUserAnswers] = useState<Record<number, number>>({});
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
   const [saved, setSaved] = useState<boolean>(false);
