@@ -59,12 +59,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 
   const inspirationTopics = [
-    { label: '👑 Kingdom of Kush', topic: 'The Kingdom of Kush: Trade, Iron Metallurgy and Pyramids' },
-    { label: '🌍 Great Rift Valley', topic: 'Geography and Geology of the Great Rift Valley' },
-    { label: '📚 African Literature', topic: 'African Literature & Post-Colonial Authors' },
-    { label: '⚙️ Solar In Africa', topic: 'Renewable Solar Energy and Microgrids in Africa' },
-    { label: '🌱 Sustainable Agro', topic: 'Sustainable Agriculture and Soil Conservation' },
-    { label: '🔬 Nubian Pyramids & Tech', topic: 'Nubian Pyramids, Astronomy and Ancient Engineering' },
+    { label: '📜 Timbuktu Manuscripts', topic: 'Timbuktu Manuscripts & Medieval African Astronomy' },
+    { label: '🏛️ Great Zimbabwe', topic: 'Great Zimbabwe Stone Architecture & Trade' },
+    { label: '⛵ Swahili Navigation', topic: 'Swahili Maritime Navigation & Indian Ocean Commerce' },
+    { label: '🪙 Aksum Coinage', topic: 'Kingdom of Aksum Gold Coinage & Metallurgy' },
+    { label: '🌿 Medicinal Botany', topic: 'African Medicinal Botany & Traditional Pharmacopeia' },
+    { label: '🎵 West African Griots', topic: 'West African Griot Oral History Traditions' },
   ];
 
   const generatorSuite = [

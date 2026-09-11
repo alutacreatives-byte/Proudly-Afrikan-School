@@ -230,7 +230,7 @@ export const CreateSetModal: React.FC<CreateSetModalProps> = ({
 
     try {
       const effectiveNotesText = notesInput.trim() || (uploadedDocument && !isTextCorruptedOrUnreadable(uploadedDocument.text) ? uploadedDocument.text.trim() : '');
-      const effectiveTopic = topicInput.trim() || (uploadedDocument ? uploadedDocument.name.replace(/\.[^/.]+$/, '') : (effectiveNotesText.slice(0, 50) || 'Study Material'));
+      const effectiveTopic = topicInput.trim() || (uploadedDocument ? uploadedDocument.name.replace(/\.[^/.]+$/, '') : (effectiveNotesText.slice(0, 50) || ''));
 
       const result = await AIService.generateStudySet({
         topic: effectiveTopic,

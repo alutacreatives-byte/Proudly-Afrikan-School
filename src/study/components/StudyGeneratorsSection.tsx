@@ -6,7 +6,8 @@ import {
   FileCheck2, 
   Presentation, 
   GitBranch, 
-  ArrowUpRight
+  ArrowUpRight,
+  MessageSquare
 } from 'lucide-react';
 import { StudyToolType } from '../types';
 
@@ -49,22 +50,22 @@ const STUDY_TOOLS: ToolItem[] = [
     btnText: 'CREATE FLASHCARDS →',
   },
   {
-    id: 'quiz',
+    id: 'essay-grader',
     toolNumber: '04',
-    tag: 'MASTERY CHECK',
-    title: 'PRACTICE QUIZ GENERATOR',
-    subtitle: 'Generate interactive multiple-choice practice tests with instant scoring, timer feedback, and deep explanations.',
-    icon: CheckSquare,
-    btnText: 'BUILD PRACTICE QUIZ →',
+    tag: 'ACADEMIC EVALUATION',
+    title: 'ESSAY GRADER',
+    subtitle: 'Upload or paste your essay to receive a comprehensive score, detailed feedback, strengths, weaknesses, and specific improvements.',
+    icon: FileCheck2,
+    btnText: 'GRADE ESSAY →',
   },
   {
     id: 'pdf-quiz',
     toolNumber: '05',
     tag: 'DOCUMENT GROUNDED',
-    title: 'PDF & DOCUMENT QUIZ',
-    subtitle: 'Upload any reading PDF or syllabus to generate a diagnostic quiz grounded directly in your uploaded text.',
-    icon: FileCheck2,
-    btnText: 'UPLOAD PDF / DOC →',
+    title: 'TUTOR CHAT',
+    subtitle: 'Upload a PDF or document to open an interactive chat where you can ask questions and receive tailored explanations and guidance based on your material.',
+    icon: MessageSquare,
+    btnText: 'START TUTOR CHAT →',
   },
   {
     id: 'presentation',

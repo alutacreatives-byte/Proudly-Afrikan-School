@@ -13,12 +13,12 @@ export const BuildHero: React.FC<BuildHeroProps> = ({
   onUploadClick,
 }) => {
   const inspirationTopics = [
-    { title: 'Kingdom of Mali', icon: CrownIcon },
-    { title: 'Great Rift Valley', icon: Globe },
-    { title: 'African Literature', icon: BookOpen },
-    { title: 'Solar In Africa', icon: Sun },
-    { title: 'Sustainable Farming', icon: Leaf },
-    { title: 'Nubian Pyramids', icon: Pyramid },
+    { title: 'Timbuktu Manuscripts', icon: BookOpen },
+    { title: 'Great Zimbabwe Architecture', icon: Pyramid },
+    { title: 'Swahili Maritime Trade', icon: Globe },
+    { title: 'Kingdom of Aksum Coinage', icon: CrownIcon },
+    { title: 'African Medicinal Botany', icon: Leaf },
+    { title: 'West African Griots', icon: Sun },
   ];
 
   return (

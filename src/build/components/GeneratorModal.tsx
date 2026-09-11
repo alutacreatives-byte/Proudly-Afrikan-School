@@ -129,10 +129,20 @@ Return valid JSON with:
             </div>
             <div>
               <h2 className="font-display font-black text-xl sm:text-2xl uppercase tracking-tight text-stone-900">
-                Resource Generator Workbench
+                {generatorType === 'course' ? 'COURSE SYLLABUS BUILDER' :
+                 generatorType === 'exam' ? 'EXAM & QUIZ GENERATOR' :
+                 generatorType === 'worksheet' ? 'WORKSHEET GENERATOR' :
+                 generatorType === 'mindmap' ? 'MIND MAP GENERATOR' :
+                 generatorType === 'lessonplan' ? 'LESSON PLAN GENERATOR' :
+                 generatorType === 'presentation' ? 'PRESENTATION GENERATOR' : 'RESOURCE GENERATOR'}
               </h2>
               <p className="font-mono text-xs text-stone-500 uppercase tracking-wider">
-                Powered by Gemini AI &bull; CAPS Aligned
+                {generatorType === 'course' ? 'CURRICULUM & MODULES' :
+                 generatorType === 'exam' ? 'ASSESSMENT & TESTING' :
+                 generatorType === 'worksheet' ? 'PRACTICE & EXERCISES' :
+                 generatorType === 'mindmap' ? 'VISUAL HIERARCHY' :
+                 generatorType === 'lessonplan' ? 'TEACHING & PEDAGOGY' :
+                 generatorType === 'presentation' ? 'SLIDES & LECTURE' : 'PROUDLY AFRIKAN BUILD'} &bull; CAPS Aligned
               </p>
             </div>
           </div>

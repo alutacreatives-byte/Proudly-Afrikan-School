@@ -284,7 +284,9 @@ export type StudyToolType =
   | 'study-guide'
   | 'flashcards'
   | 'quiz'
+  | 'essay-grader'
   | 'pdf-quiz'
+  | 'tutor-chat'
   | 'presentation'
   | 'course'
   | 'learning-path';
@@ -374,14 +376,59 @@ export interface QuizResult {
   createdAt?: string;
 }
 
+export interface EssayImprovementItem {
+  category: string;
+  suggestion: string;
+  actionableFix: string;
+}
+
+export interface EssayGraderResult {
+  id?: string;
+  title: string;
+  subject?: string;
+  topic?: string;
+  essayContent?: string;
+  sourceSnippet?: string;
+  documentName?: string;
+  capturedPhotoUrl?: string;
+  score: number;
+  maxScore?: number;
+  gradeLetter?: string;
+  overviewSummary: string;
+  detailedFeedback: string;
+  strengths: string[];
+  weaknesses: string[];
+  specificImprovements: EssayImprovementItem[];
+  toolType?: 'essay-grader';
+  createdAt?: string;
+}
+
+export interface TutorChatMessage {
+  id: string;
+  sender: 'user' | 'tutor';
+  text: string;
+  timestamp: string;
+}
+
+export interface TutorChatResult {
+  id?: string;
+  title: string;
+  documentName?: string;
+  sourceSnippet?: string;
+  messages: TutorChatMessage[];
+  toolType?: 'pdf-quiz' | 'tutor-chat';
+  createdAt?: string;
+}
+
 export interface PdfQuizResult {
   id?: string;
   title: string;
   documentName?: string;
   sourceSnippet?: string;
   capturedPhotoUrl?: string;
-  questions: QuizQuestion[];
-  toolType?: 'pdf-quiz';
+  questions?: QuizQuestion[];
+  messages?: TutorChatMessage[];
+  toolType?: 'pdf-quiz' | 'tutor-chat';
   createdAt?: string;
 }
 
@@ -479,7 +526,9 @@ export type StudyToolResult =
   | StudyGuideResult
   | FlashcardResult
   | QuizResult
+  | EssayGraderResult
   | PdfQuizResult
+  | TutorChatResult
   | PresentationResult
   | CourseResult
   | LearningPathResult;

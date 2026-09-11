@@ -6,7 +6,9 @@ import {
   StudyGuideResult,
   FlashcardsResult,
   StudyQuizResult,
+  EssayGraderResult,
   PdfQuizResult,
+  TutorChatResult,
   PresentationResult,
   CourseResult,
   LearningPathResult
@@ -14,8 +16,8 @@ import {
 import { StudyHome } from './components/StudyHome';
 import { StudyGuideGenerator } from './components/generators/StudyGuideGenerator';
 import { FlashcardGenerator } from './components/generators/FlashcardGenerator';
-import { StudyQuizGenerator } from './components/generators/StudyQuizGenerator';
-import { PdfQuizGenerator } from './components/generators/PdfQuizGenerator';
+import { EssayGraderGenerator } from './components/generators/EssayGraderGenerator';
+import { TutorChatGenerator } from './components/generators/TutorChatGenerator';
 import { StudyPresentationGenerator } from './components/generators/StudyPresentationGenerator';
 import { StudyCourseGenerator } from './components/generators/StudyCourseGenerator';
 import { StudyLearningPathGenerator } from './components/generators/StudyLearningPathGenerator';
@@ -106,8 +108,8 @@ export default function StudyApp({
     if (initialData) {
       nextResource = {
         id: `temp-${Date.now()}`,
-        title: prefillTopic || initialData.documentName || 'Study Material',
-        topic: prefillTopic || initialData.documentName || 'Study Material',
+        title: prefillTopic || initialData.documentName || '',
+        topic: prefillTopic || initialData.documentName || '',
         subject: prefillCategory || 'GENERAL STUDIES',
         sourceSnippet: initialData.sourceSnippet || '',
         documentName: initialData.documentName || '',
@@ -282,26 +284,26 @@ export default function StudyApp({
       );
     }
 
-    // 4. Practice Quiz Generator (Tool 03)
-    if (activeTool === 'quiz') {
+    // 4. Essay Grader (Tool 04 - replaced Practice Quiz Generator)
+    if (activeTool === 'essay-grader' || (activeTool as any) === 'quiz') {
       return (
-        <StudyQuizGenerator
-          key="gen-quiz"
+        <EssayGraderGenerator
+          key="gen-essay-grader"
           onBack={handleBack}
           onSaved={refreshSavedCount}
-          existingResource={activeResource as StudyQuizResult}
+          existingResource={activeResource as EssayGraderResult}
         />
       );
     }
 
-    // 5. PDF & Document Quiz (Tool 04)
-    if (activeTool === 'pdf-quiz') {
+    // 5. Tutor Chat (Tool 05 - replaced PDF & Document Quiz)
+    if (activeTool === 'pdf-quiz' || (activeTool as any) === 'tutor-chat') {
       return (
-        <PdfQuizGenerator
-          key="gen-pdf-quiz"
+        <TutorChatGenerator
+          key="gen-tutor-chat"
           onBack={handleBack}
           onSaved={refreshSavedCount}
-          existingResource={activeResource as PdfQuizResult}
+          existingResource={activeResource as TutorChatResult}
         />
       );
     }
