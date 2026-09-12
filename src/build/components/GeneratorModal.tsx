@@ -210,37 +210,6 @@ Return valid JSON with:
         <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-6">
           {!generatedResult ? (
             <div className="space-y-6 max-w-2xl mx-auto">
-              {/* Generator Type Selector (Omitted when in Lesson Plan Generator) */}
-              {generatorType !== 'lessonplan' && (
-                <div className="space-y-2">
-                  <label className="font-mono text-xs font-bold uppercase tracking-wider text-stone-800">
-                    Select Generator Type
-                  </label>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {[
-                      { id: 'exam', label: 'Exam & Quiz' },
-                      { id: 'worksheet', label: 'Worksheet' },
-                      { id: 'course', label: 'Course Syllabus' },
-                      { id: 'lessonplan', label: 'Lesson Plan' },
-                      { id: 'mindmap', label: 'Mind Map' },
-                      { id: 'presentation', label: 'Presentation' },
-                    ].map((g) => (
-                      <button
-                        key={g.id}
-                        onClick={() => setGeneratorType(g.id)}
-                        className={`p-3 rounded-2xl font-mono text-xs font-bold uppercase border transition-all cursor-pointer ${
-                          generatorType === g.id
-                            ? 'bg-[#18181B] text-white border-[#18181B] shadow-xs'
-                            : 'bg-white text-stone-800 border-stone-200 hover:bg-stone-50'
-                        }`}
-                      >
-                        {g.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               {/* Topic Input */}
               <div className="space-y-2">
                 <label className="font-mono text-xs font-bold uppercase tracking-wider text-stone-800">
