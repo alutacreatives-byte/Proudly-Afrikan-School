@@ -18,6 +18,7 @@ import { generateStudyTool } from '../../services/aiService';
 import { SourceMaterialUpload } from '../../../build/components/SourceMaterialUpload';
 import { saveResourceToStorage } from '../../../build/utils/storage';
 import { useAuthCredit } from '../../../context/AuthCreditContext';
+import { exportPresentation } from '../../../utils/exportUtils';
 
 interface StudyPresentationGeneratorProps {
   onBack: () => void;
@@ -128,15 +129,14 @@ export const StudyPresentationGenerator: React.FC<StudyPresentationGeneratorProp
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleExportJson = () => {
+  const handleExportDoc = () => {
     if (!presentation) return;
-    const blob = new Blob([JSON.stringify(presentation, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${presentation.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-slides.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    exportPresentation(presentation, 'doc');
+  };
+
+  const handleExportPdf = () => {
+    if (!presentation) return;
+    exportPresentation(presentation, 'pdf');
   };
 
   const currentSlide = presentation?.slides?.[activeSlideIndex];
@@ -145,26 +145,15 @@ export const StudyPresentationGenerator: React.FC<StudyPresentationGeneratorProp
     <div className={`w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8 ${isFullscreen ? 'fixed inset-0 z-50 bg-[#161616] p-8 max-w-none overflow-y-auto' : ''}`}>
       {/* Top Header */}
       <div className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-5 border-b ${isFullscreen ? 'border-stone-800' : 'border-stone-200'}`}>
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={onBack}
-            className={`p-2.5 rounded-full border transition-colors cursor-pointer ${
-              isFullscreen ? 'bg-stone-900 border-stone-800 text-white hover:bg-stone-800' : 'bg-white hover:bg-stone-100 border-stone-200 text-stone-700'
-            }`}
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </button>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-xs font-bold text-[#E63956] uppercase tracking-wider">
-                STUDY TOOL 06
-              </span>
-            </div>
-            <h1 className={`font-display font-black text-2xl sm:text-3xl uppercase tracking-tight ${isFullscreen ? 'text-white' : 'text-[#161616]'}`}>
-              PRESENTATION SLIDE GENERATOR
-            </h1>
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-xs font-bold text-[#E63956] uppercase tracking-wider">
+              STUDY TOOL 06
+            </span>
           </div>
+          <h1 className={`font-display font-black text-2xl sm:text-3xl uppercase tracking-tight ${isFullscreen ? 'text-white' : 'text-[#161616]'}`}>
+            PRESENTATION SLIDE GENERATOR
+          </h1>
         </div>
 
         {presentation && Array.isArray(presentation.slides) && presentation.slides.length > 0 && (
@@ -191,13 +180,25 @@ export const StudyPresentationGenerator: React.FC<StudyPresentationGeneratorProp
             </button>
             <button
               type="button"
-              onClick={handleExportJson}
+              onClick={handleExportDoc}
               className={`px-4 py-2 rounded-xl border font-mono text-xs font-bold uppercase flex items-center gap-1.5 transition-colors cursor-pointer ${
                 isFullscreen ? 'bg-stone-800 text-white border-stone-700' : 'bg-white border-stone-200 text-stone-800 hover:bg-stone-50'
               }`}
+              title="Download Word Document (.doc)"
             >
-              <Download className="w-3.5 h-3.5" />
-              JSON
+              <Download className="w-3.5 h-3.5 text-[#D92B8A]" />
+              DOC
+            </button>
+            <button
+              type="button"
+              onClick={handleExportPdf}
+              className={`px-4 py-2 rounded-xl border font-mono text-xs font-bold uppercase flex items-center gap-1.5 transition-colors cursor-pointer ${
+                isFullscreen ? 'bg-stone-800 text-white border-stone-700' : 'bg-white border-stone-200 text-stone-800 hover:bg-stone-50'
+              }`}
+              title="Download PDF Document (.pdf)"
+            >
+              <Download className="w-3.5 h-3.5 text-[#D92B8A]" />
+              PDF
             </button>
             <button
               type="button"

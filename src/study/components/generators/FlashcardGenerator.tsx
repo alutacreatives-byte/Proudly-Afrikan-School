@@ -18,6 +18,7 @@ import { generateStudyTool } from '../../services/aiService';
 import { SourceMaterialUpload } from '../../../build/components/SourceMaterialUpload';
 import { saveResourceToStorage } from '../../../build/utils/storage';
 import { useAuthCredit } from '../../../context/AuthCreditContext';
+import { exportFlashcards } from '../../../utils/exportUtils';
 
 interface FlashcardGeneratorProps {
   onBack: () => void;
@@ -138,15 +139,14 @@ export const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleExportJson = () => {
+  const handleExportDoc = () => {
     if (!flashcards) return;
-    const blob = new Blob([JSON.stringify(flashcards, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${flashcards.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-flashcards.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    exportFlashcards(flashcards, 'doc');
+  };
+
+  const handleExportPdf = () => {
+    if (!flashcards) return;
+    exportFlashcards(flashcards, 'pdf');
   };
 
   const currentCard = flashcards?.cards?.[currentIndex];
@@ -155,24 +155,15 @@ export const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-5 border-b border-stone-200">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={onBack}
-            className="p-2.5 rounded-full bg-white hover:bg-stone-100 border border-stone-200 text-stone-700 transition-colors cursor-pointer"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </button>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-xs font-bold text-[#E63956] uppercase tracking-wider">
-                STUDY TOOL 03
-              </span>
-            </div>
-            <h1 className="font-display font-black text-2xl sm:text-3xl text-[#161616] uppercase tracking-tight">
-              FLASHCARD GENERATOR
-            </h1>
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-xs font-bold text-[#E63956] uppercase tracking-wider">
+              STUDY TOOL 03
+            </span>
           </div>
+          <h1 className="font-display font-black text-2xl sm:text-3xl text-[#161616] uppercase tracking-tight">
+            FLASHCARD GENERATOR
+          </h1>
         </div>
 
         {flashcards && Array.isArray(flashcards.cards) && flashcards.cards.length > 0 && (
@@ -195,11 +186,21 @@ export const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({
             </button>
             <button
               type="button"
-              onClick={handleExportJson}
+              onClick={handleExportDoc}
               className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
+              title="Download Word Document (.doc)"
             >
-              <Download className="w-3.5 h-3.5" />
-              JSON
+              <Download className="w-3.5 h-3.5 text-[#D92B8A]" />
+              DOC
+            </button>
+            <button
+              type="button"
+              onClick={handleExportPdf}
+              className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
+              title="Download PDF Document (.pdf)"
+            >
+              <Download className="w-3.5 h-3.5 text-[#D92B8A]" />
+              PDF
             </button>
             <button
               type="button"

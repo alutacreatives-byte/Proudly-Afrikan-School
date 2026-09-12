@@ -20,6 +20,7 @@ import { generateStudyTool } from '../../services/aiService';
 import { saveResourceToStorage } from '../../../build/utils/storage';
 import { useAuthCredit } from '../../../context/AuthCreditContext';
 import { extractTextFromFile } from '../../../quiz/utils/pdfExtractor';
+import { exportEssayGrader } from '../../../utils/exportUtils';
 
 interface EssayGraderGeneratorProps {
   onBack: () => void;
@@ -139,15 +140,14 @@ export const EssayGraderGenerator: React.FC<EssayGraderGeneratorProps> = ({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleExportJson = () => {
+  const handleExportDoc = () => {
     if (!result) return;
-    const blob = new Blob([JSON.stringify(result, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${result.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-evaluation.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    exportEssayGrader(result, 'doc');
+  };
+
+  const handleExportPdf = () => {
+    if (!result) return;
+    exportEssayGrader(result, 'pdf');
   };
 
   return (
@@ -177,11 +177,21 @@ export const EssayGraderGenerator: React.FC<EssayGraderGeneratorProps> = ({
             </button>
             <button
               type="button"
-              onClick={handleExportJson}
+              onClick={handleExportDoc}
               className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
+              title="Download Word Document (.doc)"
             >
-              <Download className="w-3.5 h-3.5" />
-              JSON
+              <Download className="w-3.5 h-3.5 text-[#D92B8A]" />
+              DOC
+            </button>
+            <button
+              type="button"
+              onClick={handleExportPdf}
+              className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
+              title="Download PDF Document (.pdf)"
+            >
+              <Download className="w-3.5 h-3.5 text-[#D92B8A]" />
+              PDF
             </button>
             <button
               type="button"

@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Sparkles, X, Loader2, CheckCircle2, Printer } from 'lucide-react';
+import { Sparkles, X, Loader2, CheckCircle2, Printer, Download } from 'lucide-react';
 import { callAIAndParseJson } from '../../study/services/aiService';
 import { saveResourceToStorage } from '../utils/storage';
 import { SavedResource } from '../types';
 import { SourceMaterialUpload } from './SourceMaterialUpload';
+import { exportItem } from '../../utils/exportUtils';
 
 interface GeneratorModalProps {
   isOpen: boolean;
@@ -52,7 +53,37 @@ export const GeneratorModal: React.FC<GeneratorModalProps> = ({
     setIsGenerating(true);
     setGenerationError(null);
 
-    const prompt = `Generate a comprehensive ${generatorType} resource about "${topicInput || sourceFileName || 'Curriculum Subject'}".
+    const isLessonPlan = generatorType === 'lessonplan';
+
+    const prompt = isLessonPlan
+      ? `Generate a comprehensive pedagogical Lesson Plan for CAPS / African curriculum about "${topicInput || sourceFileName || 'Curriculum Subject'}".
+Target Grade Level: ${gradeLevel}.
+Lesson Duration: ${questionCount} minutes.
+Source Material Excerpt: "${sourceText.substring(0, 1500)}".
+Return valid JSON with:
+{
+  "title": "Lesson Plan: ${topicInput || 'Curriculum Subject'}",
+  "subject": "Curriculum / Pedagogy",
+  "topic": "${topicInput || 'Core Subject'}",
+  "description": "Comprehensive lesson plan featuring structured pedagogical phases, learning outcomes, and assessment strategies.",
+  "sections": [
+    {"heading": "1. Learning Objectives & Bloom's Taxonomy", "content": "Measurable cognitive and practical learning objectives for this lesson..."},
+    {"heading": "2. Hook & Anticipatory Inquiry (10 mins)", "content": "Engaging real-world hook question and activating prior knowledge..."},
+    {"heading": "3. Direct Instruction & Concept Modeling (25 mins)", "content": "Key concept breakdown, teacher demonstration, and visual frameworks..."},
+    {"heading": "4. Guided & Collaborative Group Practice (15 mins)", "content": "Scaffolded student activities, pair-share exercises, and active problem solving..."},
+    {"heading": "5. Formative Assessment & Exit Ticket (10 mins)", "content": "Diagnostic closure check and differentiated extension/support tasks..."}
+  ],
+  "questions": [
+    {
+      "question": "Formative Exit Ticket Diagnostic Question on ${topicInput || 'this lesson'}:",
+      "options": ["Option A: Accurate core principle demonstration", "Option B: Isolated terminology recall", "Option C: Partial application without reasoning", "Option D: Incorrect assumption"],
+      "correctAnswer": "Option A: Accurate core principle demonstration",
+      "explanation": "Demonstrates mastery of the lesson's central learning outcome."
+    }
+  ],
+  "answerKey": ["1. Option A"]
+}`
+      : `Generate a comprehensive ${generatorType} resource about "${topicInput || sourceFileName || 'Curriculum Subject'}".
 Target Grade Level: ${gradeLevel}.
 Question Count / Items: ${questionCount}.
 Source Material Excerpt: "${sourceText.substring(0, 1500)}".
@@ -84,7 +115,28 @@ Return valid JSON with:
       saveResourceToStorage(newResource);
       if (onResourceSaved) onResourceSaved(newResource);
     } catch (err: any) {
-      const fallbackData = {
+      const fallbackData = isLessonPlan ? {
+        title: `Lesson Plan: ${topicInput || 'Curriculum Masterclass'}`,
+        subject: 'Educational Pedagogy',
+        topic: topicInput || 'Core Subject',
+        description: `Pedagogical ${questionCount}-minute lesson plan for ${gradeLevel} students featuring structured phases, Bloom's taxonomy objectives, and formative assessment checks.`,
+        sections: [
+          { heading: "1. Learning Objectives & Bloom's Taxonomy", content: `By the end of this lesson on ${topicInput || 'the topic'}, learners will be able to analyze foundational concepts, apply problem-solving frameworks, and evaluate authentic case scenarios.` },
+          { heading: '2. Hook & Inquiry (10 mins)', content: `Introduce an authentic inquiry prompt connecting ${topicInput || 'the topic'} to real-world applications. Learners engage in a quick pair-share brainstorm.` },
+          { heading: '3. Direct Instruction & Guided Modeling (25 mins)', content: `Teacher presents the theoretical framework and demonstrates step-by-step problem solving with guided visual examples.` },
+          { heading: '4. Collaborative & Independent Practice (15 mins)', content: `Learners work in small groups on structured problem sets, receiving targeted scaffolding and feedback.` },
+          { heading: '5. Formative Assessment & Exit Ticket (10 mins)', content: `Conduct an exit ticket check to verify individual understanding and assign differentiated reinforcement tasks.` }
+        ],
+        questions: [
+          {
+            question: `Exit Ticket Diagnostic: Which statement best reflects core mastery of ${topicInput || "today's lesson"}?`,
+            options: ['Option A: Accurately explaining the core principle and applying it to a novel problem', 'Option B: Memorizing isolated terminology without understanding context', 'Option C: Skipping foundational definitions', 'Option D: Ignoring practical constraints'],
+            correctAnswer: 'Option A: Accurately explaining the core principle and applying it to a novel problem',
+            explanation: 'Option A demonstrates conceptual understanding and higher-order application aligned with Bloom\'s taxonomy.'
+          }
+        ],
+        answerKey: ['1. A']
+      } : {
         title: `${generatorType.toUpperCase()}: ${topicInput || 'Curriculum Masterclass'}`,
         subject: 'Educational Studies',
         topic: topicInput || 'Core Subject',
@@ -158,50 +210,52 @@ Return valid JSON with:
         <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-6">
           {!generatedResult ? (
             <div className="space-y-6 max-w-2xl mx-auto">
-              {/* Generator Type Selector */}
-              <div className="space-y-2">
-                <label className="font-mono text-xs font-bold uppercase tracking-wider text-stone-800">
-                  Select Generator Type
-                </label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {[
-                    { id: 'exam', label: 'Exam & Quiz' },
-                    { id: 'worksheet', label: 'Worksheet' },
-                    { id: 'course', label: 'Course Syllabus' },
-                    { id: 'lessonplan', label: 'Lesson Plan' },
-                    { id: 'mindmap', label: 'Mind Map' },
-                    { id: 'presentation', label: 'Presentation' },
-                  ].map((g) => (
-                    <button
-                      key={g.id}
-                      onClick={() => setGeneratorType(g.id)}
-                      className={`p-3 rounded-2xl font-mono text-xs font-bold uppercase border transition-all cursor-pointer ${
-                        generatorType === g.id
-                          ? 'bg-[#18181B] text-white border-[#18181B] shadow-xs'
-                          : 'bg-white text-stone-800 border-stone-200 hover:bg-stone-50'
-                      }`}
-                    >
-                      {g.label}
-                    </button>
-                  ))}
+              {/* Generator Type Selector (Omitted when in Lesson Plan Generator) */}
+              {generatorType !== 'lessonplan' && (
+                <div className="space-y-2">
+                  <label className="font-mono text-xs font-bold uppercase tracking-wider text-stone-800">
+                    Select Generator Type
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {[
+                      { id: 'exam', label: 'Exam & Quiz' },
+                      { id: 'worksheet', label: 'Worksheet' },
+                      { id: 'course', label: 'Course Syllabus' },
+                      { id: 'lessonplan', label: 'Lesson Plan' },
+                      { id: 'mindmap', label: 'Mind Map' },
+                      { id: 'presentation', label: 'Presentation' },
+                    ].map((g) => (
+                      <button
+                        key={g.id}
+                        onClick={() => setGeneratorType(g.id)}
+                        className={`p-3 rounded-2xl font-mono text-xs font-bold uppercase border transition-all cursor-pointer ${
+                          generatorType === g.id
+                            ? 'bg-[#18181B] text-white border-[#18181B] shadow-xs'
+                            : 'bg-white text-stone-800 border-stone-200 hover:bg-stone-50'
+                        }`}
+                      >
+                        {g.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Topic Input */}
               <div className="space-y-2">
                 <label className="font-mono text-xs font-bold uppercase tracking-wider text-stone-800">
-                  Topic / Subject Title
+                  {generatorType === 'lessonplan' ? 'Lesson Plan Topic / Subject Title' : 'Topic / Subject Title'}
                 </label>
                 <input
                   type="text"
                   value={topicInput}
                   onChange={(e) => setTopicInput(e.target.value)}
-                  placeholder="e.g., Photosynthesis, The Kingdom of Mali, Calculus Derivatives..."
+                  placeholder={generatorType === 'lessonplan' ? 'e.g., Photosynthesis, The Kingdom of Mali, Newton\'s Laws of Motion...' : 'e.g., Photosynthesis, The Kingdom of Mali, Calculus Derivatives...'}
                   className="w-full bg-[#FAF8F5] border border-stone-200 rounded-2xl p-4 font-mono text-sm text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#E63956]"
                 />
               </div>
 
-              {/* Grade Level & Item Count */}
+              {/* Grade Level & Item Count / Duration */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="font-mono text-xs font-bold uppercase tracking-wider text-stone-800">
@@ -220,18 +274,31 @@ Return valid JSON with:
 
                 <div className="space-y-2">
                   <label className="font-mono text-xs font-bold uppercase tracking-wider text-stone-800">
-                    Question / Item Count
+                    {generatorType === 'lessonplan' ? 'Lesson Duration / Pacing' : 'Question / Item Count'}
                   </label>
-                  <select
-                    value={questionCount}
-                    onChange={(e) => setQuestionCount(Number(e.target.value))}
-                    className="w-full bg-[#FAF8F5] border border-stone-200 rounded-2xl p-4 font-mono text-sm text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#E63956]"
-                  >
-                    <option value={5}>5 Questions / Items</option>
-                    <option value={10}>10 Questions / Items</option>
-                    <option value={15}>15 Questions / Items</option>
-                    <option value={20}>20 Questions / Items</option>
-                  </select>
+                  {generatorType === 'lessonplan' ? (
+                    <select
+                      value={questionCount}
+                      onChange={(e) => setQuestionCount(Number(e.target.value))}
+                      className="w-full bg-[#FAF8F5] border border-stone-200 rounded-2xl p-4 font-mono text-sm text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#E63956]"
+                    >
+                      <option value={45}>45 Minutes (Single Period)</option>
+                      <option value={60}>60 Minutes (Standard Period)</option>
+                      <option value={90}>90 Minutes (Block Period)</option>
+                      <option value={120}>120 Minutes (Workshop / Double)</option>
+                    </select>
+                  ) : (
+                    <select
+                      value={questionCount}
+                      onChange={(e) => setQuestionCount(Number(e.target.value))}
+                      className="w-full bg-[#FAF8F5] border border-stone-200 rounded-2xl p-4 font-mono text-sm text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#E63956]"
+                    >
+                      <option value={5}>5 Questions / Items</option>
+                      <option value={10}>10 Questions / Items</option>
+                      <option value={15}>15 Questions / Items</option>
+                      <option value={20}>20 Questions / Items</option>
+                    </select>
+                  )}
                 </div>
               </div>
 
@@ -264,12 +331,12 @@ Return valid JSON with:
                 {isGenerating ? (
                   <>
                     <Loader2 className="w-5 h-5 animate-spin" />
-                    <span>Synthesizing Classroom Pack with AI...</span>
+                    <span>{generatorType === 'lessonplan' ? 'Synthesizing Lesson Plan with AI...' : 'Synthesizing Classroom Pack with AI...'}</span>
                   </>
                 ) : (
                   <>
                     <Sparkles className="w-5 h-5" />
-                    <span>Generate Classroom Resource Now</span>
+                    <span>{generatorType === 'lessonplan' ? 'Generate Lesson Plan Now' : 'Generate Classroom Resource Now'}</span>
                   </>
                 )}
               </button>
@@ -288,13 +355,31 @@ Return valid JSON with:
                     </p>
                   </div>
                 </div>
-                <button
-                  onClick={() => window.print()}
-                  className="px-4 py-2 bg-white border border-stone-300 hover:bg-stone-50 rounded-xl font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-2 shadow-xs cursor-pointer"
-                >
-                  <Printer className="w-4 h-4" />
-                  <span>Print / PDF</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => exportItem(generatedResult, 'doc')}
+                    className="px-3 py-2 bg-white border border-stone-300 hover:bg-stone-50 rounded-xl font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 shadow-xs cursor-pointer"
+                    title="Download Word Document (.doc)"
+                  >
+                    <Download className="w-3.5 h-3.5 text-[#D92B8A]" />
+                    <span>DOC</span>
+                  </button>
+                  <button
+                    onClick={() => exportItem(generatedResult, 'pdf')}
+                    className="px-3 py-2 bg-white border border-stone-300 hover:bg-stone-50 rounded-xl font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 shadow-xs cursor-pointer"
+                    title="Download PDF Document (.pdf)"
+                  >
+                    <Download className="w-3.5 h-3.5 text-[#D92B8A]" />
+                    <span>PDF</span>
+                  </button>
+                  <button
+                    onClick={() => window.print()}
+                    className="px-3 py-2 bg-white border border-stone-300 hover:bg-stone-50 rounded-xl font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 shadow-xs cursor-pointer"
+                  >
+                    <Printer className="w-3.5 h-3.5" />
+                    <span>Print</span>
+                  </button>
+                </div>
               </div>
 
               <div className="bg-[#FAF8F5] border border-stone-200 rounded-3xl p-6 space-y-4">
