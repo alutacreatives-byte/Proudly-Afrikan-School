@@ -130,7 +130,7 @@ function AppContent() {
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 w-full">
+      <main className="flex-1 w-full pb-20 sm:pb-32">
         {activeTab === 'STUDY' && (
           <StudyApp
             key={selectedStudySet ? `study-${selectedStudySet.id}-${studyInitialView}` : 'study-default'}

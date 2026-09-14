@@ -190,8 +190,8 @@ export const CentralPlannerView: React.FC<CentralPlannerViewProps> = ({
   const unfinishedSessions = schedule.filter((b) => !b.isCompleted);
 
   return (
-    <div className="min-h-screen bg-[#FAF7F0] py-6 sm:py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto space-y-8">
+    <div className="min-h-screen bg-[#FAF7F0] py-10 sm:py-14 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto space-y-12 sm:space-y-16">
 
         {/* Header Hero */}
         <div className="clay-card-3d p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">

@@ -130,7 +130,7 @@ export const PricingView: React.FC<PricingViewProps> = ({ onNavigateToTab }) => 
       </section>
 
       {/* Main Content Area */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 space-y-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-24 space-y-16">
         {/* Success Alert */}
         {successNotice && (
           <div className="clay-card-3d p-4 bg-[#FFF0F2] border-[#FFCCD4] text-[#E63956] font-sans text-sm font-bold flex items-center gap-3 shadow-lg animate-in fade-in">
