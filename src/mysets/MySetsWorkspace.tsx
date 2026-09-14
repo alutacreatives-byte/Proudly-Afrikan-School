@@ -320,7 +320,7 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
   const getBadgeStyle = (kind: ContentKind) => {
     switch (kind) {
       case 'study-set':
-        return 'bg-[#FCE8F3] text-[#D92B8A] border-[#F5C2DC]';
+        return 'bg-[#FCE8F3] text-[#DA8F00] border-[#F5C2DC]';
       case 'quiz':
         return 'bg-[#FFF0E6] text-[#E05A2B] border-[#FFD5C0]';
       case 'build':
@@ -335,7 +335,7 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
   const getPlatformIcon = (kind: ContentKind) => {
     switch (kind) {
       case 'study-set':
-        return <BookOpen className="w-4.5 h-4.5 text-[#D92B8A]" />;
+        return <BookOpen className="w-4.5 h-4.5 text-[#DA8F00]" />;
       case 'quiz':
         return <GraduationCap className="w-4.5 h-4.5 text-[#E05A2B]" />;
       case 'build':
@@ -354,7 +354,7 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
         {/* Toast */}
         {notification && (
           <div className="fixed top-20 right-6 z-50 bg-[#161616] text-white px-4 py-2.5 rounded-full shadow-xl font-mono text-xs flex items-center gap-2 border border-stone-700 animate-in fade-in slide-in-from-top-2">
-            <Sparkles className="w-4 h-4 text-[#D92B8A]" />
+            <Sparkles className="w-4 h-4 text-[#DA8F00]" />
             <span>{notification}</span>
           </div>
         )}
@@ -362,8 +362,8 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
         {/* Header Banner matching 3D soft UI */}
         <div className="clay-card-3d p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-1.5">
-            <div className="flex items-center gap-1.5 text-xs font-mono font-bold uppercase tracking-wider text-[#D92B8A]">
-              <Zap className="w-3.5 h-3.5 fill-[#D92B8A]/20" />
+            <div className="flex items-center gap-1.5 text-xs font-mono font-bold uppercase tracking-wider text-[#DA8F00]">
+              <Zap className="w-3.5 h-3.5 fill-[#DA8F00]/20" />
               <span>UNIFIED KNOWLEDGE REPOSITORY</span>
             </div>
             <h1 className="text-2xl sm:text-4xl font-display font-black tracking-tight text-[#161616] uppercase">
@@ -430,14 +430,14 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
                 placeholder="Search all sets, quizzes, exams, or topics..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-[#F2ECE1] border border-[#E3D9C9] rounded-2xl pl-10 pr-24 py-2.5 text-xs sm:text-[13px] font-mono font-medium text-[#161616] focus:outline-none focus:bg-white focus:border-[#D92B8A] transition-all placeholder:text-stone-400"
+                className="w-full bg-[#F2ECE1] border border-[#E3D9C9] rounded-2xl pl-10 pr-24 py-2.5 text-xs sm:text-[13px] font-mono font-medium text-[#161616] focus:outline-none focus:bg-white focus:border-[#DA8F00] transition-all placeholder:text-stone-400"
               />
               {searchQuery.trim() && (
                 <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
                   <button
                     type="button"
                     onClick={handleSaveCurrentSearch}
-                    className="px-2 py-1 bg-[#D92B8A] hover:bg-[#c02479] text-white text-[10px] font-mono font-bold uppercase rounded-lg shadow-xs transition-colors cursor-pointer flex items-center gap-1"
+                    className="px-2 py-1 bg-[#DA8F00] hover:bg-[#c02479] text-white text-[10px] font-mono font-bold uppercase rounded-lg shadow-xs transition-colors cursor-pointer flex items-center gap-1"
                     title="Save this search to My Sets"
                   >
                     <Bookmark className="w-3 h-3" />
@@ -507,12 +507,12 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
                   onClick={() => setSelectedKind(tab.id as ContentKind)}
                   className={`px-4 py-1.5 rounded-full transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 text-xs font-mono font-bold uppercase ${
                     isActive
-                      ? 'bg-[#3E0E27] text-white border-2 border-[#D92B8A] shadow-[0_0_16px_rgba(217,43,138,0.65)]'
+                      ? 'bg-[#4D3300] text-white border-2 border-[#DA8F00] shadow-[0_0_16px_rgba(217,43,138,0.65)]'
                       : 'bg-[#EFEBE4] text-stone-700 hover:bg-[#E5DFD6]'
                   }`}
                 >
                   <span>{tab.label}</span>
-                  {tab.hasZap && isActive && <Zap className="w-3 h-3 text-[#D92B8A] fill-[#D92B8A]" />}
+                  {tab.hasZap && isActive && <Zap className="w-3 h-3 text-[#DA8F00] fill-[#DA8F00]" />}
                   {!tab.hasZap && (
                     <span className="text-[11px] text-stone-500 ml-0.5">
                       {count}
@@ -546,7 +546,7 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
               )}
               <button
                 onClick={onNavigateToStudy}
-                className="bg-[#D92B8A] text-white px-5 py-2.5 rounded-full text-xs font-mono font-bold uppercase shadow-md cursor-pointer hover:bg-[#C92255] transition-colors"
+                className="bg-[#DA8F00] text-white px-5 py-2.5 rounded-full text-xs font-mono font-bold uppercase shadow-md cursor-pointer hover:bg-[#C92255] transition-colors"
               >
                 Open Study Builder
               </button>
@@ -581,7 +581,7 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
                     </div>
 
                     {/* Title in Inter font */}
-                    <h3 className="font-inter font-bold text-lg sm:text-xl text-[#161616] group-hover:text-[#D92B8A] transition-colors line-clamp-2 leading-snug tracking-tight">
+                    <h3 className="font-inter font-bold text-lg sm:text-xl text-[#161616] group-hover:text-[#DA8F00] transition-colors line-clamp-2 leading-snug tracking-tight">
                       {item.title}
                     </h3>
 
@@ -619,7 +619,7 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
                           className="px-2.5 py-1.5 rounded-full bg-white border border-[#EAE3D6] hover:bg-stone-100 text-stone-700 transition-colors shadow-xs cursor-pointer font-mono text-xs font-bold uppercase flex items-center gap-1"
                           title="Download Word Document (.doc)"
                         >
-                          <Download className="w-4 h-4 text-[#D92B8A]" />
+                          <Download className="w-4 h-4 text-[#DA8F00]" />
                           <span>DOC</span>
                         </button>
                         <button
@@ -628,7 +628,7 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
                           className="px-2.5 py-1.5 rounded-full bg-white border border-[#EAE3D6] hover:bg-stone-100 text-stone-700 transition-colors shadow-xs cursor-pointer font-mono text-xs font-bold uppercase flex items-center gap-1"
                           title="Download PDF Document (.pdf)"
                         >
-                          <Download className="w-4 h-4 text-[#D92B8A]" />
+                          <Download className="w-4 h-4 text-[#DA8F00]" />
                           <span>PDF</span>
                         </button>
                         <button
@@ -642,7 +642,7 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
                       </div>
 
                       {/* Primary Open Trigger */}
-                      <span className="text-sm font-mono font-bold text-[#161616] group-hover:text-[#D92B8A] flex items-center gap-1.5 uppercase tracking-wider">
+                      <span className="text-sm font-mono font-bold text-[#161616] group-hover:text-[#DA8F00] flex items-center gap-1.5 uppercase tracking-wider">
                         <span>OPEN</span>
                         <ArrowRight className="w-4.5 h-4.5 group-hover:translate-x-1 transition-transform" />
                       </span>

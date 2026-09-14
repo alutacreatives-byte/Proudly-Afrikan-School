@@ -263,11 +263,11 @@ export default function App({
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF7F0] text-[#161616] flex flex-col justify-between selection:bg-[#E05A2B] selection:text-white">
+    <div className="min-h-screen bg-[#FAF7F0] text-[#161616] flex flex-col justify-between selection:bg-[#E52E5E] selection:text-white">
       {/* Global Error Banner if API failed */}
       {globalError && (
-        <div className="bg-[#FFEBE6] border-b-2 border-[#E05A2B] py-3 px-4 text-center font-mono-code text-xs sm:text-sm text-[#292929] flex items-center justify-center gap-2">
-          <AlertTriangle className="w-4 h-4 text-[#E05A2B] shrink-0" />
+        <div className="bg-[#FFEBE6] border-b-2 border-[#E52E5E] py-3 px-4 text-center font-mono-code text-xs sm:text-sm text-[#292929] flex items-center justify-center gap-2">
+          <AlertTriangle className="w-4 h-4 text-[#E52E5E] shrink-0" />
           <span>{globalError}</span>
           <button
             onClick={() => setGlobalError(null)}
@@ -312,7 +312,7 @@ export default function App({
           <section className="py-4">
             <div className="bg-white rounded-[2rem] border border-[#E6E0D5] p-7 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-[0_10px_30px_-10px_rgba(41,41,41,0.05)]">
               <div className="space-y-1.5 text-center md:text-left">
-                <span className="font-mono-code text-xs font-bold uppercase tracking-widest text-[#E05A2B]">
+                <span className="font-mono-code text-xs font-bold uppercase tracking-widest text-[#E52E5E]">
                   INSTANT TRIAL
                 </span>
                 <h3 className="font-display font-black text-2xl sm:text-3xl text-[#292929] uppercase tracking-tight">
@@ -327,7 +327,7 @@ export default function App({
                 onClick={handleLoadDemoQuiz}
                 className="px-7 py-4 bg-[#292929] text-[#F5F0E6] hover:bg-[#1A1A1A] font-display font-black text-base uppercase rounded-full shadow-md hover:shadow-lg hover:scale-102 transition-all flex items-center gap-2.5 cursor-pointer shrink-0"
               >
-                <Play className="w-4 h-4 text-[#E05A2B] fill-[#E05A2B]" />
+                <Play className="w-4 h-4 text-[#E52E5E] fill-[#E52E5E]" />
                 <span>LAUNCH DEMO QUIZ</span>
               </button>
             </div>
@@ -345,7 +345,7 @@ export default function App({
           <div className="flex items-center justify-between mb-6 pb-3 border-b border-[#292929]/20">
             <button
               onClick={() => setViewState('builder')}
-              className="inline-flex items-center gap-2 font-mono-code text-xs font-bold text-[#292929] hover:text-[#E05A2B] transition-colors cursor-pointer"
+              className="inline-flex items-center gap-2 font-mono-code text-xs font-bold text-[#292929] hover:text-[#E52E5E] transition-colors cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>EXIT TO BUILDER</span>

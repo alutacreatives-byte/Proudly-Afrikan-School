@@ -23,15 +23,15 @@ export const Hero: React.FC<HeroProps> = ({ onStartClick, onSelectSample }) => {
         <div className="lg:col-span-7 space-y-6">
           {/* Edition Pill Badge */}
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white/90 border border-stone-300/80 rounded-full shadow-sm text-xs sm:text-sm font-mono font-bold tracking-wider uppercase text-stone-800">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#E05A2B] inline-block animate-pulse"></span>
+            <span className="w-2.5 h-2.5 rounded-full bg-[#E52E5E] inline-block animate-pulse"></span>
             <span>PROUDLY AFRIKAN EDUCATION • QUIZ GENERATOR</span>
           </div>
 
           {/* Giant Oversized Display Headline: Exact matching scale to Study and Build */}
           <h1 className="font-display font-black text-5xl sm:text-7xl md:text-8xl lg:text-[5.5rem] xl:text-[6.25rem] uppercase tracking-tighter text-[#161616] leading-[0.88] sm:leading-[0.9] lg:leading-[0.92] break-words">
-            TEST<br />
-            ANYTHING.<br />
-            <span className="text-[#E05A2B]">ABOUT<br />ANYTHING.</span>
+            QUIZ<br />
+            YOURSELF.<br />
+            <span className="bg-gradient-to-r from-[#E52E5E] via-[#F25C22] to-[#FF6B00] bg-clip-text text-transparent">LEARN<br />FASTER.</span>
           </h1>
 
           {/* Clear, comfortable, easy-to-read subtext */}
@@ -43,7 +43,7 @@ export const Hero: React.FC<HeroProps> = ({ onStartClick, onSelectSample }) => {
           <div className="flex flex-col sm:flex-row flex-wrap gap-3 pt-2">
             <button
               onClick={onStartClick}
-              className="w-full sm:w-auto px-7 sm:px-8 py-4 bg-[#E05A2B] hover:bg-[#c84d22] text-white font-display text-xs sm:text-sm font-black uppercase tracking-wider rounded-full shadow-[0_4px_18px_rgba(224,90,43,0.38)] transition-all flex items-center justify-center gap-2.5 active:scale-95 cursor-pointer"
+              className="w-full sm:w-auto px-7 sm:px-8 py-4 bg-gradient-to-r from-[#E52E5E] via-[#F25C22] to-[#FF6B00] hover:brightness-105 text-white font-display text-xs sm:text-sm font-black uppercase tracking-wider rounded-full shadow-[0_4px_18px_rgba(224,90,43,0.38)] transition-all flex items-center justify-center gap-2.5 active:scale-95 cursor-pointer"
             >
               <Sparkles className="w-4 h-4" />
               <span>CREATE YOUR QUIZ</span>
@@ -57,7 +57,7 @@ export const Hero: React.FC<HeroProps> = ({ onStartClick, onSelectSample }) => {
           <div className="bg-[#FAF8F5] border-2 border-stone-200/90 shadow-2xl rounded-3xl p-6 sm:p-7 space-y-4">
             <div className="flex items-center justify-between border-b border-stone-200 pb-3">
               <div className="flex items-center gap-2 font-display text-xs sm:text-sm font-black uppercase tracking-wider text-stone-900">
-                <span className="text-[#E05A2B] text-sm">❖</span>
+                <span className="text-[#E52E5E] text-sm">❖</span>
                 <span>INSTANT INSPIRATION</span>
               </div>
               <span className="font-mono text-xs text-stone-400 font-bold uppercase tracking-wider">
@@ -71,7 +71,7 @@ export const Hero: React.FC<HeroProps> = ({ onStartClick, onSelectSample }) => {
                 <button
                   key={idx}
                   onClick={() => onSelectSample(item.topic, item.category)}
-                  className="px-3.5 py-2.5 bg-white hover:bg-orange-50/60 border border-stone-200/90 hover:border-orange-300 text-stone-800 hover:text-[#E05A2B] font-medium text-xs sm:text-sm rounded-full transition-all shadow-sm flex items-center gap-2 text-left truncate cursor-pointer"
+                  className="px-3.5 py-2.5 bg-white hover:bg-orange-50/60 border border-stone-200/90 hover:border-orange-300 text-stone-800 hover:text-[#E52E5E] font-medium text-xs sm:text-sm rounded-full transition-all shadow-sm flex items-center gap-2 text-left truncate cursor-pointer"
                 >
                   <span className="truncate">{item.label}</span>
                 </button>
@@ -88,8 +88,8 @@ export const Hero: React.FC<HeroProps> = ({ onStartClick, onSelectSample }) => {
           {/* Quick Metrics Bar in Rounded Pill Container */}
           <div className="grid grid-cols-3 gap-2 bg-white border border-stone-200/90 p-3.5 rounded-2xl shadow-sm">
             <div className="text-center border-r border-stone-200 pr-2">
-              <div className="font-mono text-lg sm:text-xl font-black text-[#E05A2B] flex items-center justify-center gap-1">
-                <Flame className="w-4 h-4 fill-[#E05A2B]" />
+              <div className="font-mono text-lg sm:text-xl font-black text-[#E52E5E] flex items-center justify-center gap-1">
+                <Flame className="w-4 h-4 fill-[#E52E5E]" />
                 100%
               </div>
               <div className="font-mono text-xs font-bold text-stone-600 uppercase tracking-wider">
@@ -107,7 +107,7 @@ export const Hero: React.FC<HeroProps> = ({ onStartClick, onSelectSample }) => {
             </div>
 
             <div className="text-center pl-2">
-              <div className="font-mono text-lg sm:text-xl font-black text-[#E05A2B]">
+              <div className="font-mono text-lg sm:text-xl font-black text-[#E52E5E]">
                 Fast
               </div>
               <div className="font-mono text-xs font-bold text-stone-600 uppercase tracking-wider">

@@ -177,7 +177,7 @@ export const SavedResultViewer: React.FC<SavedResultViewerProps> = ({
 
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-[#FCE8F3] text-[#D92B8A] border border-[#F5C2DC]">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-[#FCE8F3] text-[#DA8F00] border border-[#F5C2DC]">
                   {item.kindLabel}
                 </span>
                 <span className="text-xs font-mono font-semibold text-stone-500 uppercase">
@@ -220,7 +220,7 @@ export const SavedResultViewer: React.FC<SavedResultViewerProps> = ({
               className="px-3.5 py-2 rounded-full bg-white border border-stone-200 hover:bg-stone-50 text-stone-700 font-mono text-xs font-bold uppercase flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
               title="Download Word Document (.doc)"
             >
-              <Download className="w-3.5 h-3.5 text-[#D92B8A]" />
+              <Download className="w-3.5 h-3.5 text-[#DA8F00]" />
               <span className="hidden sm:inline">DOC</span>
             </button>
 
@@ -229,7 +229,7 @@ export const SavedResultViewer: React.FC<SavedResultViewerProps> = ({
               className="px-3.5 py-2 rounded-full bg-white border border-stone-200 hover:bg-stone-50 text-stone-700 font-mono text-xs font-bold uppercase flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
               title="Download PDF Document (.pdf)"
             >
-              <Download className="w-3.5 h-3.5 text-[#D92B8A]" />
+              <Download className="w-3.5 h-3.5 text-[#DA8F00]" />
               <span className="hidden sm:inline">PDF</span>
             </button>
 
@@ -240,7 +240,7 @@ export const SavedResultViewer: React.FC<SavedResultViewerProps> = ({
                 title="Open in tool generator"
               >
                 <span>OPEN WORKBENCH</span>
-                <ExternalLink className="w-3.5 h-3.5 text-[#D92B8A]" />
+                <ExternalLink className="w-3.5 h-3.5 text-[#DA8F00]" />
               </button>
             )}
 
@@ -263,7 +263,7 @@ export const SavedResultViewer: React.FC<SavedResultViewerProps> = ({
               <div className="bg-white border border-[#EAE3D6] rounded-3xl p-6 shadow-xs space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
-                    <span className="text-xs font-mono font-bold text-[#D92B8A] uppercase tracking-wider">
+                    <span className="text-xs font-mono font-bold text-[#DA8F00] uppercase tracking-wider">
                       ACTIVE CURRICULUM MODULE • {studySet.concepts?.length || 0} CONCEPTS
                     </span>
                     <h3 className="font-display font-black text-2xl uppercase text-[#161616] mt-1">
@@ -278,7 +278,7 @@ export const SavedResultViewer: React.FC<SavedResultViewerProps> = ({
                     <div className="flex flex-wrap items-center gap-2 shrink-0">
                       <button
                         onClick={() => onLaunchPractice('study')}
-                        className="px-4 py-2.5 bg-[#D92B8A] hover:bg-[#c02479] text-white font-mono text-xs font-bold uppercase rounded-full shadow-xs flex items-center gap-1.5 cursor-pointer"
+                        className="px-4 py-2.5 bg-[#DA8F00] hover:bg-[#c02479] text-white font-mono text-xs font-bold uppercase rounded-full shadow-xs flex items-center gap-1.5 cursor-pointer"
                       >
                         <BookOpen className="w-3.5 h-3.5" />
                         <span>LEARN</span>
@@ -287,14 +287,14 @@ export const SavedResultViewer: React.FC<SavedResultViewerProps> = ({
                         onClick={() => onLaunchPractice('flashcards')}
                         className="px-4 py-2.5 bg-white border border-stone-300 hover:bg-pink-50 text-stone-800 font-mono text-xs font-bold uppercase rounded-full shadow-xs flex items-center gap-1.5 cursor-pointer"
                       >
-                        <Layers className="w-3.5 h-3.5 text-[#D92B8A]" />
+                        <Layers className="w-3.5 h-3.5 text-[#DA8F00]" />
                         <span>FLASHCARDS</span>
                       </button>
                       <button
                         onClick={() => onLaunchPractice('practice')}
                         className="px-4 py-2.5 bg-stone-900 hover:bg-black text-white font-mono text-xs font-bold uppercase rounded-full shadow-xs flex items-center gap-1.5 cursor-pointer"
                       >
-                        <CheckCircle2 className="w-3.5 h-3.5 text-[#D92B8A]" />
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[#DA8F00]" />
                         <span>PRACTICE</span>
                       </button>
                     </div>
@@ -314,7 +314,7 @@ export const SavedResultViewer: React.FC<SavedResultViewerProps> = ({
                   {(studySet.concepts || []).map((concept, idx) => (
                     <div 
                       key={concept.id || idx}
-                      className="bg-white border border-[#EAE3D6] rounded-2xl p-5 shadow-xs hover:border-[#D92B8A]/40 transition-all space-y-2.5"
+                      className="bg-white border border-[#EAE3D6] rounded-2xl p-5 shadow-xs hover:border-[#DA8F00]/40 transition-all space-y-2.5"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <span className="w-6 h-6 rounded-full bg-[#FAF7F0] border border-[#EAE3D6] text-stone-600 font-mono text-xs font-bold flex items-center justify-center shrink-0">
@@ -628,7 +628,7 @@ export const SavedResultViewer: React.FC<SavedResultViewerProps> = ({
           {toolType === 'mind-map' && (
             <div className="space-y-6">
               <div className="bg-white border border-[#EAE3D6] rounded-3xl p-6 shadow-xs">
-                <span className="text-xs font-mono font-bold text-[#D92B8A] uppercase">VISUAL CONCEPT HIERARCHY</span>
+                <span className="text-xs font-mono font-bold text-[#DA8F00] uppercase">VISUAL CONCEPT HIERARCHY</span>
                 <h3 className="font-display font-black text-2xl uppercase text-[#161616] mt-1">
                   {anyData.rootNode?.title || anyData.topic || item.title}
                 </h3>
@@ -649,7 +649,7 @@ export const SavedResultViewer: React.FC<SavedResultViewerProps> = ({
                   {(anyData.rootNode?.children || []).map((branch: any, bIdx: number) => (
                     <div key={bIdx} className="bg-[#FAF7F0] border border-[#EAE3D6] rounded-2xl p-5 space-y-3 shadow-2xs">
                       <div className="flex items-center gap-2">
-                        <span className="w-3 h-3 rounded-full bg-[#D92B8A]"></span>
+                        <span className="w-3 h-3 rounded-full bg-[#DA8F00]"></span>
                         <h5 className="font-display font-black text-sm uppercase text-[#161616]">
                           {branch.title}
                         </h5>
@@ -772,7 +772,7 @@ export const SavedResultViewer: React.FC<SavedResultViewerProps> = ({
                         <div>
                           <div className="flex items-center justify-between text-xs font-mono text-stone-400 pb-4 border-b border-stone-800">
                             <span>SLIDE {activeSlideIndex + 1} OF {anyData.slides.length}</span>
-                            <span className="uppercase text-[#D92B8A] font-bold">{anyData.title || item.title}</span>
+                            <span className="uppercase text-[#DA8F00] font-bold">{anyData.title || item.title}</span>
                           </div>
 
                           <h3 className="font-display font-black text-2xl sm:text-4xl uppercase text-white mt-6">
@@ -782,7 +782,7 @@ export const SavedResultViewer: React.FC<SavedResultViewerProps> = ({
                           <ul className="space-y-3 mt-6 text-sm sm:text-base font-sans text-stone-300 max-w-3xl">
                             {(currentSlide.bullets || []).map((b: string, i: number) => (
                               <li key={i} className="flex items-start gap-2.5">
-                                <span className="text-[#D92B8A] font-bold">•</span>
+                                <span className="text-[#DA8F00] font-bold">•</span>
                                 <span>{b}</span>
                               </li>
                             ))}
@@ -791,7 +791,7 @@ export const SavedResultViewer: React.FC<SavedResultViewerProps> = ({
 
                         {currentSlide.speakerNotes && (
                           <div className="pt-4 border-t border-stone-800 text-xs font-mono text-stone-400 bg-stone-950/60 p-3.5 rounded-xl">
-                            <span className="font-bold text-[#D92B8A] uppercase">Speaker Notes: </span>
+                            <span className="font-bold text-[#DA8F00] uppercase">Speaker Notes: </span>
                             {currentSlide.speakerNotes}
                           </div>
                         )}
@@ -896,7 +896,7 @@ export const SavedResultViewer: React.FC<SavedResultViewerProps> = ({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                       {anyData.keyPoints.map((pt: string, idx: number) => (
                         <div key={idx} className="p-3 bg-white border border-stone-200 rounded-xl text-xs font-sans text-stone-800 flex items-start gap-2">
-                          <Check className="w-3.5 h-3.5 text-[#D92B8A] shrink-0 mt-0.5" />
+                          <Check className="w-3.5 h-3.5 text-[#DA8F00] shrink-0 mt-0.5" />
                           <span>{pt}</span>
                         </div>
                       ))}

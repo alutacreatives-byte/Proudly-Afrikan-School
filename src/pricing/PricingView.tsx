@@ -87,7 +87,7 @@ export const PricingView: React.FC<PricingViewProps> = ({ onNavigateToTab }) => 
               <h1 className="font-display font-black text-5xl sm:text-7xl md:text-8xl lg:text-[5.5rem] xl:text-[6.25rem] uppercase tracking-tighter text-[#161616] leading-[0.88] sm:leading-[0.9] lg:leading-[0.92] break-words">
                 CHOOSE<br />
                 HOW YOU<br />
-                <span className="text-[#D92B8A]">LEARN.</span>
+                <span className="text-[#E73A56]">LEARN.</span>
               </h1>
 
               <p className="text-base sm:text-lg lg:text-xl text-stone-700 font-normal leading-[1.65] max-w-2xl">
@@ -146,9 +146,9 @@ export const PricingView: React.FC<PricingViewProps> = ({ onNavigateToTab }) => 
             const isPopular = plan.id === 'STUDENT';
 
             const titleColor = 
-              plan.id === 'FREE' ? '#E62E43' :
-              plan.id === 'LEARNER' ? '#D96B27' :
-              plan.id === 'STUDENT' ? '#D92B8A' : '#D33842';
+              plan.id === 'FREE' ? '#DA8F00' :
+              plan.id === 'LEARNER' ? '#E52E5E' :
+              plan.id === 'STUDENT' ? '#D92B8A' : '#FF8000';
 
             const getBadge = () => {
               if (plan.id === 'FREE') {
@@ -399,7 +399,7 @@ export const PricingView: React.FC<PricingViewProps> = ({ onNavigateToTab }) => 
         {/* Direct Customer Support & Institutional Inquiries Card */}
         <div className="clay-card-3d p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="space-y-2 max-w-2xl">
-            <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#D92B8A] uppercase">
+            <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#E73A56] uppercase">
               <Mail className="w-4 h-4" />
               <span>Direct Customer & School Support</span>
             </div>
