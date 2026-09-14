@@ -17,6 +17,7 @@ import { SourceMaterialUpload } from '../../../build/components/SourceMaterialUp
 import { saveResourceToStorage } from '../../../build/utils/storage';
 import { useAuthCredit } from '../../../context/AuthCreditContext';
 import { exportPdfQuiz } from '../../../utils/exportUtils';
+import { useScrollToResult } from '../../../utils/useScrollToResult';
 
 interface PdfQuizGeneratorProps {
   onBack: () => void;
@@ -44,6 +45,8 @@ export const PdfQuizGenerator: React.FC<PdfQuizGeneratorProps> = ({
   const [saved, setSaved] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+
+  const resultRef = useScrollToResult(quiz, isGenerating);
 
   const handleGenerate = async () => {
     if (!sourceMaterial.trim()) {
@@ -219,10 +222,10 @@ export const PdfQuizGenerator: React.FC<PdfQuizGeneratorProps> = ({
         )}
       </div>
 
-      {/* Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left Form */}
-        <div className="lg:col-span-4 space-y-6">
+      {/* Main Layout: Menu directly ABOVE generation area */}
+      <div className="space-y-8">
+        {/* Form Menu Column */}
+        <div className="w-full space-y-6">
           <div className="p-6 rounded-[2rem] bg-white border border-stone-200/90 shadow-[0_10px_30px_rgba(0,0,0,0.05)] space-y-5">
             <div className="flex items-center gap-2 pb-3 border-b border-stone-100">
               <Sparkles className="w-4 h-4 text-[#E63956]" />
@@ -294,8 +297,8 @@ export const PdfQuizGenerator: React.FC<PdfQuizGeneratorProps> = ({
           </div>
         </div>
 
-        {/* Right Active Quiz Player */}
-        <div className="lg:col-span-8">
+        {/* Generated Result Area */}
+        <div ref={resultRef} className="w-full scroll-mt-24">
           {quiz && Array.isArray(quiz.questions) && quiz.questions.length > 0 ? (
             <div className="p-8 sm:p-10 rounded-[2rem] bg-white border border-stone-200/90 shadow-[0_10px_30px_rgba(0,0,0,0.05)] space-y-8">
               {/* Quiz Header & Status */}

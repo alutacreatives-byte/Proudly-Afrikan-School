@@ -404,9 +404,9 @@ export const TutorChatGenerator: React.FC<TutorChatGeneratorProps> = ({
         </div>
       ) : (
         /* Active Chat Interface */
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Left Document File Reference Sidebar */}
-          <div className="lg:col-span-4 space-y-4">
+        <div className="space-y-6 items-start">
+          {/* Document File Reference & Quick Prompts Menu */}
+          <div className="w-full space-y-4">
             <div className="p-6 rounded-[2rem] bg-white border border-stone-200/90 shadow-[0_10px_30px_rgba(0,0,0,0.05)] space-y-4">
               <div className="flex items-center gap-2 pb-3 border-b border-stone-100">
                 <FileText className="w-4 h-4 text-[#E63956]" />
@@ -456,8 +456,8 @@ export const TutorChatGenerator: React.FC<TutorChatGeneratorProps> = ({
             </div>
           </div>
 
-          {/* Right Chat Feed */}
-          <div className="lg:col-span-8 flex flex-col h-[680px] rounded-[2rem] bg-white border border-stone-200/90 shadow-[0_10px_30px_rgba(0,0,0,0.05)] overflow-hidden">
+          {/* Chat Feed */}
+          <div className="w-full flex flex-col h-[680px] rounded-[2rem] bg-white border border-stone-200/90 shadow-[0_10px_30px_rgba(0,0,0,0.05)] overflow-hidden">
             {/* Chat Messages Container */}
             <div className="flex-1 p-6 overflow-y-auto space-y-6">
               {messages.map((m, idx) => {
