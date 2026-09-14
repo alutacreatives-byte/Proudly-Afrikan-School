@@ -230,16 +230,16 @@ export const StudyPresentationGenerator: React.FC<StudyPresentationGeneratorProp
         {/* Left Form (Hidden in fullscreen) */}
         {!isFullscreen && (
           <div className="w-full space-y-6">
-            <div className="p-6 rounded-[2rem] bg-white border border-stone-200/90 shadow-[0_10px_30px_rgba(0,0,0,0.05)] space-y-5">
+            <div className="p-6 sm:p-8 rounded-[2rem] bg-white border border-stone-200/90 shadow-[0_10px_30px_rgba(0,0,0,0.05)] space-y-6">
               <div className="flex items-center gap-2 pb-3 border-b border-stone-100">
                 <Sparkles className="w-4 h-4 text-[#E63956]" />
-                <h2 className="font-display font-black text-sm uppercase text-[#161616] tracking-wider">
+                <h2 className="font-display font-black text-base uppercase text-[#161616] tracking-wider">
                   Deck Configuration
                 </h2>
               </div>
 
               <div>
-                <label className="block font-mono text-xs font-bold text-stone-700 uppercase mb-2">
+                <label className="block font-mono text-[13px] sm:text-sm font-bold text-stone-900 uppercase mb-2">
                   Presentation Topic *
                 </label>
                 <input
@@ -247,64 +247,63 @@ export const StudyPresentationGenerator: React.FC<StudyPresentationGeneratorProp
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
                   placeholder="e.g. Great Zimbabwe Architecture & Trade"
-                  className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:border-[#E63956] focus:ring-1 focus:ring-[#E63956] bg-stone-50 text-sm font-medium outline-hidden"
+                  className="w-full px-4 py-3 sm:py-3.5 rounded-2xl border border-stone-200 focus:border-[#E63956] focus:ring-1 focus:ring-[#E63956] bg-stone-50 text-xs sm:text-sm font-mono text-stone-900 outline-hidden"
                 />
               </div>
 
-              <div>
-                <label className="block font-mono text-xs font-bold text-stone-700 uppercase mb-2">
-                  Subject
-                </label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:border-[#E63956] bg-stone-50 text-sm font-medium outline-hidden"
-                >
-                  <option value="AFRICAN HISTORY">African History</option>
-                  <option value="SCIENCES & STEM">Sciences & STEM</option>
-                  <option value="MATHEMATICS">Mathematics</option>
-                  <option value="LITERATURE & ARTS">Literature & Arts</option>
-                  <option value="GEOGRAPHY & ENVIRONMENT">Geography & Environment</option>
-                  <option value="CIVICS & ECONOMICS">Civics & Economics</option>
-                </select>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="block font-mono text-[13px] sm:text-sm font-bold text-stone-900 uppercase mb-2">
+                    Subject
+                  </label>
+                  <select
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    className="w-full px-4 py-3 sm:py-3.5 rounded-2xl border border-stone-200 focus:border-[#E63956] bg-stone-50 text-xs sm:text-sm font-mono text-stone-900 outline-hidden"
+                  >
+                    <option value="AFRICAN HISTORY">African History</option>
+                    <option value="SCIENCES & STEM">Sciences & STEM</option>
+                    <option value="MATHEMATICS">Mathematics</option>
+                    <option value="LITERATURE & ARTS">Literature & Arts</option>
+                    <option value="GEOGRAPHY & ENVIRONMENT">Geography & Environment</option>
+                    <option value="CIVICS & ECONOMICS">Civics & Economics</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-mono text-[13px] sm:text-sm font-bold text-stone-900 uppercase mb-2">
+                    Audience Level
+                  </label>
+                  <select
+                    value={gradeLevel}
+                    onChange={(e) => setGradeLevel(e.target.value)}
+                    className="w-full px-4 py-3 sm:py-3.5 rounded-2xl border border-stone-200 focus:border-[#E63956] bg-stone-50 text-xs sm:text-sm font-mono text-stone-900 outline-hidden"
+                  >
+                    <option value="Primary / Middle School">Primary / Middle School</option>
+                    <option value="Secondary / High School">Secondary / High School</option>
+                    <option value="Undergraduate / University">Undergraduate / University</option>
+                    <option value="Academic Conference / Professional">Academic Conference / Professional</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-mono text-[13px] sm:text-sm font-bold text-stone-900 uppercase mb-2">
+                    Slide Count
+                  </label>
+                  <select
+                    value={count}
+                    onChange={(e) => setCount(Number(e.target.value))}
+                    className="w-full px-4 py-3 sm:py-3.5 rounded-2xl border border-stone-200 focus:border-[#E63956] bg-stone-50 text-xs sm:text-sm font-mono text-stone-900 outline-hidden"
+                  >
+                    <option value={5}>5 Slides (Overview / Lightning)</option>
+                    <option value={6}>6 Slides (Standard Lecture Deck)</option>
+                    <option value={8}>8 Slides (In-Depth Topic Presentation)</option>
+                    <option value={10}>10 Slides (Comprehensive Keynote)</option>
+                  </select>
+                </div>
               </div>
 
               <div>
-                <label className="block font-mono text-xs font-bold text-stone-700 uppercase mb-2">
-                  Audience Level
-                </label>
-                <select
-                  value={gradeLevel}
-                  onChange={(e) => setGradeLevel(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:border-[#E63956] bg-stone-50 text-sm font-medium outline-hidden"
-                >
-                  <option value="Primary / Middle School">Primary / Middle School</option>
-                  <option value="Secondary / High School">Secondary / High School</option>
-                  <option value="Undergraduate / University">Undergraduate / University</option>
-                  <option value="Academic Conference / Professional">Academic Conference / Professional</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block font-mono text-xs font-bold text-stone-700 uppercase mb-2">
-                  Slide Count
-                </label>
-                <select
-                  value={count}
-                  onChange={(e) => setCount(Number(e.target.value))}
-                  className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:border-[#E63956] bg-stone-50 text-sm font-medium outline-hidden"
-                >
-                  <option value={5}>5 Slides (Overview / Lightning)</option>
-                  <option value={6}>6 Slides (Standard Lecture Deck)</option>
-                  <option value={8}>8 Slides (In-Depth Topic Presentation)</option>
-                  <option value={10}>10 Slides (Comprehensive Keynote)</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block font-mono text-xs font-bold text-stone-700 uppercase mb-2">
-                  Optional Source Material (PDF / DOC / Notes)
-                </label>
                 <SourceMaterialUpload
                   currentFileName={sourceFileName}
                   onTextExtracted={(text, name) => {
@@ -315,6 +314,7 @@ export const StudyPresentationGenerator: React.FC<StudyPresentationGeneratorProp
                     setSourceMaterial('');
                     setSourceFileName('');
                   }}
+                  accentColor="#E63956"
                 />
               </div>
 

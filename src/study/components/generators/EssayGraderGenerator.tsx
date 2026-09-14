@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { EssayGraderResult, StudyToolInput } from '../../types';
 import { generateStudyTool } from '../../services/aiService';
+import { SourceMaterialUpload } from '../../../build/components/SourceMaterialUpload';
 import { saveResourceToStorage } from '../../../build/utils/storage';
 import { useAuthCredit } from '../../../context/AuthCreditContext';
 import { extractTextFromFile } from '../../../quiz/utils/pdfExtractor';
@@ -220,72 +221,61 @@ export const EssayGraderGenerator: React.FC<EssayGraderGeneratorProps> = ({
       <div className="space-y-8">
         {/* Form Menu Column */}
         <div className="w-full space-y-6">
-          <div className="p-6 rounded-[2rem] bg-white border border-stone-200/90 shadow-[0_10px_30px_rgba(0,0,0,0.05)] space-y-5">
+          <div className="p-6 sm:p-8 rounded-[2rem] bg-white border border-stone-200/90 shadow-[0_10px_30px_rgba(0,0,0,0.05)] space-y-6">
             <div className="flex items-center gap-2 pb-3 border-b border-stone-100">
               <FileCheck2 className="w-4 h-4 text-[#E63956]" />
-              <h2 className="font-display font-black text-sm uppercase text-[#161616] tracking-wider">
+              <h2 className="font-display font-black text-base uppercase text-[#161616] tracking-wider">
                 Essay Input & Setup
               </h2>
             </div>
 
-            <div>
-              <label className="block font-mono text-xs font-bold text-stone-700 uppercase mb-2">
-                Essay Title / Topic *
-              </label>
-              <input
-                type="text"
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
-                placeholder="e.g. Postcolonial Economic Structures"
-                className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:border-[#E63956] focus:ring-1 focus:ring-[#E63956] bg-stone-50 text-sm font-medium outline-hidden"
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block font-mono text-[13px] sm:text-sm font-bold text-stone-900 uppercase mb-2">
+                  Essay Title / Topic *
+                </label>
+                <input
+                  type="text"
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                  placeholder="e.g. Postcolonial Economic Structures"
+                  className="w-full px-4 py-3 sm:py-3.5 rounded-2xl border border-stone-200 focus:border-[#E63956] focus:ring-1 focus:ring-[#E63956] bg-stone-50 text-xs sm:text-sm font-mono text-stone-900 outline-hidden"
+                />
+              </div>
+
+              <div>
+                <label className="block font-mono text-[13px] sm:text-sm font-bold text-stone-900 uppercase mb-2">
+                  Subject Category
+                </label>
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="w-full px-4 py-3 sm:py-3.5 rounded-2xl border border-stone-200 focus:border-[#E63956] bg-stone-50 text-xs sm:text-sm font-mono text-stone-900 outline-hidden"
+                >
+                  <option value="LITERATURE & ARTS">Literature & Arts</option>
+                  <option value="AFRICAN HISTORY">African History</option>
+                  <option value="SCIENCES & STEM">Sciences & STEM</option>
+                  <option value="MATHEMATICS">Mathematics</option>
+                  <option value="GEOGRAPHY & ENVIRONMENT">Geography & Environment</option>
+                  <option value="CIVICS & ECONOMICS">Civics & Economics</option>
+                </select>
+              </div>
             </div>
 
             <div>
-              <label className="block font-mono text-xs font-bold text-stone-700 uppercase mb-2">
-                Subject
-              </label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:border-[#E63956] bg-stone-50 text-sm font-medium outline-hidden"
-              >
-                <option value="LITERATURE & ARTS">Literature & Arts</option>
-                <option value="AFRICAN HISTORY">African History</option>
-                <option value="SCIENCES & STEM">Sciences & STEM</option>
-                <option value="MATHEMATICS">Mathematics</option>
-                <option value="GEOGRAPHY & ENVIRONMENT">Geography & Environment</option>
-                <option value="CIVICS & ECONOMICS">Civics & Economics</option>
-              </select>
-            </div>
-
-            {/* Document Upload */}
-            <div>
-              <label className="block font-mono text-xs font-bold text-stone-700 uppercase mb-2">
-                Upload Document (Optional)
-              </label>
-              <label className="border-2 border-dashed border-stone-200 hover:border-[#E63956] rounded-2xl p-4 flex flex-col items-center justify-center cursor-pointer bg-stone-50 transition-colors">
-                <Upload className="w-5 h-5 text-stone-400 mb-1" />
-                <span className="text-xs font-mono font-bold text-stone-700">
-                  {sourceFileName ? sourceFileName : 'Upload .doc, .docx, .pdf, .txt essay'}
-                </span>
-                <span className="text-[10px] font-mono text-stone-400 mt-0.5">
-                  Click to browse or drag file
-                </span>
-                <input type="file" accept=".doc,.docx,.pdf,.txt,.md" onChange={handleFileUpload} className="hidden" />
-              </label>
-            </div>
-
-            <div>
-              <label className="block font-mono text-xs font-bold text-stone-700 uppercase mb-2">
-                Or Paste Essay Content *
-              </label>
-              <textarea
-                value={essayContent}
-                onChange={(e) => setEssayContent(e.target.value)}
-                rows={7}
-                placeholder="Paste your full essay text here for comprehensive grading..."
-                className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:border-[#E63956] focus:ring-1 focus:ring-[#E63956] bg-stone-50 text-xs sm:text-sm font-medium outline-hidden resize-y"
+              <SourceMaterialUpload
+                sourceText={essayContent}
+                onSourceTextChange={(text) => setEssayContent(text)}
+                currentFileName={sourceFileName}
+                onTextExtracted={(text, name) => {
+                  setEssayContent(text);
+                  setSourceFileName(name || '');
+                }}
+                onClear={() => {
+                  setEssayContent('');
+                  setSourceFileName('');
+                }}
+                accentColor="#E63956"
               />
             </div>
 

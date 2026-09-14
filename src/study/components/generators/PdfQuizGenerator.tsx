@@ -226,19 +226,18 @@ export const PdfQuizGenerator: React.FC<PdfQuizGeneratorProps> = ({
       <div className="space-y-8">
         {/* Form Menu Column */}
         <div className="w-full space-y-6">
-          <div className="p-6 rounded-[2rem] bg-white border border-stone-200/90 shadow-[0_10px_30px_rgba(0,0,0,0.05)] space-y-5">
+          <div className="p-6 sm:p-8 rounded-[2rem] bg-white border border-stone-200/90 shadow-[0_10px_30px_rgba(0,0,0,0.05)] space-y-6">
             <div className="flex items-center gap-2 pb-3 border-b border-stone-100">
               <Sparkles className="w-4 h-4 text-[#E63956]" />
-              <h2 className="font-display font-black text-sm uppercase text-[#161616] tracking-wider">
-                Upload & Grounding
+              <h2 className="font-display font-black text-base uppercase text-[#161616] tracking-wider">
+                Document / Notes Grounded Quiz
               </h2>
             </div>
 
             <div>
-              <label className="block font-mono text-xs font-bold text-stone-700 uppercase mb-2">
-                Upload Document (PDF / DOCX / TXT) *
-              </label>
               <SourceMaterialUpload
+                sourceText={sourceMaterial}
+                onSourceTextChange={(text) => setSourceMaterial(text)}
                 currentFileName={sourceFileName}
                 onTextExtracted={(text, name) => {
                   setSourceMaterial(text);
@@ -248,30 +247,18 @@ export const PdfQuizGenerator: React.FC<PdfQuizGeneratorProps> = ({
                   setSourceMaterial('');
                   setSourceFileName('');
                 }}
+                accentColor="#E63956"
               />
             </div>
 
             <div>
-              <label className="block font-mono text-xs font-bold text-stone-700 uppercase mb-2">
-                Or Paste Document Notes
-              </label>
-              <textarea
-                rows={4}
-                value={sourceMaterial}
-                onChange={(e) => setSourceMaterial(e.target.value)}
-                placeholder="Paste chapter notes, lecture transcript or book excerpt..."
-                className="w-full p-3.5 rounded-xl border border-stone-200 focus:border-[#E63956] bg-stone-50 text-xs font-mono outline-hidden"
-              />
-            </div>
-
-            <div>
-              <label className="block font-mono text-xs font-bold text-stone-700 uppercase mb-2">
+              <label className="block font-mono text-[13px] sm:text-sm font-bold text-stone-900 uppercase mb-2">
                 Questions Count
               </label>
               <select
                 value={count}
                 onChange={(e) => setCount(Number(e.target.value))}
-                className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:border-[#E63956] bg-stone-50 text-sm font-medium outline-hidden"
+                className="w-full px-4 py-3 sm:py-3.5 rounded-2xl border border-stone-200 focus:border-[#E63956] bg-stone-50 text-xs sm:text-sm font-mono text-stone-900 outline-hidden"
               >
                 <option value={5}>5 Questions (Rapid Grounded Drill)</option>
                 <option value={8}>8 Questions (Standard Assessment)</option>

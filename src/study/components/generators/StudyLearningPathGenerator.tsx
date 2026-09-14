@@ -200,16 +200,16 @@ export const StudyLearningPathGenerator: React.FC<StudyLearningPathGeneratorProp
       <div className="space-y-8">
         {/* Form Menu Column */}
         <div className="w-full space-y-6">
-          <div className="p-6 rounded-[2rem] bg-white border border-stone-200/90 shadow-[0_10px_30px_rgba(0,0,0,0.05)] space-y-5">
+          <div className="p-6 sm:p-8 rounded-[2rem] bg-white border border-stone-200/90 shadow-[0_10px_30px_rgba(0,0,0,0.05)] space-y-6">
             <div className="flex items-center gap-2 pb-3 border-b border-stone-100">
               <Sparkles className="w-4 h-4 text-[#E63956]" />
-              <h2 className="font-display font-black text-sm uppercase text-[#161616] tracking-wider">
+              <h2 className="font-display font-black text-base uppercase text-[#161616] tracking-wider">
                 Roadmap Parameters
               </h2>
             </div>
 
             <div>
-              <label className="block font-mono text-xs font-bold text-stone-700 uppercase mb-2">
+              <label className="block font-mono text-[13px] sm:text-sm font-bold text-stone-900 uppercase mb-2">
                 Domain / Goal Skill *
               </label>
               <input
@@ -217,42 +217,41 @@ export const StudyLearningPathGenerator: React.FC<StudyLearningPathGeneratorProp
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
                 placeholder="e.g. West African Medieval Empires"
-                className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:border-[#E63956] focus:ring-1 focus:ring-[#E63956] bg-stone-50 text-sm font-medium outline-hidden"
+                className="w-full px-4 py-3 sm:py-3.5 rounded-2xl border border-stone-200 focus:border-[#E63956] focus:ring-1 focus:ring-[#E63956] bg-stone-50 text-xs sm:text-sm font-mono text-stone-900 outline-hidden"
               />
             </div>
 
-            <div>
-              <label className="block font-mono text-xs font-bold text-stone-700 uppercase mb-2">
-                Target Outcome / Benchmark
-              </label>
-              <input
-                type="text"
-                value={targetGoal}
-                onChange={(e) => setTargetGoal(e.target.value)}
-                placeholder="e.g. Scholarly Fluency & Research Capstone"
-                className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:border-[#E63956] bg-stone-50 text-sm font-medium outline-hidden"
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block font-mono text-[13px] sm:text-sm font-bold text-stone-900 uppercase mb-2">
+                  Target Outcome / Benchmark
+                </label>
+                <input
+                  type="text"
+                  value={targetGoal}
+                  onChange={(e) => setTargetGoal(e.target.value)}
+                  placeholder="e.g. Scholarly Fluency & Research Capstone"
+                  className="w-full px-4 py-3 sm:py-3.5 rounded-2xl border border-stone-200 focus:border-[#E63956] bg-stone-50 text-xs sm:text-sm font-mono text-stone-900 outline-hidden"
+                />
+              </div>
+
+              <div>
+                <label className="block font-mono text-[13px] sm:text-sm font-bold text-stone-900 uppercase mb-2">
+                  Current Level
+                </label>
+                <select
+                  value={startingLevel}
+                  onChange={(e) => setStartingLevel(e.target.value)}
+                  className="w-full px-4 py-3 sm:py-3.5 rounded-2xl border border-stone-200 focus:border-[#E63956] bg-stone-50 text-xs sm:text-sm font-mono text-stone-900 outline-hidden"
+                >
+                  <option value="Complete Beginner / Foundational">Complete Beginner / Foundational</option>
+                  <option value="Intermediate / Reviewing Basics">Intermediate / Reviewing Basics</option>
+                  <option value="Advanced / Capstone Readiness">Advanced / Capstone Readiness</option>
+                </select>
+              </div>
             </div>
 
             <div>
-              <label className="block font-mono text-xs font-bold text-stone-700 uppercase mb-2">
-                Current Level
-              </label>
-              <select
-                value={startingLevel}
-                onChange={(e) => setStartingLevel(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:border-[#E63956] bg-stone-50 text-sm font-medium outline-hidden"
-              >
-                <option value="Complete Beginner / Foundational">Complete Beginner / Foundational</option>
-                <option value="Intermediate / Reviewing Basics">Intermediate / Reviewing Basics</option>
-                <option value="Advanced / Capstone Readiness">Advanced / Capstone Readiness</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block font-mono text-xs font-bold text-stone-700 uppercase mb-2">
-                Optional Source Material (PDF / DOC / Notes)
-              </label>
               <SourceMaterialUpload
                 currentFileName={sourceFileName}
                 onTextExtracted={(text, name) => {
@@ -263,6 +262,7 @@ export const StudyLearningPathGenerator: React.FC<StudyLearningPathGeneratorProp
                   setSourceMaterial('');
                   setSourceFileName('');
                 }}
+                accentColor="#E63956"
               />
             </div>
 

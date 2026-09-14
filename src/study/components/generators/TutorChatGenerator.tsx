@@ -15,6 +15,7 @@ import {
   Download
 } from 'lucide-react';
 import { TutorChatResult, TutorChatMessage } from '../../types';
+import { SourceMaterialUpload } from '../../../build/components/SourceMaterialUpload';
 import { saveResourceToStorage } from '../../../build/utils/storage';
 import { useAuthCredit } from '../../../context/AuthCreditContext';
 import { exportTutorChat } from '../../../utils/exportUtils';
@@ -356,38 +357,41 @@ export const TutorChatGenerator: React.FC<TutorChatGeneratorProps> = ({
         /* Upload & Setup Screen */
         <div className="max-w-3xl mx-auto p-8 sm:p-10 rounded-[2rem] bg-white border border-stone-200/90 shadow-[0_10px_30px_rgba(0,0,0,0.05)] space-y-6">
           <div className="space-y-2 text-center">
-            <div className="w-12 h-12 rounded-2xl bg-pink-50 text-[#E63956] flex items-center justify-center mx-auto mb-2">
+            <div className="w-12 h-12 rounded-2xl bg-rose-50 text-[#E63956] flex items-center justify-center mx-auto mb-2">
               <MessageSquare className="w-6 h-6" />
             </div>
             <h2 className="font-display font-black text-xl uppercase text-[#161616]">
               Upload Material for Tutor Chat
             </h2>
             <p className="text-xs sm:text-sm text-stone-500 max-w-md mx-auto">
-              Upload any PDF, Word document (.doc, .docx), or text file to immediately open an interactive mentoring session based on your document.
+              Upload any PDF, Word document, photo, or notes to open an interactive mentoring session.
             </p>
           </div>
 
           <div className="space-y-4">
-            <div>
-              <label className="block font-mono text-xs font-bold text-stone-700 uppercase mb-2">
-                Upload PDF or Document (.pdf, .doc, .docx, .txt)
-              </label>
-              <label className="border-2 border-dashed border-stone-200 hover:border-[#E63956] rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer bg-stone-50 transition-colors">
-                <Upload className="w-6 h-6 text-stone-400 mb-2" />
-                <span className="text-xs sm:text-sm font-mono font-bold text-stone-700 text-center">
-                  {sourceFileName ? sourceFileName : 'Click to browse or drag file here'}
-                </span>
-                <span className="text-[10px] font-mono text-stone-400 mt-1">
-                  Supports PDF, Word (.doc/.docx), Text (.txt, .md)
-                </span>
-                <input
-                  type="file"
-                  accept=".pdf,.doc,.docx,.txt,.md"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                />
-              </label>
-            </div>
+            <SourceMaterialUpload
+              currentFileName={sourceFileName}
+              onTextExtracted={(text, name) => {
+                if (name) setSourceFileName(name);
+                if (text) {
+                  setIsChatActive(true);
+                  if (messages.length === 0) {
+                    setMessages([
+                      {
+                        id: `msg_tutor_init_${Date.now()}`,
+                        sender: 'tutor',
+                        text: `Hello! I have loaded your material: **${name || 'Uploaded Material'}**. What specific concept, question, or summary would you like to explore first?`,
+                        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                      },
+                    ]);
+                  }
+                }
+              }}
+              onClear={() => {
+                setSourceFileName('');
+              }}
+              accentColor="#E63956"
+            />
 
             {error && (
               <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs font-mono">
