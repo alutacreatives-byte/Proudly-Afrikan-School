@@ -1,130 +1,149 @@
 import React from 'react';
-import { Sparkles, FileText, Upload, Camera, ArrowDown } from 'lucide-react';
+import { Type, ClipboardCopy, FileUp, Camera, ArrowDown } from 'lucide-react';
+
+export type BuildCreationMethod = 'topic' | 'text' | 'pdf' | 'capture';
 
 interface BuildThreeWaysSectionProps {
-  activeMethod: 'topic' | 'text' | 'pdf' | 'capture';
-  onSelectMethod: (method: 'topic' | 'text' | 'pdf' | 'capture') => void;
+  activeMethod?: BuildCreationMethod;
+  onSelectMethod: (method: BuildCreationMethod) => void;
 }
 
 export const BuildThreeWaysSection: React.FC<BuildThreeWaysSectionProps> = ({
-  activeMethod,
+  activeMethod = 'topic',
   onSelectMethod,
 }) => {
-  const methods = [
+  const cards = [
     {
-      id: 'topic',
+      id: 'topic' as BuildCreationMethod,
       num: '01',
-      badge: 'FASTEST',
-      badgeStyle: 'bg-orange-50 text-[#FF8000] border border-orange-200 shadow-xs',
+      badgeText: 'FASTEST',
+      badgeClass: 'bg-[#FF7A00] text-white shadow-[0_4px_14px_rgba(255,122,0,0.35)]',
       title: 'TYPE IT.',
+      titleColor: 'text-[#FF7A00]',
       subtitle: 'TOPIC & CONCEPT MODE',
-      desc: 'Type any subject, exam topic, or concept to generate flashcards, study guides, or practice quizzes.',
-      icon: Sparkles,
+      desc: 'Type any subject, curriculum topic, or concept to generate lesson plans, assessment packs, or practice worksheets.',
+      icon: Type,
     },
     {
-      id: 'text',
+      id: 'text' as BuildCreationMethod,
       num: '02',
-      badge: 'DEEP CONTEXT',
-      badgeStyle: 'bg-stone-100 text-stone-700 border border-stone-200 shadow-xs',
+      badgeText: 'DEEP CONTEXT',
+      badgeClass: 'bg-[#FAF8F5] border border-stone-200 text-stone-700 shadow-xs',
       title: 'PASTE IT.',
+      titleColor: 'text-[#161616]',
       subtitle: 'LECTURE & CLASS NOTES',
-      desc: 'Paste your raw revision notes, textbook summaries, or article snippets to build tailored drills.',
-      icon: FileText,
+      desc: 'Paste your raw teaching notes, textbook summaries, or article snippets to build tailored classroom lessons.',
+      icon: ClipboardCopy,
     },
     {
-      id: 'pdf',
+      id: 'pdf' as BuildCreationMethod,
       num: '03',
-      badge: 'PDF • DOC • DOCX',
-      badgeStyle: 'bg-stone-900 text-white shadow-xs',
+      badgeText: 'PDF • DOC • DOCX',
+      badgeClass: 'bg-[#18181B] text-white shadow-xs',
       title: 'UPLOAD IT.',
+      titleColor: 'text-[#161616]',
       subtitle: 'DOCUMENT & PDF MODE',
-      desc: 'Upload syllabus PDFs, past papers, or slides to extract content and ground every quiz with source citations.',
-      icon: Upload,
+      desc: 'Upload syllabus PDFs, past papers, or slides to extract content and ground every lesson plan with source citations.',
+      icon: FileUp,
     },
     {
-      id: 'capture',
+      id: 'capture' as BuildCreationMethod,
       num: '04',
-      badge: 'CAMERA • OCR',
-      badgeStyle: 'bg-orange-50 text-[#FF8000] border border-orange-200 shadow-xs',
+      badgeText: 'CAMERA • OCR',
+      badgeClass: 'bg-orange-50 text-[#FF7A00] border border-orange-200 shadow-xs',
       title: 'CAPTURE IT.',
+      titleColor: 'text-[#FF7A00]',
       subtitle: 'CAMERA & PHOTO MODE',
-      desc: 'Photograph homework, textbook pages, handwritten work, equations, diagrams, or worksheets to instantly digitize and study.',
+      desc: 'Photograph textbook pages, handwritten work, equations, diagrams, or worksheets to instantly digitize and build.',
       icon: Camera,
     },
   ];
 
+  const handleCardClick = (method: BuildCreationMethod) => {
+    onSelectMethod(method);
+    const sectionEl = document.getElementById('build-generators-section');
+    if (sectionEl) {
+      sectionEl.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
-    <div className="space-y-8">
-      <div className="text-center space-y-2">
-        <h2 className="font-display font-black text-2xl sm:text-3xl text-[#161616] uppercase tracking-tight">
-          Four Ways to Build Educational Content
-        </h2>
-        <p className="font-sans text-sm text-stone-600 max-w-2xl mx-auto">
-          Generate comprehensive CAPS-aligned curriculum resources instantly using AI-powered topic prompts, pasted notes, syllabus documents, or camera snapshots.
-        </p>
-      </div>
+    <section className="space-y-6 pt-4 border-t border-stone-200/80">
+      <div>
+        {/* Section Header - Exact matching 4 Ways To Study section */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 pb-6 border-b border-stone-200/80 gap-4">
+          <div>
+            <span className="font-mono text-xs font-bold uppercase tracking-widest text-[#FF7A00] block mb-2">
+              FLEXIBLE BUILD MODES
+            </span>
+            <h2 className="font-display font-black text-3xl sm:text-5xl md:text-6xl uppercase tracking-tight text-[#161616] leading-none">
+              FOUR WAYS TO BUILD.
+            </h2>
+          </div>
+          <p className="font-mono text-xs sm:text-sm text-stone-600 max-w-md leading-relaxed">
+            Choose how you want to provide your teaching content to generate instant curriculum materials.
+          </p>
+        </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {methods.map((method) => {
-          const Icon = method.icon;
-          const isActive = activeMethod === method.id;
-          return (
-            <div
-              key={method.id}
-              onClick={() => onSelectMethod(method.id as any)}
-              className={`rounded-[2rem] p-7 flex flex-col justify-between transition-all cursor-pointer group ${
-                isActive
-                  ? 'bg-gradient-to-b from-[#FFFDF9] to-[#F9F0E6] border-2 border-[#FF8000] shadow-[0_16px_40px_rgba(255,128,0,0.2)] transform -translate-y-1'
-                  : 'clay-card-3d-interactive'
-              }`}
-            >
-              <div className="space-y-6">
-                {/* Top Row: Number & Badge */}
-                <div className="flex items-center justify-between">
-                  <span className="font-mono font-black text-2xl text-stone-900 tracking-tight">
-                    {method.num}
-                  </span>
-                  <span className={`font-mono text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full ${method.badgeStyle}`}>
-                    {method.badge}
-                  </span>
-                </div>
+        {/* 4 Elevated Soft Cards - Fully responsive across mobile, tablet, and desktop */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-6">
+          {cards.map((card) => {
+            const Icon = card.icon;
+            const isSelected = activeMethod === card.id;
 
-                {/* Dark Circular Icon Box */}
-                <div className="w-12 h-12 rounded-2xl bg-[#18181B] text-white flex items-center justify-center group-hover:scale-110 transition-transform shadow-md">
-                  <Icon className="w-6 h-6 text-[#FF8000]" />
-                </div>
-
-                {/* Title, Subtitle & Description */}
-                <div className="space-y-2.5">
-                  <div>
-                    <h3 className="font-display font-black text-2xl text-[#161616] uppercase tracking-tight">
-                      {method.title}
-                    </h3>
-                    <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-[#FF8000]">
-                      {method.subtitle}
+            return (
+              <div
+                key={card.id}
+                onClick={() => handleCardClick(card.id)}
+                className={`bg-white rounded-[2rem] border transition-all p-6 sm:p-7 flex flex-col justify-between cursor-pointer group ${
+                  isSelected
+                    ? 'border-[#FF7A00] shadow-[0_20px_45px_-10px_rgba(255,122,0,0.18)] ring-2 ring-[#FF7A00]/20'
+                    : 'border-stone-200/90 shadow-[0_16px_40px_rgba(0,0,0,0.06)] hover:shadow-[0_24px_50px_rgba(255,122,0,0.14)] hover:-translate-y-1 hover:border-[#FF7A00]/40'
+                }`}
+              >
+                <div>
+                  {/* Top card bar */}
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="font-display font-black text-3xl sm:text-4xl text-stone-400 group-hover:text-[#FF7A00] transition-colors">
+                      {card.num}
+                    </span>
+                    <span className={`px-3 py-0.5 rounded-full text-[11px] font-mono font-bold uppercase tracking-wider ${card.badgeClass}`}>
+                      {card.badgeText}
                     </span>
                   </div>
-                  <p className="font-sans text-xs sm:text-sm text-stone-600 leading-relaxed">
-                    {method.desc}
+
+                  {/* Icon */}
+                  <div className="w-11 h-11 rounded-full bg-[#18181B] text-[#FF7A00] flex items-center justify-center mb-4 group-hover:scale-105 group-hover:bg-[#FF7A00] group-hover:text-white transition-all shadow-xs">
+                    <Icon className="w-5 h-5" />
+                  </div>
+
+                  {/* Title */}
+                  <h3 className={`font-display font-black text-xl sm:text-2xl uppercase tracking-tight mb-1 ${card.titleColor}`}>
+                    {card.title}
+                  </h3>
+                  <div className="font-mono text-[11px] font-bold text-[#FF7A00] uppercase tracking-wider mb-2.5">
+                    {card.subtitle}
+                  </div>
+
+                  <p className="text-xs sm:text-sm text-stone-600 leading-relaxed font-normal">
+                    {card.desc}
                   </p>
                 </div>
-              </div>
 
-              {/* Bottom Footer Action */}
-              <div className="flex items-center justify-between pt-6 mt-6 border-t border-stone-200/80">
-                <span className="font-mono text-xs font-bold text-stone-900 uppercase tracking-widest">
-                  SELECT MODE
-                </span>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors shadow-sm ${
-                  isActive ? 'bg-[#FF8000] text-white' : 'bg-stone-900 text-white group-hover:bg-[#FF8000]'
-                }`}>
-                  <ArrowDown className="w-4 h-4 -rotate-90" />
+                <div className="pt-5 mt-5 border-t border-stone-100 flex items-center justify-between">
+                  <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-stone-900 group-hover:text-[#FF7A00] transition-colors">
+                    SELECT MODE
+                  </span>
+                  <div className="w-7 h-7 rounded-full bg-[#18181B] text-white flex items-center justify-center group-hover:bg-[#FF7A00] group-hover:translate-y-0.5 transition-all shadow-xs">
+                    <ArrowDown className="w-3.5 h-3.5" />
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
-    </div>
+    </section>
   );
 };
+
