@@ -1,5 +1,7 @@
 import React from 'react';
-import { Sparkles, FileUp } from 'lucide-react';
+import { Sparkles, FileUp, RefreshCw } from 'lucide-react';
+import { useAuthCredit } from '../../context/AuthCreditContext';
+import { useDynamicInspiration, BUILD_TOPICS_POOL } from '../../data/inspirationTopics';
 
 interface BuildHeroProps {
   onSelectInspiration: (topic: string) => void;
@@ -12,22 +14,20 @@ export const BuildHero: React.FC<BuildHeroProps> = ({
   onOpenGenerator,
   onUploadClick,
 }) => {
-  const inspirationTopics = [
-    { title: 'Timbuktu Manuscripts', emoji: '📜' },
-    { title: 'Great Zimbabwe Architecture', emoji: '🏛️' },
-    { title: 'Swahili Maritime Trade', emoji: '⛵' },
-    { title: 'Kingdom of Aksum Coinage', emoji: '🌍' },
-    { title: 'African Medicinal Botany', emoji: '🌿' },
-    { title: 'West African Griots', emoji: '🎵' },
-  ];
+  const { user } = useAuthCredit();
+  const { topics: inspirationTopics, refreshTopics } = useDynamicInspiration(
+    BUILD_TOPICS_POOL,
+    'build',
+    user?.email || user?.uid
+  );
 
   return (
     <section className="pt-2 pb-8 border-b border-stone-200/80">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
         {/* Left Column: Edition Badge, Giant Display Headline, Subtext & Action Buttons */}
-        <div className="lg:col-span-7 space-y-6">
+        <div className="lg:col-span-7 space-y-6 flex flex-col justify-start">
           {/* Edition Pill Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 clay-pill-3d text-xs sm:text-sm font-mono font-bold tracking-wider uppercase text-stone-800">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 clay-pill-3d text-xs sm:text-sm font-mono font-bold tracking-wider uppercase text-stone-800 self-start h-8">
             <span className="w-2.5 h-2.5 rounded-full bg-[#FF7A00] inline-block animate-pulse shadow-[0_0_6px_rgba(255,128,0,0.6)]"></span>
             <span>PROUDLY AFRIKAN EDUCATION • RESOURCE BUILDER</span>
           </div>
@@ -40,7 +40,7 @@ export const BuildHero: React.FC<BuildHeroProps> = ({
           </h1>
 
           {/* Clear, comfortable, easy-to-read subtext */}
-          <p className="text-base sm:text-lg lg:text-xl xl:text-[1.3rem] text-stone-700 font-normal leading-[1.65] max-w-2xl">
+          <p className="text-base sm:text-lg lg:text-xl xl:text-[1.3rem] text-stone-700 font-normal leading-[1.65] max-w-2xl min-h-[4rem] sm:min-h-[3.5rem] lg:min-h-[4rem]">
             Turn any topic, text notes, or educational PDF into sharp, classroom-ready exams, lesson plans, worksheets, and interactive courses in seconds.
           </p>
 
@@ -65,26 +65,36 @@ export const BuildHero: React.FC<BuildHeroProps> = ({
         </div>
 
         {/* Right Column: Instant Inspiration Card & Metrics */}
-        <div className="lg:col-span-5 space-y-5 lg:pt-4">
+        <div className="lg:col-span-5 space-y-5 lg:pt-0">
           {/* Instant Inspiration Clay Card */}
           <div className="clay-card-3d p-6 sm:p-7 space-y-4">
-            <div className="flex items-center justify-between border-b border-stone-200/80 pb-3">
+            <div className="flex items-center justify-between border-b border-stone-200/80 pb-3 h-9">
               <div className="flex items-center gap-2 font-display text-xs sm:text-sm font-black uppercase tracking-wider text-stone-900">
                 <span className="text-[#FF7A00] text-sm">❖</span>
                 <span>INSTANT STUDY INSPIRATION</span>
               </div>
-              <span className="font-mono text-xs text-stone-400 font-bold uppercase tracking-wider">
-                TAP TO TRY
-              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={refreshTopics}
+                  className="p-1 text-stone-400 hover:text-[#FF7A00] transition-colors rounded-full hover:bg-stone-200/50 cursor-pointer"
+                  title="Shuffle topics"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                </button>
+                <span className="font-mono text-xs text-stone-400 font-bold uppercase tracking-wider">
+                  TAP TO TRY
+                </span>
+              </div>
             </div>
 
             {/* Topic Pills Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              {inspirationTopics.map((item) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 min-h-[10.5rem]">
+              {inspirationTopics.map((item, idx) => (
                 <button
-                  key={item.title}
-                  onClick={() => onSelectInspiration(item.title)}
-                  className="px-3.5 py-2.5 clay-pill-3d hover:border-[#FF7A00]/40 hover:text-[#FF7A00] text-stone-800 font-medium text-xs sm:text-sm flex items-center gap-2 text-left truncate cursor-pointer transition-all"
+                  key={idx}
+                  onClick={() => onSelectInspiration(item.topic || item.title)}
+                  className="h-11 px-3.5 clay-pill-3d hover:border-[#FF7A00]/40 hover:text-[#FF7A00] text-stone-800 font-medium text-xs sm:text-sm flex items-center gap-2 text-left truncate cursor-pointer transition-all"
                 >
                   <span className="text-base shrink-0">{item.emoji}</span>
                   <span className="truncate">{item.title}</span>

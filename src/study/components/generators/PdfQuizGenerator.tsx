@@ -18,15 +18,18 @@ import { saveResourceToStorage } from '../../../build/utils/storage';
 import { useAuthCredit } from '../../../context/AuthCreditContext';
 import { exportPdfQuiz } from '../../../utils/exportUtils';
 import { useScrollToResult } from '../../../utils/useScrollToResult';
+import { GlobalNavigationButtons } from '../../../components/GlobalNavigationButtons';
 
 interface PdfQuizGeneratorProps {
   onBack: () => void;
+  onGoHome?: () => void;
   onSaved?: () => void;
   existingResource?: PdfQuizResult;
 }
 
 export const PdfQuizGenerator: React.FC<PdfQuizGeneratorProps> = ({
   onBack,
+  onGoHome,
   onSaved,
   existingResource,
 }) => {
@@ -220,6 +223,12 @@ export const PdfQuizGenerator: React.FC<PdfQuizGeneratorProps> = ({
             </button>
           </div>
         )}
+        <GlobalNavigationButtons
+          onBack={onBack}
+          onGoHome={onGoHome}
+          backLabel="Back"
+          homeLabel="Home"
+        />
       </div>
 
       {/* Main Layout: Menu directly ABOVE generation area */}

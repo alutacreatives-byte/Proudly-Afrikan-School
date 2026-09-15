@@ -287,21 +287,23 @@ export default function App({
 
   return (
     <div className="min-h-screen bg-[#FAF7F0] text-[#161616] flex flex-col justify-between selection:bg-[#E52E5E] selection:text-white">
-      {/* Top Navigation Bar in QUIZ */}
-      <div className="w-full bg-[#FAF7F0] border-b border-stone-200/80 sticky top-0 z-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between">
-          <GlobalNavigationButtons
-            onBack={handleBack}
-            onGoHome={handleGoHome}
-            backLabel="Back"
-            homeLabel="Home"
-          />
+      {/* Top Navigation Bar in QUIZ - displayed ONLY when inside an active quiz / review / results */}
+      {viewState !== 'builder' && (
+        <div className="w-full bg-[#FAF7F0] border-b border-stone-200/80 sticky top-0 z-20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between">
+            <GlobalNavigationButtons
+              onBack={handleBack}
+              onGoHome={handleGoHome}
+              backLabel="Back"
+              homeLabel="Home"
+            />
 
-          <div className="text-xs font-mono font-bold text-stone-500 uppercase tracking-wider hidden sm:block">
-            {`QUIZ • ${viewState.toUpperCase().replace('_', ' ')}`}
+            <div className="text-xs font-mono font-bold text-stone-500 uppercase tracking-wider hidden sm:block">
+              {`QUIZ • ${viewState.toUpperCase().replace('_', ' ')}`}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Global Error Banner if API failed */}
       {globalError && (
@@ -319,7 +321,7 @@ export default function App({
 
       {/* VIEW STATE: BUILDER & LANDING PAGE */}
       {viewState === 'builder' && (
-        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 space-y-14 sm:space-y-16 pb-20">
+        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12 pb-20">
           {/* Section 1: Hero */}
           <Hero
             onStartClick={() => scrollToSection('quiz-builder')}

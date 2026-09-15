@@ -28,10 +28,13 @@ import {
   Type,
   ClipboardList,
   FileUp,
-  ChevronDown
+  ChevronDown,
+  RefreshCw
 } from 'lucide-react';
 import { BROAD_SUBJECT_AREAS } from '../data/subjectCategories';
 import { GeneratorMode } from './CreateSetModal';
+import { useAuthCredit } from '../../context/AuthCreditContext';
+import { useDynamicInspiration, STUDY_TOPICS_POOL } from '../../data/inspirationTopics';
 
 interface HomeScreenProps {
   onNavigate: (view: AppView, categoryFilter?: string) => void;
@@ -57,15 +60,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onOpenTutor,
 }) => {
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
-
-  const inspirationTopics = [
-    { label: '📜 Timbuktu Manuscripts', topic: 'Timbuktu Manuscripts & Medieval African Astronomy' },
-    { label: '🏛️ Great Zimbabwe', topic: 'Great Zimbabwe Stone Architecture & Trade' },
-    { label: '⛵ Swahili Navigation', topic: 'Swahili Maritime Navigation & Indian Ocean Commerce' },
-    { label: '🪙 Aksum Coinage', topic: 'Kingdom of Aksum Gold Coinage & Metallurgy' },
-    { label: '🌿 Medicinal Botany', topic: 'African Medicinal Botany & Traditional Pharmacopeia' },
-    { label: '🎵 West African Griots', topic: 'West African Griot Oral History Traditions' },
-  ];
+  const { user } = useAuthCredit();
+  const { topics: inspirationTopics, refreshTopics } = useDynamicInspiration(
+    STUDY_TOPICS_POOL,
+    'study',
+    user?.email || user?.uid
+  );
 
   const generatorSuite = [
     {
@@ -194,9 +194,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       <section className="pt-2 pb-8 border-b border-stone-200/80">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
           {/* Left Column: Edition Badge, Giant Display Headline, Subtext & Action Buttons */}
-          <div className="lg:col-span-7 space-y-6">
+          <div className="lg:col-span-7 space-y-6 flex flex-col justify-start">
             {/* Edition Pill Badge */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white/90 border border-stone-300/80 rounded-full shadow-sm text-xs sm:text-sm font-mono font-bold tracking-wider uppercase text-stone-800">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white/90 border border-stone-300/80 rounded-full shadow-sm text-xs sm:text-sm font-mono font-bold tracking-wider uppercase text-stone-800 self-start h-8">
               <span className="w-2.5 h-2.5 rounded-full bg-[#D92B8A] inline-block animate-pulse"></span>
               <span>PROUDLY AFRIKAN EDUCATION • STUDY COMPANION</span>
             </div>
@@ -209,7 +209,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             </h1>
 
             {/* Clear, comfortable, easy-to-read subtext (20-24px desktop, 18-21px tablet, 16-18px mobile) */}
-            <p className="text-base sm:text-lg lg:text-xl xl:text-[1.3rem] text-stone-700 font-normal leading-[1.65] max-w-2xl">
+            <p className="text-base sm:text-lg lg:text-xl xl:text-[1.3rem] text-stone-700 font-normal leading-[1.65] max-w-2xl min-h-[4rem] sm:min-h-[3.5rem] lg:min-h-[4rem]">
               Turn any topic, text notes, or educational PDF into sharp, classroom-ready exams, lesson plans, worksheets, and interactive study sets in seconds.
             </p>
 
@@ -243,21 +243,31 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </div>
 
           {/* Right Column: Instant Inspiration Card & Metrics */}
-          <div className="lg:col-span-5 space-y-5 lg:pt-4">
+          <div className="lg:col-span-5 space-y-5 lg:pt-0">
             {/* Instant Inspiration Elevated Rounded Card */}
             <div className="bg-[#FAF8F5] border-2 border-stone-200/90 shadow-2xl rounded-3xl p-6 sm:p-7 space-y-4">
-              <div className="flex items-center justify-between border-b border-stone-200 pb-3">
+              <div className="flex items-center justify-between border-b border-stone-200 pb-3 h-9">
                 <div className="flex items-center gap-2 font-display text-xs sm:text-sm font-black uppercase tracking-wider text-stone-900">
                   <span className="text-[#D92B8A] text-sm">❖</span>
-                  <span>INSTANT INSPIRATION</span>
+                  <span>INSTANT STUDY INSPIRATION</span>
                 </div>
-                <span className="font-mono text-xs text-stone-400 font-bold uppercase tracking-wider">
-                  TAP TO TRY
-                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={refreshTopics}
+                    className="p-1 text-stone-400 hover:text-[#D92B8A] transition-colors rounded-full hover:bg-stone-200/50 cursor-pointer"
+                    title="Shuffle topics"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                  </button>
+                  <span className="font-mono text-xs text-stone-400 font-bold uppercase tracking-wider">
+                    TAP TO TRY
+                  </span>
+                </div>
               </div>
 
               {/* 2-Column Pill Button Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 min-h-[10.5rem]">
                 {inspirationTopics.map((item, idx) => (
                   <button
                     key={idx}
@@ -271,7 +281,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                         onCreateSetClick('topic', item.topic);
                       }
                     }}
-                    className="px-3.5 py-2.5 bg-white hover:bg-pink-50/60 border border-stone-200/90 hover:border-pink-300 text-stone-800 hover:text-[#D92B8A] font-medium text-xs sm:text-sm rounded-full transition-all shadow-sm flex items-center gap-2 text-left truncate cursor-pointer"
+                    className="h-11 px-3.5 bg-white hover:bg-pink-50/60 border border-stone-200/90 hover:border-pink-300 text-stone-800 hover:text-[#D92B8A] font-medium text-xs sm:text-sm rounded-full transition-all shadow-sm flex items-center gap-2 text-left truncate cursor-pointer"
                   >
                     <span className="truncate">{item.label}</span>
                   </button>
