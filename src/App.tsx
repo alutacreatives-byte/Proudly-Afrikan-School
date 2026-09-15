@@ -151,6 +151,8 @@ function AppContent() {
             key={selectedQuiz ? `quiz-${selectedQuiz.id}` : 'quiz-default'}
             initialQuiz={selectedQuiz}
             onNavigateToTab={handleSelectTab}
+            onGoHome={handleGoHome}
+            onBack={handleBackFromStudy}
           />
         )}
 
@@ -158,7 +160,8 @@ function AppContent() {
           <BuildApp
             key={selectedBuildResource ? `build-${selectedBuildResource.id}` : 'build-main'}
             initialResource={selectedBuildResource}
-            onGoHome={() => handleSelectTab('STUDY')}
+            onGoHome={handleGoHome}
+            onBack={handleBackFromStudy}
           />
         )}
 

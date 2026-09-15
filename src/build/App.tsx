@@ -9,9 +9,10 @@ import { BuildGeneratorView } from './components/BuildGeneratorView';
 export interface BuildAppProps {
   initialResource?: SavedResource | null;
   onGoHome?: () => void;
+  onBack?: () => void;
 }
 
-export default function BuildApp({ initialResource, onGoHome }: BuildAppProps) {
+export default function BuildApp({ initialResource, onGoHome, onBack }: BuildAppProps) {
   const [activeTool, setActiveTool] = useState<string | null>(
     initialResource ? initialResource.toolType : null
   );
@@ -29,7 +30,11 @@ export default function BuildApp({ initialResource, onGoHome }: BuildAppProps) {
   };
 
   const handleBackToMenu = () => {
-    setActiveTool(null);
+    if (activeTool) {
+      setActiveTool(null);
+    } else if (onBack) {
+      onBack();
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -40,6 +45,7 @@ export default function BuildApp({ initialResource, onGoHome }: BuildAppProps) {
           activeTool={activeTool}
           onSelectTool={handleSelectTool}
           onBack={handleBackToMenu}
+          onGoHome={onGoHome}
           initialTopic={selectedTopic}
           initialResource={initialResource}
         />

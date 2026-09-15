@@ -10,6 +10,7 @@ import {
   Trash2,
   Loader2,
   Sliders,
+  Sparkles,
 } from 'lucide-react';
 import {
   CreationMethod,
@@ -260,7 +261,7 @@ export const QuizBuilder: React.FC<QuizBuilderProps> = ({
         {/* Left Column: Knowledge Source Tabs & Inputs (7 cols) */}
         <div className="lg:col-span-7 space-y-6">
           {/* Method Selectors / Rounded Pill Tabs */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 bg-[#FAF7F2] p-1.5 rounded-2xl border border-[#E0D8C5] shadow-xs gap-1.5">
+          <div className="grid grid-cols-2 sm:grid-cols-4 bg-[#EFE8DE] p-2 rounded-2xl border border-[#E4DCD0] shadow-[inset_2px_2px_4px_rgba(0,0,0,0.06)] gap-2">
             <button
               onClick={() => {
                 onMethodChange('topic');
@@ -268,8 +269,8 @@ export const QuizBuilder: React.FC<QuizBuilderProps> = ({
               }}
               className={`py-3 px-3 rounded-xl font-display font-black text-xs sm:text-sm uppercase tracking-tight flex items-center justify-center gap-2 transition-all cursor-pointer ${
                 creationMethod === 'topic'
-                  ? 'bg-[#E52E5E] text-white shadow-sm scale-101'
-                  : 'bg-transparent text-[#292929] hover:bg-white'
+                  ? 'bg-[#E62E6B] text-white shadow-[0_4px_12px_rgba(230,46,107,0.35)] scale-101'
+                  : 'bg-transparent text-stone-700 hover:bg-[#FAF4EC]'
               }`}
             >
               <Type className="w-4 h-4" />
@@ -283,8 +284,8 @@ export const QuizBuilder: React.FC<QuizBuilderProps> = ({
               }}
               className={`py-3 px-3 rounded-xl font-display font-black text-xs sm:text-sm uppercase tracking-tight flex items-center justify-center gap-2 transition-all cursor-pointer ${
                 creationMethod === 'text'
-                  ? 'bg-[#E52E5E] text-white shadow-sm scale-101'
-                  : 'bg-transparent text-[#292929] hover:bg-white'
+                  ? 'bg-[#E62E6B] text-white shadow-[0_4px_12px_rgba(230,46,107,0.35)] scale-101'
+                  : 'bg-transparent text-stone-700 hover:bg-[#FAF4EC]'
               }`}
             >
               <ClipboardCopy className="w-4 h-4" />
@@ -298,8 +299,8 @@ export const QuizBuilder: React.FC<QuizBuilderProps> = ({
               }}
               className={`py-3 px-3 rounded-xl font-display font-black text-xs sm:text-sm uppercase tracking-tight flex items-center justify-center gap-2 transition-all cursor-pointer ${
                 creationMethod === 'pdf'
-                  ? 'bg-[#E52E5E] text-white shadow-sm scale-101'
-                  : 'bg-transparent text-[#292929] hover:bg-white'
+                  ? 'bg-[#E62E6B] text-white shadow-[0_4px_12px_rgba(230,46,107,0.35)] scale-101'
+                  : 'bg-transparent text-stone-700 hover:bg-[#FAF4EC]'
               }`}
             >
               <FileUp className="w-4 h-4" />
@@ -313,8 +314,8 @@ export const QuizBuilder: React.FC<QuizBuilderProps> = ({
               }}
               className={`py-3 px-3 rounded-xl font-display font-black text-xs sm:text-sm uppercase tracking-tight flex items-center justify-center gap-2 transition-all cursor-pointer ${
                 creationMethod === 'capture'
-                  ? 'bg-[#E52E5E] text-white shadow-sm scale-101'
-                  : 'bg-transparent text-[#292929] hover:bg-white'
+                  ? 'bg-[#E62E6B] text-white shadow-[0_4px_12px_rgba(230,46,107,0.35)] scale-101'
+                  : 'bg-transparent text-stone-700 hover:bg-[#FAF4EC]'
               }`}
             >
               <Camera className="w-4 h-4" />
@@ -323,7 +324,7 @@ export const QuizBuilder: React.FC<QuizBuilderProps> = ({
           </div>
 
           {/* Dynamic Input Panels */}
-          <div className="bg-white rounded-[2rem] border border-[#E6E0D5] shadow-[0_10px_30px_-10px_rgba(41,41,41,0.05)] p-6 sm:p-8 min-h-[340px] flex flex-col justify-between">
+          <div className="bg-[#FAF4EC] rounded-[2.5rem] border border-[#EFE5DA] shadow-[0_25px_60px_-15px_rgba(100,80,60,0.12),_0_10px_25px_-5px_rgba(100,80,60,0.06)] p-6 sm:p-8 min-h-[340px] flex flex-col justify-between">
             {/* METHOD 1: TOPIC */}
             {creationMethod === 'topic' && (
               <div className="space-y-5 flex-1 flex flex-col justify-between">
@@ -623,18 +624,10 @@ export const QuizBuilder: React.FC<QuizBuilderProps> = ({
 
         {/* Right Column: Selectable Quiz Settings */}
         <div className="lg:col-span-5 space-y-6">
-          <div className="bg-[#FAF7F2] rounded-[2rem] border border-[#E6E0D5] shadow-[0_10px_30px_-10px_rgba(41,41,41,0.05)] p-6 sm:p-7 space-y-6">
-            <div className="flex items-center justify-between border-b border-[#292929]/10 pb-3.5">
-              <span className="font-display font-black text-lg sm:text-xl uppercase tracking-tight text-[#292929] flex items-center gap-2">
-                <Sliders className="w-5 h-5 text-[#E52E5E]" />
-                QUIZ SETTINGS
-              </span>
-              <span className="font-mono-code text-[11px] text-[#5E5950] font-bold">CUSTOMIZE</span>
-            </div>
-
+          <div className="bg-[#FAF4EC] rounded-[2.5rem] border border-[#EFE5DA] shadow-[0_25px_60px_-15px_rgba(100,80,60,0.12),_0_10px_25px_-5px_rgba(100,80,60,0.06)] p-6 sm:p-7 space-y-6">
             {/* 1. NUMBER OF QUESTIONS */}
             <div>
-              <label className="font-mono-code text-xs font-bold uppercase tracking-wider text-[#292929] block mb-2">
+              <label className="font-mono text-[11px] sm:text-xs font-bold uppercase tracking-wider text-stone-600 block mb-2">
                 NUMBER OF QUESTIONS
               </label>
               <div className="grid grid-cols-5 gap-1.5">
@@ -642,10 +635,10 @@ export const QuizBuilder: React.FC<QuizBuilderProps> = ({
                   <button
                     key={num}
                     onClick={() => setQuestionCount(num)}
-                    className={`py-2.5 rounded-xl font-display font-black text-sm sm:text-base border transition-all cursor-pointer ${
+                    className={`py-2.5 rounded-2xl font-display font-black text-sm sm:text-base border transition-all cursor-pointer ${
                       questionCount === num
-                        ? 'bg-[#292929] text-[#F5F0E6] border-[#292929] shadow-xs'
-                        : 'bg-white text-[#292929] border-[#E0D8C5] hover:bg-[#F5F0E6]'
+                        ? 'bg-[#E62E6B] text-white border-[#E62E6B] shadow-[0_4px_12px_rgba(230,46,107,0.35)]'
+                        : 'bg-[#EFE8DE] text-stone-900 border-[#E4DCD0] shadow-[inset_1px_1px_3px_rgba(0,0,0,0.05)] hover:bg-[#E8DFC0]'
                     }`}
                   >
                     {num}
@@ -656,7 +649,7 @@ export const QuizBuilder: React.FC<QuizBuilderProps> = ({
 
             {/* 2. DIFFICULTY */}
             <div>
-              <label className="font-mono-code text-xs font-bold uppercase tracking-wider text-[#292929] block mb-2">
+              <label className="font-mono text-[11px] sm:text-xs font-bold uppercase tracking-wider text-stone-600 block mb-2">
                 DIFFICULTY LEVEL
               </label>
               <div className="grid grid-cols-3 gap-2">
@@ -668,10 +661,10 @@ export const QuizBuilder: React.FC<QuizBuilderProps> = ({
                   <button
                     key={item.id}
                     onClick={() => setDifficulty(item.id)}
-                    className={`py-2.5 rounded-xl font-display font-black text-xs sm:text-sm uppercase border transition-all cursor-pointer ${
+                    className={`py-2.5 rounded-2xl font-display font-black text-xs sm:text-sm uppercase border transition-all cursor-pointer ${
                       difficulty === item.id
-                        ? 'bg-[#E52E5E] text-white border-[#E52E5E] shadow-xs'
-                        : 'bg-white text-[#292929] border-[#E0D8C5] hover:bg-[#F5F0E6]'
+                        ? 'bg-[#E62E6B] text-white border-[#E62E6B] shadow-[0_4px_12px_rgba(230,46,107,0.35)]'
+                        : 'bg-[#EFE8DE] text-stone-900 border-[#E4DCD0] shadow-[inset_1px_1px_3px_rgba(0,0,0,0.05)] hover:bg-[#E8DFC0]'
                     }`}
                   >
                     {item.label}
@@ -682,7 +675,7 @@ export const QuizBuilder: React.FC<QuizBuilderProps> = ({
 
             {/* 3. QUESTION TYPE */}
             <div>
-              <label className="font-mono-code text-xs font-bold uppercase tracking-wider text-[#292929] block mb-2">
+              <label className="font-mono text-[11px] sm:text-xs font-bold uppercase tracking-wider text-stone-600 block mb-2">
                 QUESTION FORMAT
               </label>
               <div className="grid grid-cols-3 gap-2">
@@ -694,10 +687,10 @@ export const QuizBuilder: React.FC<QuizBuilderProps> = ({
                   <button
                     key={item.id}
                     onClick={() => setQuestionType(item.id)}
-                    className={`py-2 px-1 text-center font-mono-code font-bold text-xs uppercase rounded-xl border transition-all cursor-pointer ${
+                    className={`py-2.5 px-1 text-center font-mono text-[11px] font-bold uppercase rounded-2xl border transition-all cursor-pointer ${
                       questionType === item.id
-                        ? 'bg-[#292929] text-[#F5F0E6] border-[#292929] shadow-xs'
-                        : 'bg-white text-[#292929] border-[#E0D8C5] hover:bg-[#F5F0E6]'
+                        ? 'bg-[#E62E6B] text-white border-[#E62E6B] shadow-[0_4px_12px_rgba(230,46,107,0.35)]'
+                        : 'bg-[#EFE8DE] text-stone-900 border-[#E4DCD0] shadow-[inset_1px_1px_3px_rgba(0,0,0,0.05)] hover:bg-[#E8DFC0]'
                     }`}
                   >
                     {item.label}
@@ -708,7 +701,7 @@ export const QuizBuilder: React.FC<QuizBuilderProps> = ({
 
             {/* 4. EDUCATION LEVEL */}
             <div>
-              <label className="font-mono-code text-xs font-bold uppercase tracking-wider text-[#292929] block mb-2">
+              <label className="font-mono text-[11px] sm:text-xs font-bold uppercase tracking-wider text-stone-600 block mb-2">
                 TARGET AUDIENCE / LEVEL
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -721,10 +714,10 @@ export const QuizBuilder: React.FC<QuizBuilderProps> = ({
                   <button
                     key={item.id}
                     onClick={() => setEducationLevel(item.id)}
-                    className={`py-2 px-2.5 text-left font-mono-code font-bold text-xs uppercase rounded-xl border transition-all cursor-pointer truncate ${
+                    className={`py-2.5 px-3 text-left font-mono text-[11px] font-bold uppercase rounded-2xl border transition-all cursor-pointer truncate ${
                       educationLevel === item.id
-                        ? 'bg-[#292929] text-[#F5F0E6] border-[#292929] shadow-xs'
-                        : 'bg-white text-[#292929] border-[#E0D8C5] hover:bg-[#F5F0E6]'
+                        ? 'bg-[#E62E6B] text-white border-[#E62E6B] shadow-[0_4px_12px_rgba(230,46,107,0.35)]'
+                        : 'bg-[#EFE8DE] text-stone-900 border-[#E4DCD0] shadow-[inset_1px_1px_3px_rgba(0,0,0,0.05)] hover:bg-[#E8DFC0]'
                     }`}
                   >
                     {item.label}
@@ -735,7 +728,7 @@ export const QuizBuilder: React.FC<QuizBuilderProps> = ({
 
             {/* 5. SUBJECT CATEGORY */}
             <div>
-              <label className="font-mono-code text-xs font-bold uppercase tracking-wider text-[#292929] block mb-2">
+              <label className="font-mono text-[11px] sm:text-xs font-bold uppercase tracking-wider text-stone-600 block mb-2">
                 SUBJECT CATEGORY
               </label>
               <div className="grid grid-cols-3 gap-1.5">
@@ -743,10 +736,10 @@ export const QuizBuilder: React.FC<QuizBuilderProps> = ({
                   <button
                     key={subj}
                     onClick={() => setSelectedSubject(subj)}
-                    className={`py-1.5 px-2 text-center font-mono-code text-xs font-bold uppercase rounded-lg border transition-all cursor-pointer truncate ${
+                    className={`py-2 px-2 text-center font-mono text-[11px] font-bold uppercase rounded-xl border transition-all cursor-pointer truncate ${
                       selectedSubject === subj
-                        ? 'bg-[#E52E5E] text-white border-[#E52E5E]'
-                        : 'bg-white text-[#292929] border-[#E0D8C5] hover:bg-[#F5F0E6]'
+                        ? 'bg-[#E62E6B] text-white border-[#E62E6B] shadow-[0_4px_12px_rgba(230,46,107,0.35)]'
+                        : 'bg-[#EFE8DE] text-stone-900 border-[#E4DCD0] shadow-[inset_1px_1px_3px_rgba(0,0,0,0.05)] hover:bg-[#E8DFC0]'
                     }`}
                   >
                     {subj}
@@ -759,14 +752,15 @@ export const QuizBuilder: React.FC<QuizBuilderProps> = ({
       </div>
 
       {/* SECTION 4: THE BIG GENERATE BUTTON & GENERATING ANIMATED STATE */}
-      <div className="mt-10">
+      <div className="mt-8">
         {!isGenerating ? (
           <button
             onClick={handleGenerateClick}
-            className="w-full py-6 md:py-7 bg-gradient-to-r from-[#E52E5E] via-[#F25C22] to-[#FF6B00] hover:brightness-105 text-white font-display font-black text-xl sm:text-2xl md:text-3xl uppercase tracking-tight rounded-full shadow-xl hover:shadow-2xl hover:scale-101 transition-all flex items-center justify-center gap-4 cursor-pointer group"
+            className="w-full py-4.5 bg-[#E62E6B] hover:bg-[#d8245f] text-white font-display text-base font-black uppercase tracking-wider rounded-full shadow-[0_10px_28px_rgba(230,46,107,0.4)] active:scale-[0.99] transition-all flex items-center justify-center gap-2.5 cursor-pointer group"
           >
+            <Sparkles className="w-5 h-5 text-white" />
             <span>GENERATE QUIZ</span>
-            <ArrowRight className="w-6 h-6 md:w-8 md:h-8 group-hover:translate-x-2 transition-transform" />
+            <ArrowRight className="w-4 h-4 text-white group-hover:translate-x-1 transition-transform" />
           </button>
         ) : (
           <div className="w-full py-8 md:py-12 bg-[#292929] text-[#F5F0E6] rounded-[2rem] shadow-xl p-6 flex flex-col items-center justify-center gap-4">

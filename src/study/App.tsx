@@ -266,6 +266,7 @@ export default function StudyApp({
         <StudyGuideGenerator
           key="gen-study-guide"
           onBack={handleBack}
+          onGoHome={handleGoHome}
           onSaved={refreshSavedCount}
           existingResource={activeResource as StudyGuideResult}
         />
@@ -278,8 +279,9 @@ export default function StudyApp({
         <FlashcardGenerator
           key="gen-flashcards"
           onBack={handleBack}
+          onGoHome={handleGoHome}
           onSaved={refreshSavedCount}
-          existingResource={activeResource as FlashcardsResult}
+          existingResource={activeResource as FlashcardResult}
         />
       );
     }
@@ -290,6 +292,7 @@ export default function StudyApp({
         <EssayGraderGenerator
           key="gen-essay-grader"
           onBack={handleBack}
+          onGoHome={handleGoHome}
           onSaved={refreshSavedCount}
           existingResource={activeResource as EssayGraderResult}
         />
@@ -302,6 +305,7 @@ export default function StudyApp({
         <TutorChatGenerator
           key="gen-tutor-chat"
           onBack={handleBack}
+          onGoHome={handleGoHome}
           onSaved={refreshSavedCount}
           existingResource={activeResource as TutorChatResult}
         />
@@ -314,6 +318,7 @@ export default function StudyApp({
         <StudyPresentationGenerator
           key="gen-presentation"
           onBack={handleBack}
+          onGoHome={handleGoHome}
           onSaved={refreshSavedCount}
           existingResource={activeResource as PresentationResult}
         />
@@ -326,6 +331,7 @@ export default function StudyApp({
         <StudyCourseGenerator
           key="gen-course"
           onBack={handleBack}
+          onGoHome={handleGoHome}
           onSaved={refreshSavedCount}
           existingResource={activeResource as CourseResult}
         />
@@ -338,6 +344,7 @@ export default function StudyApp({
         <StudyLearningPathGenerator
           key="gen-learning-path"
           onBack={handleBack}
+          onGoHome={handleGoHome}
           onSaved={refreshSavedCount}
           existingResource={activeResource as LearningPathResult}
         />

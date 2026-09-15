@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, Loader2, CheckCircle2, Printer, Download, ArrowLeft } from 'lucide-react';
+import { Sparkles, Loader2, CheckCircle2, Printer, Download, ArrowLeft, ArrowRight } from 'lucide-react';
+import { GlobalNavigationButtons } from '../../components/GlobalNavigationButtons';
 import { callAIAndParseJson } from '../../study/services/aiService';
 import { saveResourceToStorage } from '../utils/storage';
 import { SavedResource } from '../types';
@@ -12,6 +13,7 @@ interface BuildGeneratorViewProps {
   activeTool: string;
   onSelectTool: (toolId: string) => void;
   onBack: () => void;
+  onGoHome?: () => void;
   initialTopic?: string;
   initialResource?: SavedResource | null;
   onResourceSaved?: (resource: SavedResource) => void;
@@ -21,6 +23,7 @@ export const BuildGeneratorView: React.FC<BuildGeneratorViewProps> = ({
   activeTool,
   onSelectTool,
   onBack,
+  onGoHome,
   initialTopic = '',
   initialResource,
   onResourceSaved,
@@ -213,25 +216,23 @@ Return valid JSON with:
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={onBack}
-          className="px-4 py-2 rounded-xl bg-white border border-stone-200/90 text-stone-700 hover:bg-stone-50 font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer shadow-xs"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back to Build Overview</span>
-        </button>
+        <GlobalNavigationButtons
+          onBack={onBack}
+          onGoHome={onGoHome}
+          backLabel="Back"
+          homeLabel="Home"
+        />
       </div>
 
       {/* 3. Main Stacked Layout: Menu directly ABOVE generation area on mobile, tablet, and desktop */}
       <div className="space-y-8">
-        {/* The Tool Menu / Form - Remains visible above generation area */}
+        {/* The Tool Menu / Form - Soft UI 3D Design */}
         <div className="w-full">
-          <div className="p-6 sm:p-8 rounded-[2rem] bg-white border border-stone-200/90 shadow-[0_10px_30px_rgba(0,0,0,0.05)] space-y-6">
+          <div className="p-6 sm:p-10 rounded-[2.5rem] bg-[#FAF4EC] border border-[#EFE5DA] shadow-[0_25px_60px_-15px_rgba(100,80,60,0.12),_0_10px_25px_-5px_rgba(100,80,60,0.06)] space-y-6">
             {/* Topic Input */}
-            <div className="space-y-2">
-              <label className="block font-mono text-[13px] sm:text-sm font-bold uppercase tracking-wider text-stone-900">
-                {activeTool === 'lessonplan' ? 'Lesson Plan Topic / Subject Title *' : 'Topic / Subject Title *'}
+            <div className="space-y-2 text-left">
+              <label className="block font-mono text-[11px] sm:text-xs font-bold uppercase tracking-wider text-stone-600">
+                {activeTool === 'lessonplan' ? 'LESSON PLAN TOPIC / SUBJECT TITLE *' : 'TOPIC / SUBJECT TITLE *'}
               </label>
               <input
                 type="text"
@@ -239,23 +240,23 @@ Return valid JSON with:
                 onChange={(e) => setTopicInput(e.target.value)}
                 placeholder={
                   activeTool === 'lessonplan'
-                    ? "e.g., Photosynthesis, The Kingdom of Mali, Newton's Laws of Motion..."
-                    : "e.g., Photosynthesis, The Kingdom of Mali, Calculus Derivatives..."
+                    ? "e.g. Great Zimbabwe Architecture & Trade"
+                    : "e.g. Great Zimbabwe Architecture & Trade"
                 }
-                className="w-full bg-stone-50 border border-stone-200 rounded-2xl p-4 font-mono text-xs sm:text-sm text-stone-900 focus:outline-hidden focus:border-[#FF7A00] focus:ring-1 focus:ring-[#FF7A00]"
+                className="w-full bg-[#EFE8DE] border border-[#E4DCD0] rounded-2xl p-4 font-mono text-xs sm:text-sm text-stone-900 placeholder-stone-400/80 shadow-[inset_2px_2px_4px_rgba(0,0,0,0.07),_inset_-2px_-2px_4px_rgba(255,255,255,0.8)] focus:outline-hidden focus:border-[#E62E6B] transition-all"
               />
             </div>
 
             {/* Grade Level & Item Count / Duration */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
               <div className="space-y-2">
-                <label className="block font-mono text-[13px] sm:text-sm font-bold uppercase tracking-wider text-stone-900">
-                  Grade Level / Target Audience
+                <label className="block font-mono text-[11px] sm:text-xs font-bold uppercase tracking-wider text-stone-600">
+                  GRADE LEVEL / TARGET AUDIENCE
                 </label>
                 <select
                   value={gradeLevel}
                   onChange={(e) => setGradeLevel(e.target.value)}
-                  className="w-full bg-stone-50 border border-stone-200 rounded-2xl p-4 font-mono text-xs sm:text-sm text-stone-900 focus:outline-hidden focus:border-[#FF7A00]"
+                  className="w-full bg-[#EFE8DE] border border-[#E4DCD0] rounded-2xl p-4 font-mono text-xs sm:text-sm text-stone-900 shadow-[inset_2px_2px_4px_rgba(0,0,0,0.07),_inset_-2px_-2px_4px_rgba(255,255,255,0.8)] focus:outline-hidden focus:border-[#E62E6B] cursor-pointer transition-all"
                 >
                   <option value="Grade 8-9">Grade 8-9 (Intermediate)</option>
                   <option value="Grade 10-12">Grade 10-12 (FET / Senior)</option>
@@ -264,14 +265,14 @@ Return valid JSON with:
               </div>
 
               <div className="space-y-2">
-                <label className="block font-mono text-[13px] sm:text-sm font-bold uppercase tracking-wider text-stone-900">
-                  {activeTool === 'lessonplan' ? 'Lesson Duration / Pacing' : 'Question / Item Count'}
+                <label className="block font-mono text-[11px] sm:text-xs font-bold uppercase tracking-wider text-stone-600">
+                  {activeTool === 'lessonplan' ? 'LESSON DURATION / PACING' : 'QUESTION / ITEM COUNT'}
                 </label>
                 {activeTool === 'lessonplan' ? (
                   <select
                     value={questionCount}
                     onChange={(e) => setQuestionCount(Number(e.target.value))}
-                    className="w-full bg-stone-50 border border-stone-200 rounded-2xl p-4 font-mono text-xs sm:text-sm text-stone-900 focus:outline-hidden focus:border-[#FF7A00]"
+                    className="w-full bg-[#EFE8DE] border border-[#E4DCD0] rounded-2xl p-4 font-mono text-xs sm:text-sm text-stone-900 shadow-[inset_2px_2px_4px_rgba(0,0,0,0.07),_inset_-2px_-2px_4px_rgba(255,255,255,0.8)] focus:outline-hidden focus:border-[#E62E6B] cursor-pointer transition-all"
                   >
                     <option value={45}>45 Minutes (Single Period)</option>
                     <option value={60}>60 Minutes (Standard Period)</option>
@@ -282,7 +283,7 @@ Return valid JSON with:
                   <select
                     value={questionCount}
                     onChange={(e) => setQuestionCount(Number(e.target.value))}
-                    className="w-full bg-stone-50 border border-stone-200 rounded-2xl p-4 font-mono text-xs sm:text-sm text-stone-900 focus:outline-hidden focus:border-[#FF7A00]"
+                    className="w-full bg-[#EFE8DE] border border-[#E4DCD0] rounded-2xl p-4 font-mono text-xs sm:text-sm text-stone-900 shadow-[inset_2px_2px_4px_rgba(0,0,0,0.07),_inset_-2px_-2px_4px_rgba(255,255,255,0.8)] focus:outline-hidden focus:border-[#E62E6B] cursor-pointer transition-all"
                   >
                     <option value={5}>5 Questions / Items</option>
                     <option value={10}>10 Questions / Items</option>
@@ -305,7 +306,7 @@ Return valid JSON with:
                   setSourceText('');
                   setSourceFileName('');
                 }}
-                accentColor="#FF7A00"
+                accentColor="#E62E6B"
               />
             </div>
 
@@ -315,29 +316,28 @@ Return valid JSON with:
               </div>
             )}
 
-            {/* Generate Button */}
+            {/* Generate Button - Soft UI 3D Pink Button */}
             <button
               onClick={handleGenerate}
               disabled={isGenerating}
-              className="w-full py-4 bg-gradient-to-r from-[#FF7A00] via-[#D09500] to-[#A67A00] hover:brightness-105 text-white font-display text-base font-black uppercase tracking-wider rounded-2xl shadow-[0_10px_25px_rgba(230,57,86,0.35),inset_0_1px_1px_rgba(255,255,255,0.4)] border border-white/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className="w-full py-4 bg-[#E62E6B] hover:bg-[#d8245f] text-white font-display text-sm font-black uppercase tracking-wider rounded-full shadow-[0_10px_28px_rgba(230,46,107,0.4)] active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
               {isGenerating ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
                   <span>
                     {activeTool === 'lessonplan'
-                      ? 'Synthesizing Lesson Plan...'
-                      : 'Synthesizing Classroom Pack...'}
+                      ? 'SYNTHESIZING LESSON PLAN...'
+                      : 'SYNTHESIZING CLASSROOM PACK...'}
                   </span>
                 </>
               ) : (
                 <>
                   <Sparkles className="w-5 h-5" />
                   <span>
-                    {activeTool === 'lessonplan'
-                      ? 'Generate Lesson Plan Now'
-                      : 'Generate Classroom Resource Now'}
+                    GENERATE {activeTool === 'lessonplan' ? 'LESSON PLAN' : 'RESOURCE'}
                   </span>
+                  <ArrowRight className="w-4 h-4" />
                 </>
               )}
             </button>

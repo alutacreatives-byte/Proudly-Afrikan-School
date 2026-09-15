@@ -19,15 +19,18 @@ import { SourceMaterialUpload } from '../../../build/components/SourceMaterialUp
 import { saveResourceToStorage } from '../../../build/utils/storage';
 import { useAuthCredit } from '../../../context/AuthCreditContext';
 import { exportTutorChat } from '../../../utils/exportUtils';
+import { GlobalNavigationButtons } from '../../../components/GlobalNavigationButtons';
 
 interface TutorChatGeneratorProps {
   onBack: () => void;
+  onGoHome?: () => void;
   onSaved?: () => void;
   existingResource?: TutorChatResult;
 }
 
 export const TutorChatGenerator: React.FC<TutorChatGeneratorProps> = ({
   onBack,
+  onGoHome,
   onSaved,
   existingResource,
 }) => {
@@ -297,73 +300,78 @@ export const TutorChatGenerator: React.FC<TutorChatGeneratorProps> = ({
           </h1>
         </div>
 
-        {isChatActive && (
-          <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
-            <button
-              type="button"
-              onClick={handleCopy}
-              className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
-            >
-              {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-              {copied ? 'Copied' : 'Copy'}
-            </button>
-            <button
-              type="button"
-              onClick={handleExportDoc}
-              className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
-              title="Download Word Document (.doc)"
-            >
-              <Download className="w-3.5 h-3.5 text-[#D92B8A]" />
-              DOC
-            </button>
-            <button
-              type="button"
-              onClick={handleExportPdf}
-              className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
-              title="Download PDF Document (.pdf)"
-            >
-              <Download className="w-3.5 h-3.5 text-[#D92B8A]" />
-              PDF
-            </button>
-            <button
-              type="button"
-              onClick={() => window.print()}
-              className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
-            >
-              <Printer className="w-3.5 h-3.5" />
-              Print
-            </button>
-            <button
-              type="button"
-              onClick={handleSave}
-              className="px-4 py-2 rounded-xl bg-[#18181B] hover:bg-[#27272A] text-white font-mono text-xs font-bold uppercase flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
-            >
-              <Bookmark className="w-3.5 h-3.5" />
-              {saved ? 'Saved' : 'Save Session'}
-            </button>
-            <button
-              type="button"
-              onClick={handleResetDocument}
-              className="px-4 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 font-mono text-xs font-bold uppercase flex items-center gap-1.5 transition-colors cursor-pointer"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              New Document
-            </button>
-          </div>
-        )}
+        <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end flex-wrap">
+          {isChatActive && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={handleCopy}
+                className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                {copied ? 'Copied' : 'Copy'}
+              </button>
+              <button
+                type="button"
+                onClick={handleExportDoc}
+                className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
+                title="Download Word Document (.doc)"
+              >
+                <Download className="w-3.5 h-3.5 text-[#D92B8A]" />
+                DOC
+              </button>
+              <button
+                type="button"
+                onClick={handleExportPdf}
+                className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
+                title="Download PDF Document (.pdf)"
+              >
+                <Download className="w-3.5 h-3.5 text-[#D92B8A]" />
+                PDF
+              </button>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                Print
+              </button>
+              <button
+                type="button"
+                onClick={handleSave}
+                className="px-4 py-2 rounded-xl bg-[#18181B] hover:bg-[#27272A] text-white font-mono text-xs font-bold uppercase flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+              >
+                <Bookmark className="w-3.5 h-3.5" />
+                {saved ? 'Saved' : 'Save Session'}
+              </button>
+              <button
+                type="button"
+                onClick={handleResetDocument}
+                className="px-4 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 font-mono text-xs font-bold uppercase flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                New Document
+              </button>
+            </div>
+          )}
+          <GlobalNavigationButtons
+            onBack={onBack}
+            onGoHome={onGoHome}
+            backLabel="Back"
+            homeLabel="Home"
+          />
+        </div>
       </div>
 
       {!isChatActive ? (
         /* Upload & Setup Screen */
-        <div className="max-w-3xl mx-auto p-8 sm:p-10 rounded-[2rem] bg-white border border-stone-200/90 shadow-[0_10px_30px_rgba(0,0,0,0.05)] space-y-6">
+        <div className="max-w-3xl mx-auto p-6 sm:p-10 rounded-[2.5rem] bg-[#FAF4EC] border border-[#EFE5DA] shadow-[0_25px_60px_-15px_rgba(100,80,60,0.12),_0_10px_25px_-5px_rgba(100,80,60,0.06)] space-y-6">
           <div className="space-y-2 text-center">
-            <div className="w-12 h-12 rounded-2xl bg-rose-50 text-[#E63956] flex items-center justify-center mx-auto mb-2">
-              <MessageSquare className="w-6 h-6" />
+            <div className="w-14 h-14 rounded-2xl bg-[#F5ECE3] shadow-[inset_1px_1px_2px_rgba(255,255,255,0.9),_2px_4px_8px_rgba(0,0,0,0.06)] border border-[#E8DDD0] text-[#E62E6B] flex items-center justify-center mx-auto mb-3">
+              <MessageSquare className="w-7 h-7" />
             </div>
-            <h2 className="font-display font-black text-xl uppercase text-[#161616]">
-              Upload Material for Tutor Chat
-            </h2>
-            <p className="text-xs sm:text-sm text-stone-500 max-w-md mx-auto">
+            <p className="text-xs sm:text-sm text-stone-600 max-w-md mx-auto">
               Upload any PDF, Word document, photo, or notes to open an interactive mentoring session.
             </p>
           </div>
@@ -389,17 +397,17 @@ export const TutorChatGenerator: React.FC<TutorChatGeneratorProps> = ({
               onClear={() => {
                 setSourceFileName('');
               }}
-              accentColor="#E63956"
+              accentColor="#E62E6B"
             />
 
             {error && (
-              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs font-mono">
+              <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl text-rose-700 text-xs font-mono">
                 {error}
               </div>
             )}
 
             {isUploading && (
-              <div className="text-center font-mono text-xs text-stone-500 animate-pulse py-2">
+              <div className="text-center font-mono text-xs text-stone-600 animate-pulse py-2">
                 Loading document and initializing mentoring session...
               </div>
             )}

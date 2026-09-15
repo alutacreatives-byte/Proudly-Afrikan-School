@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { GlobalNavigationButtons } from '../components/GlobalNavigationButtons';
 import { Hero } from './components/Hero';
 import { ThreeWaysSection } from './components/ThreeWaysSection';
 import { QuizBuilder } from './components/QuizBuilder';
@@ -25,14 +26,36 @@ export interface QuizAppProps {
   key?: React.Key;
   initialQuiz?: Quiz | null;
   onNavigateToTab?: (tab: 'STUDY' | 'QUIZ' | 'BUILD' | 'MY SETS' | 'PLANNER') => void;
+  onGoHome?: () => void;
+  onBack?: () => void;
 }
 
 export default function App({
   initialQuiz,
   onNavigateToTab,
+  onGoHome,
+  onBack,
 }: QuizAppProps = {}) {
   // Navigation & View State
   const [viewState, setViewState] = useState<AppViewState>(initialQuiz ? 'quiz_active' : 'builder');
+
+  const handleGoHome = () => {
+    if (onGoHome) {
+      onGoHome();
+    } else if (onNavigateToTab) {
+      onNavigateToTab('STUDY');
+    }
+  };
+
+  const handleBack = () => {
+    if (viewState !== 'builder') {
+      setViewState('builder');
+    } else if (onBack) {
+      onBack();
+    } else if (onNavigateToTab) {
+      onNavigateToTab('STUDY');
+    }
+  };
 
   // Creation State
   const [creationMethod, setCreationMethod] = useState<CreationMethod>('topic');
@@ -230,7 +253,7 @@ export default function App({
   };
 
   // Return to home / builder view
-  const handleGoHome = () => {
+  const handleResetToBuilder = () => {
     setViewState('builder');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -264,6 +287,22 @@ export default function App({
 
   return (
     <div className="min-h-screen bg-[#FAF7F0] text-[#161616] flex flex-col justify-between selection:bg-[#E52E5E] selection:text-white">
+      {/* Top Navigation Bar in QUIZ */}
+      <div className="w-full bg-[#FAF7F0] border-b border-stone-200/80 sticky top-0 z-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between">
+          <GlobalNavigationButtons
+            onBack={handleBack}
+            onGoHome={handleGoHome}
+            backLabel="Back"
+            homeLabel="Home"
+          />
+
+          <div className="text-xs font-mono font-bold text-stone-500 uppercase tracking-wider hidden sm:block">
+            {`QUIZ • ${viewState.toUpperCase().replace('_', ' ')}`}
+          </div>
+        </div>
+      </div>
+
       {/* Global Error Banner if API failed */}
       {globalError && (
         <div className="bg-[#FFEBE6] border-b-2 border-[#E52E5E] py-3 px-4 text-center font-mono-code text-xs sm:text-sm text-[#292929] flex items-center justify-center gap-2">

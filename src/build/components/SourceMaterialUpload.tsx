@@ -110,9 +110,9 @@ export const SourceMaterialUpload: React.FC<SourceMaterialUploadProps> = ({
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 text-left">
       {/* Label above */}
-      <span className="font-mono text-[11px] sm:text-xs font-bold text-stone-700 tracking-wider block uppercase">
+      <span className="font-mono text-[11px] sm:text-xs font-bold text-stone-600 tracking-wider block uppercase">
         OPTIONAL SOURCE MATERIAL (PDF / DOC / CAMERA)
       </span>
 
@@ -121,30 +121,30 @@ export const SourceMaterialUpload: React.FC<SourceMaterialUploadProps> = ({
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        className={`relative bg-[#FAF8F5] border-2 border-dashed rounded-3xl p-6 sm:p-8 text-center transition-all ${
+        className={`relative bg-[#EEE7DD]/70 border border-dashed rounded-2xl sm:rounded-3xl p-6 sm:p-7 text-center transition-all shadow-[inset_1px_1px_3px_rgba(0,0,0,0.04)] ${
           isDragging
-            ? 'border-[#D92B8A] bg-pink-50/40 shadow-md scale-[1.01]'
-            : 'border-stone-200/90 shadow-xs hover:border-stone-300'
+            ? 'border-[#E62E6B] bg-pink-50/50 scale-[1.01]'
+            : 'border-[#D5CCC0] hover:border-stone-400'
         }`}
       >
         {/* Top Upload Circle Icon */}
-        <div className="w-12 h-12 rounded-full bg-white shadow-xs border border-stone-100/80 flex items-center justify-center mx-auto mb-3.5">
-          <Upload className="w-5 h-5" style={{ color: accentColor || '#D92B8A' }} />
+        <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#FAF5EE] shadow-[2px_3px_8px_rgba(0,0,0,0.06),_-2px_-2px_6px_rgba(255,255,255,0.9)] border border-[#F0E6DC] flex items-center justify-center mx-auto mb-3">
+          <Upload className="w-4 h-4 sm:w-5 sm:h-5 text-[#E62E6B]" />
         </div>
 
         {/* Title */}
-        <h3 className="font-display font-black text-base sm:text-lg text-[#161616] uppercase tracking-tight mb-1">
+        <h3 className="font-display font-black text-xs sm:text-sm text-[#1A1A1A] uppercase tracking-wide mb-1">
           {isUploading ? 'READING FILE...' : 'DRAG & DROP PDF OR TEXT FILE'}
         </h3>
 
         {/* Subtitle */}
-        <p className="font-mono text-xs sm:text-sm text-stone-500 mb-5">
+        <p className="font-mono text-[11px] sm:text-xs text-stone-500 mb-4">
           Supports PDF, DOC, DOCX, TXT (Up to 25 pages)
         </p>
 
         {/* Active File Loaded Indicator */}
         {activeFileName && (
-          <div className="inline-flex items-center gap-2 mb-5 font-mono text-xs font-semibold text-emerald-900 bg-emerald-50 px-3.5 py-1.5 rounded-full border border-emerald-200/90 shadow-2xs">
+          <div className="inline-flex items-center gap-2 mb-4 font-mono text-xs font-semibold text-emerald-900 bg-emerald-50 px-3.5 py-1.5 rounded-full border border-emerald-200 shadow-2xs">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
             <span className="truncate max-w-[200px] sm:max-w-[320px]">{activeFileName}</span>
             <button
@@ -164,7 +164,7 @@ export const SourceMaterialUpload: React.FC<SourceMaterialUploadProps> = ({
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={isUploading}
-            className="bg-[#18181B] hover:bg-black text-white font-mono font-bold text-xs px-6 py-3 rounded-full transition-all shadow-sm active:scale-95 cursor-pointer disabled:opacity-50 uppercase tracking-wider"
+            className="bg-[#FAF5EE] text-[#2D2D2D] font-mono font-bold text-[11px] sm:text-xs px-5 py-2.5 rounded-2xl shadow-[2px_3px_8px_rgba(0,0,0,0.08),_-2px_-2px_6px_rgba(255,255,255,0.95)] border border-white/80 hover:bg-white active:translate-y-0.5 transition-all cursor-pointer disabled:opacity-50 uppercase tracking-wider"
           >
             {isUploading ? 'PROCESSING...' : 'BROWSE FILES'}
           </button>
@@ -173,10 +173,9 @@ export const SourceMaterialUpload: React.FC<SourceMaterialUploadProps> = ({
             type="button"
             onClick={() => setIsCameraOpen(true)}
             disabled={isUploading}
-            style={{ backgroundColor: accentColor || '#D92B8A' }}
-            className="text-white hover:opacity-90 font-mono font-bold text-xs px-6 py-3 rounded-full transition-all shadow-sm active:scale-95 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2 uppercase tracking-wider"
+            className="bg-[#E62E6B] hover:bg-[#d8245f] text-white font-mono font-bold text-[11px] sm:text-xs px-5 py-2.5 rounded-2xl shadow-[0_6px_16px_rgba(230,46,107,0.35)] active:translate-y-0.5 transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5 uppercase tracking-wider"
           >
-            <Camera className="w-4 h-4 text-white" />
+            <Camera className="w-3.5 h-3.5 text-white" />
             <span>CAPTURE IT (CAMERA)</span>
           </button>
 
@@ -189,35 +188,35 @@ export const SourceMaterialUpload: React.FC<SourceMaterialUploadProps> = ({
             className="hidden"
           />
         </div>
-
-        {/* Optional Paste Text Accordion Toggle */}
-        <div className="mt-4 pt-3 border-t border-stone-200/60 flex items-center justify-between text-xs font-mono">
-          <button
-            type="button"
-            onClick={() => setShowPasteArea(!showPasteArea)}
-            className="text-stone-500 hover:text-stone-800 flex items-center gap-1 cursor-pointer"
-          >
-            <span>{showPasteArea ? 'Hide Direct Text Paste' : 'Or Paste Raw Text Notes'}</span>
-            {showPasteArea ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-          </button>
-          <span className="text-stone-400 text-[11px]">
-            {sourceText.length > 0 ? `${sourceText.length} chars grounded` : 'No text grounded'}
-          </span>
-        </div>
-
-        {/* Expandable Text Area */}
-        {showPasteArea && (
-          <div className="mt-3 text-left">
-            <textarea
-              value={sourceText}
-              onChange={(e) => onSourceTextChange && onSourceTextChange(e.target.value)}
-              placeholder="Paste text notes, syllabus content, or exam directives directly..."
-              rows={3}
-              className="w-full p-3 bg-white border border-stone-200 rounded-2xl font-sans text-xs text-stone-900 placeholder-stone-400 focus:outline-hidden focus:ring-2 focus:ring-[#D92B8A] transition-all resize-y"
-            />
-          </div>
-        )}
       </div>
+
+      {/* Optional Paste Text Accordion Toggle below dashed container */}
+      <div className="pt-1 flex items-center justify-between text-xs font-mono">
+        <button
+          type="button"
+          onClick={() => setShowPasteArea(!showPasteArea)}
+          className="text-stone-500 hover:text-stone-800 flex items-center gap-1 cursor-pointer"
+        >
+          <span>{showPasteArea ? 'Hide Direct Text Paste' : 'Or Paste Raw Text Notes'}</span>
+          {showPasteArea ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+        </button>
+        <span className="text-stone-400 text-[11px]">
+          {sourceText.length > 0 ? `${sourceText.length} chars grounded` : 'No text grounded'}
+        </span>
+      </div>
+
+      {/* Expandable Text Area */}
+      {showPasteArea && (
+        <div className="mt-2 text-left">
+          <textarea
+            value={sourceText}
+            onChange={(e) => onSourceTextChange && onSourceTextChange(e.target.value)}
+            placeholder="Paste text notes, syllabus content, or exam directives directly..."
+            rows={3}
+            className="w-full p-3.5 bg-[#EFE8DE] border border-[#E4DCD0] rounded-2xl font-mono text-xs text-stone-900 placeholder-stone-400 shadow-[inset_2px_2px_4px_rgba(0,0,0,0.07)] focus:outline-hidden focus:border-[#E62E6B] transition-all resize-y"
+          />
+        </div>
+      )}
 
       <CameraCaptureModal
         isOpen={isCameraOpen}
