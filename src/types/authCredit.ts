@@ -28,7 +28,7 @@ export const PLANS: Record<PlanTier, PlanDetails> = {
     features: [
       '400 once-off AI credits on sign up',
       'Unlimited access to Study, Quiz & Planner',
-      'Full access to My Sets library',
+      'Full access to History library',
       'Standard AI generation speed',
       'No recurring payment',
     ],

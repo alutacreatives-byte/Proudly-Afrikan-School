@@ -374,7 +374,6 @@ export const TutorChatGenerator: React.FC<TutorChatGeneratorProps> = ({
               onTextExtracted={(text, name) => {
                 if (name) setSourceFileName(name);
                 if (text) {
-                  setIsChatActive(true);
                   if (messages.length === 0) {
                     setMessages([
                       {

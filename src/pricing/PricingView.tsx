@@ -180,7 +180,7 @@ export const PricingView: React.FC<PricingViewProps> = ({ onNavigateToTab }) => 
                 return [
                   '400 once-off AI credits on sign',
                   'Unlimited access to Study.',
-                  'Full access to My Sets library',
+                  'Full access to History library',
                   'Standard AI generation speed',
                   'No recurring payment',
                 ];
@@ -348,7 +348,7 @@ export const PricingView: React.FC<PricingViewProps> = ({ onNavigateToTab }) => 
               </div>
               <div className="p-2.5 rounded-2xl clay-card-3d flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-[#D92B8A]"></span>
-                <span>My Sets: 0 cr</span>
+                <span>History: 0 cr</span>
               </div>
               <div className="p-2.5 rounded-2xl clay-card-3d flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-[#D92B8A]"></span>

@@ -89,7 +89,7 @@ export const EducationalContent: React.FC = () => {
     {
       question: 'What is an AI quiz generator?',
       answer:
-        'An AI quiz generator is an intelligent educational tool that analyzes source materials (such as topics, text notes, or PDF documents) and automatically produces rigorous, accurate assessment questions, answer choices, and explanatory notes for rapid self-testing.',
+        'An AI quiz generator is an intelligent educational tool that analyzes source materials, such as topics, text notes, or PDF documents, and automatically produces rigorous, accurate assessment questions, answer choices, and explanatory notes for rapid self-testing.',
     },
     {
       question: 'Can I create a quiz from a PDF?',
@@ -104,12 +104,12 @@ export const EducationalContent: React.FC = () => {
     {
       question: 'Can I choose the difficulty?',
       answer:
-        'Yes. You can select between Easy (foundational definitions and clear options), Medium (nuanced conceptual questions), and Hard (deep analytical questions with plausible distractors).',
+        'Yes. You can select between Easy with foundational definitions and clear options, Medium for nuanced conceptual questions, and Hard featuring deep analytical questions with plausible distractors.',
     },
     {
       question: 'Can I create multiple-choice questions?',
       answer:
-        'Yes. You can choose Multiple Choice (4 choices with one correct answer), True / False statements (2 options), or Mixed mode which blends both formats for variety.',
+        'Yes. You can choose Multiple Choice with four options and one correct answer, True or False statements with two options, or Mixed mode which blends both formats for variety.',
     },
     {
       question: 'Is Proudly Afrikan Quiz free?',

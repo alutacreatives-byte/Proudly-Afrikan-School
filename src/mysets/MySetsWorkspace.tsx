@@ -113,7 +113,7 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
       category: selectedSubject !== 'ALL' ? selectedSubject : 'Curriculum Search',
     });
     loadAllContent();
-    showToast(`Search "${searchQuery.trim()}" saved to MY SETS!`);
+    showToast(`Search "${searchQuery.trim()}" saved to History!`);
   };
 
   // Convert all distinct data types into Unified Items
@@ -438,7 +438,7 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
                     type="button"
                     onClick={handleSaveCurrentSearch}
                     className="px-2 py-1 bg-[#DA8F00] hover:bg-[#c02479] text-white text-[10px] font-mono font-bold uppercase rounded-lg shadow-xs transition-colors cursor-pointer flex items-center gap-1"
-                    title="Save this search to My Sets"
+                    title="Save this search to History"
                   >
                     <Bookmark className="w-3 h-3" />
                     <span>SAVE</span>
@@ -541,7 +541,7 @@ export const MySetsWorkspace: React.FC<MySetsWorkspaceProps> = ({
                   className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-full text-xs font-mono font-bold uppercase shadow-md cursor-pointer transition-colors flex items-center gap-1.5"
                 >
                   <Bookmark className="w-3.5 h-3.5" />
-                  <span>Save "{searchQuery}" To My Sets</span>
+                  <span>Save "{searchQuery}" To History</span>
                 </button>
               )}
               <button

@@ -932,7 +932,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             },
             {
               q: 'HOW ARE ACTIVE MEMORY & SPACED REPETITION SCHEDULES CALCULATED?',
-              a: 'Our active memory system employs the SuperMemo SM-2 algorithm. Based on your self-reported recall ratings (Again, Hard, Good, Easy), it calculates optimal review intervals (1, 3, 7, 14, 30 days) to prevent forgetting curve decay with minimal daily study time.'
+              a: 'Our active memory system employs the SuperMemo SM-2 algorithm. Based on your self-reported recall ratings ranging from Again and Hard to Good and Easy, it calculates optimal review intervals across 1, 3, 7, 14, or 30 days to prevent forgetting curve decay with minimal daily study time.'
             },
             {
               q: 'CAN TEACHERS AND EDUCATORS EXPORT PRINT-READY EXAMS & WORKSHEETS?',
