@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   X, 
   Printer, 
@@ -52,6 +52,13 @@ export const SavedResultViewer: React.FC<SavedResultViewerProps> = ({
   const [isCardFlipped, setIsCardFlipped] = useState(false);
   const [userAnswers, setUserAnswers] = useState<Record<number, number>>({});
   const [showQuizResults, setShowQuizResults] = useState(false);
+
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, []);
 
   // Extract underlying data
   const studySet = item.originalStudySet;
@@ -168,15 +175,15 @@ export const SavedResultViewer: React.FC<SavedResultViewerProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-xs overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-6 bg-black/60 backdrop-blur-xs overflow-hidden">
       <div 
-        className="relative w-full max-w-5xl bg-[#FAF7F0] border border-[#E3D9C9] rounded-[28px] sm:rounded-[36px] shadow-[0_20px_70px_rgba(0,0,0,0.3)] my-auto flex flex-col max-h-[92vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+        className="relative w-full max-w-5xl h-[92vh] max-h-[92vh] bg-[#FAF7F0] border border-[#E3D9C9] rounded-[24px] sm:rounded-[36px] shadow-[0_20px_70px_rgba(0,0,0,0.3)] my-auto flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header Bar with Global Navigation */}
         <div className="bg-white border-b border-[#EAE3D6] px-4 sm:px-8 py-4 flex flex-col gap-3 shrink-0">
           {/* Top Row: Navigation & Actions */}
-          <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 w-full">
             <GlobalNavigationButtons
               onBack={onBack || onClose}
               onGoHome={onGoHome}
@@ -263,7 +270,7 @@ export const SavedResultViewer: React.FC<SavedResultViewerProps> = ({
                 </span>
               </div>
 
-              <h2 className="font-display font-black text-base sm:text-lg lg:text-xl text-[#161616] uppercase truncate mt-0.5 max-w-full">
+              <h2 className="font-display font-black text-sm sm:text-base lg:text-xl text-[#161616] uppercase break-words mt-0.5 max-w-full">
                 {item.title}
               </h2>
             </div>
@@ -271,7 +278,7 @@ export const SavedResultViewer: React.FC<SavedResultViewerProps> = ({
         </div>
 
         {/* Scrollable Content Body */}
-        <div className="p-5 sm:p-8 overflow-y-auto space-y-6 flex-1">
+        <div className="p-4 sm:p-8 overflow-y-auto no-scrollbar space-y-6 flex-1">
           
           {/* 1. STUDY SET VIEWER */}
           {studySet && (

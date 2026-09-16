@@ -327,3 +327,11 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #D92B8A;
 }
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
