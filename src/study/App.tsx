@@ -282,7 +282,7 @@ export default function StudyApp({
           onBack={handleBack}
           onGoHome={handleGoHome}
           onSaved={refreshSavedCount}
-          existingResource={activeResource as FlashcardResult}
+          existingResource={activeResource as FlashcardsResult}
         />
       );
     }

@@ -330,10 +330,10 @@ export const QuizBuilder: React.FC<QuizBuilderProps> = ({
               <div className="space-y-5 flex-1 flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label htmlFor="topic-input" className="font-mono-code text-xs font-bold uppercase tracking-wider text-[#292929]">
+                    <label htmlFor="topic-input" className="font-mono-code text-[10px] uppercase tracking-wider text-[#292929]">
                       ENTER TOPIC OR PROMPT
                     </label>
-                    <span className="font-mono-code text-[11px] font-bold text-[#736E65]">ANY SUBJECT</span>
+                    <span className="font-mono-code text-[9px] text-[#736E65]">ANY SUBJECT</span>
                   </div>
 
                   <input
@@ -345,7 +345,7 @@ export const QuizBuilder: React.FC<QuizBuilderProps> = ({
                       if (validationError) setValidationError(null);
                     }}
                     placeholder="e.g. The Kingdom of Mali, Quantum Physics, African Wildlife..."
-                    className="w-full bg-[#FAF7F2] border border-[#E0D8C5] rounded-xl p-4 font-display font-bold text-base sm:text-lg text-[#292929] placeholder:text-[#A39E93] focus:outline-none focus:ring-2 focus:ring-[#E52E5E] transition-all"
+                    className="w-full bg-[#FAF7F2] border border-[#E0D8C5] rounded-xl p-4 font-display text-sm sm:text-base text-[#292929] placeholder:text-[#A39E93] focus:outline-none focus:ring-2 focus:ring-[#E52E5E] transition-all"
                     disabled={isGenerating}
                   />
                 </div>

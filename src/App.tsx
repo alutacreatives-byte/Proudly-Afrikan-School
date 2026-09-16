@@ -173,6 +173,8 @@ function AppContent() {
             onNavigateToStudy={() => setActiveTab('STUDY')}
             onNavigateToQuiz={() => setActiveTab('QUIZ')}
             onNavigateToBuild={() => setActiveTab('BUILD')}
+            onBack={handleBackFromStudy}
+            onGoHome={handleGoHome}
           />
         )}
 

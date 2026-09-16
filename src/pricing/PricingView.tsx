@@ -78,9 +78,9 @@ export const PricingView: React.FC<PricingViewProps> = ({ onNavigateToTab }) => 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
           <div className="lg:col-span-8 space-y-6 flex flex-col justify-start">
               {/* Edition Badge */}
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 clay-pill-3d text-xs sm:text-sm font-mono font-bold tracking-wider uppercase text-stone-800 self-start h-8 shadow-xs">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#D92B8A] inline-block animate-pulse"></span>
-                <span>PROUDLY AFRIKAN EDUCATION • TRANSPARENT PRICING</span>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 clay-pill-3d text-[10px] sm:text-xs font-mono font-bold tracking-wider uppercase text-stone-800 self-start h-8 shadow-xs whitespace-nowrap">
+                <span className="w-2 h-2 rounded-full bg-[#D92B8A] inline-block animate-pulse shrink-0"></span>
+                <span className="truncate">PROUDLY AFRIKAN EDUCATION • TRANSPARENT PRICING</span>
               </div>
 
               <h1 className="font-display font-black text-5xl sm:text-7xl md:text-8xl lg:text-[5.5rem] xl:text-[6.25rem] uppercase tracking-tighter text-[#161616] leading-[0.88] sm:leading-[0.9] lg:leading-[0.92] break-words">

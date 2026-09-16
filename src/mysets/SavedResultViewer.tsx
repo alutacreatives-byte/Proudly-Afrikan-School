@@ -26,12 +26,15 @@ import {
 } from 'lucide-react';
 import { UnifiedItem } from './MySetsWorkspace';
 import { exportUnifiedItem } from '../utils/exportUtils';
+import { GlobalNavigationButtons } from '../components/GlobalNavigationButtons';
 
 interface SavedResultViewerProps {
   item: UnifiedItem;
   onClose: () => void;
   onOpenInWorkbench?: () => void;
   onLaunchPractice?: (mode: 'study' | 'flashcards' | 'practice') => void;
+  onBack?: () => void;
+  onGoHome?: () => void;
 }
 
 export const SavedResultViewer: React.FC<SavedResultViewerProps> = ({
@@ -39,6 +42,8 @@ export const SavedResultViewer: React.FC<SavedResultViewerProps> = ({
   onClose,
   onOpenInWorkbench,
   onLaunchPractice,
+  onBack,
+  onGoHome,
 }) => {
   const [copied, setCopied] = useState(false);
   const [showMarkingGuide, setShowMarkingGuide] = useState(false);
@@ -168,16 +173,85 @@ export const SavedResultViewer: React.FC<SavedResultViewerProps> = ({
         className="relative w-full max-w-5xl bg-[#FAF7F0] border border-[#E3D9C9] rounded-[28px] sm:rounded-[36px] shadow-[0_20px_70px_rgba(0,0,0,0.3)] my-auto flex flex-col max-h-[92vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header Bar */}
-        <div className="bg-white border-b border-[#EAE3D6] px-5 sm:px-8 py-4 sm:py-5 flex items-center justify-between gap-4 shrink-0">
-          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+        {/* Header Bar with Global Navigation */}
+        <div className="bg-white border-b border-[#EAE3D6] px-4 sm:px-8 py-4 flex flex-col gap-3 shrink-0">
+          {/* Top Row: Navigation & Actions */}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <GlobalNavigationButtons
+              onBack={onBack || onClose}
+              onGoHome={onGoHome}
+              backLabel="Back"
+              homeLabel="Home"
+            />
+
+            {/* Top Actions */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={handleCopy}
+                className="px-3 py-1.5 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-700 font-mono text-xs font-bold uppercase flex items-center gap-1.5 transition-colors cursor-pointer"
+                title="Copy to clipboard"
+              >
+                {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                <span className="hidden sm:inline">{copied ? 'COPIED' : 'COPY'}</span>
+              </button>
+
+              <button
+                onClick={handlePrint}
+                className="px-3 py-1.5 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-700 font-mono text-xs font-bold uppercase flex items-center gap-1.5 transition-colors cursor-pointer"
+                title="Print document"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">PRINT</span>
+              </button>
+
+              <button
+                onClick={() => exportUnifiedItem(item, 'doc')}
+                className="px-3 py-1.5 rounded-full bg-white border border-stone-200 hover:bg-stone-50 text-stone-700 font-mono text-xs font-bold uppercase flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                title="Download Word Document (.doc)"
+              >
+                <Download className="w-3.5 h-3.5 text-[#E52E5E]" />
+                <span className="hidden sm:inline">DOC</span>
+              </button>
+
+              <button
+                onClick={() => exportUnifiedItem(item, 'pdf')}
+                className="px-3 py-1.5 rounded-full bg-white border border-stone-200 hover:bg-stone-50 text-stone-700 font-mono text-xs font-bold uppercase flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                title="Download PDF Document (.pdf)"
+              >
+                <Download className="w-3.5 h-3.5 text-[#E52E5E]" />
+                <span className="hidden sm:inline">PDF</span>
+              </button>
+
+              {onOpenInWorkbench && (
+                <button
+                  onClick={onOpenInWorkbench}
+                  className="px-3.5 py-1.5 rounded-full bg-[#161616] hover:bg-stone-800 text-white font-mono text-xs font-bold uppercase flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                  title="Open in tool generator"
+                >
+                  <span>WORKBENCH</span>
+                  <ExternalLink className="w-3.5 h-3.5 text-[#E52E5E]" />
+                </button>
+              )}
+
+              <button
+                onClick={onClose}
+                className="p-2 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-500 hover:text-stone-900 transition-colors cursor-pointer ml-1"
+                title="Close viewer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Bottom Row: Icon, Metadata & Title */}
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0 pt-1">
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#E02D68] to-[#C92255] text-white flex items-center justify-center shadow-sm shrink-0">
               {studySet ? <BookOpen className="w-5 h-5" /> : quiz ? <GraduationCap className="w-5 h-5" /> : <Layers className="w-5 h-5" />}
             </div>
 
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-[#FCE8F3] text-[#DA8F00] border border-[#F5C2DC]">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-[#FFF0F3] text-[#E52E5E] border border-[#FFCCD4]">
                   {item.kindLabel}
                 </span>
                 <span className="text-xs font-mono font-semibold text-stone-500 uppercase">
@@ -189,68 +263,10 @@ export const SavedResultViewer: React.FC<SavedResultViewerProps> = ({
                 </span>
               </div>
 
-              <h2 className="font-display font-black text-lg sm:text-xl text-[#161616] uppercase truncate mt-0.5">
+              <h2 className="font-display font-black text-base sm:text-lg lg:text-xl text-[#161616] uppercase truncate mt-0.5 max-w-full">
                 {item.title}
               </h2>
             </div>
-          </div>
-
-          {/* Top Actions */}
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={handleCopy}
-              className="px-3.5 py-2 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-700 font-mono text-xs font-bold uppercase flex items-center gap-1.5 transition-colors cursor-pointer"
-              title="Copy to clipboard"
-            >
-              {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-              <span className="hidden sm:inline">{copied ? 'COPIED' : 'COPY'}</span>
-            </button>
-
-            <button
-              onClick={handlePrint}
-              className="px-3.5 py-2 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-700 font-mono text-xs font-bold uppercase flex items-center gap-1.5 transition-colors cursor-pointer"
-              title="Print document"
-            >
-              <Printer className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">PRINT</span>
-            </button>
-
-            <button
-              onClick={() => exportUnifiedItem(item, 'doc')}
-              className="px-3.5 py-2 rounded-full bg-white border border-stone-200 hover:bg-stone-50 text-stone-700 font-mono text-xs font-bold uppercase flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
-              title="Download Word Document (.doc)"
-            >
-              <Download className="w-3.5 h-3.5 text-[#DA8F00]" />
-              <span className="hidden sm:inline">DOC</span>
-            </button>
-
-            <button
-              onClick={() => exportUnifiedItem(item, 'pdf')}
-              className="px-3.5 py-2 rounded-full bg-white border border-stone-200 hover:bg-stone-50 text-stone-700 font-mono text-xs font-bold uppercase flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
-              title="Download PDF Document (.pdf)"
-            >
-              <Download className="w-3.5 h-3.5 text-[#DA8F00]" />
-              <span className="hidden sm:inline">PDF</span>
-            </button>
-
-            {onOpenInWorkbench && (
-              <button
-                onClick={onOpenInWorkbench}
-                className="px-4 py-2 rounded-full bg-[#161616] hover:bg-stone-800 text-white font-mono text-xs font-bold uppercase flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
-                title="Open in tool generator"
-              >
-                <span>OPEN WORKBENCH</span>
-                <ExternalLink className="w-3.5 h-3.5 text-[#DA8F00]" />
-              </button>
-            )}
-
-            <button
-              onClick={onClose}
-              className="p-2 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-500 hover:text-stone-900 transition-colors cursor-pointer ml-1"
-              title="Close viewer"
-            >
-              <X className="w-5 h-5" />
-            </button>
           </div>
         </div>
 
@@ -922,19 +938,6 @@ export const SavedResultViewer: React.FC<SavedResultViewerProps> = ({
             </div>
           )}
 
-        </div>
-
-        {/* Footer Bar */}
-        <div className="bg-[#FAF7F0] border-t border-[#EAE3D6] px-6 py-4 flex items-center justify-between gap-4 shrink-0">
-          <span className="text-xs font-mono text-stone-500">
-            Proudly Afrikan Archive ID: {item.id}
-          </span>
-          <button
-            onClick={onClose}
-            className="px-6 py-2 bg-stone-900 hover:bg-black text-white font-mono text-xs font-bold uppercase rounded-full shadow-xs cursor-pointer"
-          >
-            CLOSE
-          </button>
         </div>
 
       </div>

@@ -18,7 +18,7 @@ export const BuildHero: React.FC<BuildHeroProps> = ({
   const { topics: inspirationTopics, refreshTopics } = useDynamicInspiration(
     BUILD_TOPICS_POOL,
     'build',
-    user?.email || user?.uid
+    user?.email || user?.id || (user as any)?.uid
   );
 
   return (
@@ -27,9 +27,9 @@ export const BuildHero: React.FC<BuildHeroProps> = ({
         {/* Left Column: Edition Badge, Giant Display Headline, Subtext & Action Buttons */}
         <div className="lg:col-span-7 space-y-6 flex flex-col justify-start">
           {/* Edition Pill Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 clay-pill-3d text-xs sm:text-sm font-mono font-bold tracking-wider uppercase text-stone-800 self-start h-8">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#FF7A00] inline-block animate-pulse shadow-[0_0_6px_rgba(255,128,0,0.6)]"></span>
-            <span>PROUDLY AFRIKAN EDUCATION • RESOURCE BUILDER</span>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 clay-pill-3d text-[10px] sm:text-xs font-mono font-bold tracking-wider uppercase text-stone-800 self-start h-8 whitespace-nowrap">
+            <span className="w-2 h-2 rounded-full bg-[#FF7A00] inline-block animate-pulse shadow-[0_0_6px_rgba(255,128,0,0.6)] shrink-0"></span>
+            <span className="truncate">PROUDLY AFRIKAN EDUCATION • RESOURCE BUILDER</span>
           </div>
 
           {/* Giant Oversized Display Headline */}
