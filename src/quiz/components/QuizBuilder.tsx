@@ -324,7 +324,7 @@ export const QuizBuilder: React.FC<QuizBuilderProps> = ({
           </div>
 
           {/* Dynamic Input Panels */}
-          <div className="bg-[#FAF4EC] rounded-[2.5rem] border border-[#EFE5DA] shadow-[0_25px_60px_-15px_rgba(100,80,60,0.12),_0_10px_25px_-5px_rgba(100,80,60,0.06)] p-6 sm:p-8 min-h-[340px] flex flex-col justify-between">
+          <div className="bg-[#FAF4EC] rounded-[2.5rem] border border-[#EFE5DA] shadow-[0_2px_10px_rgba(100,80,60,0.04),_0_12px_30px_rgba(100,80,60,0.08),_0_28px_56px_-6px_rgba(100,80,60,0.10),_0_45px_80px_-12px_rgba(100,80,60,0.08)] p-6 sm:p-8 min-h-[340px] flex flex-col justify-between">
             {/* METHOD 1: TOPIC */}
             {creationMethod === 'topic' && (
               <div className="space-y-5 flex-1 flex flex-col justify-between">
@@ -624,7 +624,7 @@ export const QuizBuilder: React.FC<QuizBuilderProps> = ({
 
         {/* Right Column: Selectable Quiz Settings */}
         <div className="lg:col-span-5 space-y-6">
-          <div className="bg-[#FAF4EC] rounded-[2.5rem] border border-[#EFE5DA] shadow-[0_25px_60px_-15px_rgba(100,80,60,0.12),_0_10px_25px_-5px_rgba(100,80,60,0.06)] p-6 sm:p-7 space-y-6">
+          <div className="bg-[#FAF4EC] rounded-[2.5rem] border border-[#EFE5DA] shadow-[0_2px_10px_rgba(100,80,60,0.04),_0_12px_30px_rgba(100,80,60,0.08),_0_28px_56px_-6px_rgba(100,80,60,0.10),_0_45px_80px_-12px_rgba(100,80,60,0.08)] p-6 sm:p-7 space-y-6">
             {/* 1. NUMBER OF QUESTIONS */}
             <div>
               <label className="font-mono text-[11px] sm:text-xs font-bold uppercase tracking-wider text-stone-600 block mb-2">

@@ -366,7 +366,7 @@ export const TutorChatGenerator: React.FC<TutorChatGeneratorProps> = ({
 
       {!isChatActive ? (
         /* Upload & Setup Screen */
-        <div className="max-w-3xl mx-auto p-6 sm:p-10 rounded-[2.5rem] bg-[#FAF4EC] border border-[#EFE5DA] shadow-[0_25px_60px_-15px_rgba(100,80,60,0.12),_0_10px_25px_-5px_rgba(100,80,60,0.06)] space-y-6">
+        <div className="max-w-3xl mx-auto p-6 sm:p-10 rounded-[2.5rem] bg-[#FAF4EC] border border-[#EFE5DA] shadow-[0_2px_10px_rgba(100,80,60,0.04),_0_12px_30px_rgba(100,80,60,0.08),_0_28px_56px_-6px_rgba(100,80,60,0.10),_0_45px_80px_-12px_rgba(100,80,60,0.08)] space-y-6">
           <div className="space-y-2 text-center">
             <div className="w-14 h-14 rounded-2xl bg-[#F5ECE3] shadow-[inset_1px_1px_2px_rgba(255,255,255,0.9),_2px_4px_8px_rgba(0,0,0,0.06)] border border-[#E8DDD0] text-[#E62E6B] flex items-center justify-center mx-auto mb-3">
               <MessageSquare className="w-7 h-7" />

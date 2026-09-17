@@ -431,7 +431,7 @@ Return valid JSON with:
       <div className="space-y-8">
         {/* The Tool Menu / Form - Soft UI 3D Design */}
         <div className="w-full">
-          <div className="p-6 sm:p-10 rounded-[2.5rem] bg-[#FAF4EC] border border-[#EFE5DA] shadow-[0_25px_60px_-15px_rgba(100,80,60,0.12),_0_10px_25px_-5px_rgba(100,80,60,0.06)] space-y-6">
+          <div className="p-6 sm:p-10 rounded-[2.5rem] bg-[#FAF4EC] border border-[#EFE5DA] shadow-[0_2px_10px_rgba(100,80,60,0.04),_0_12px_30px_rgba(100,80,60,0.08),_0_28px_56px_-6px_rgba(100,80,60,0.10),_0_45px_80px_-12px_rgba(100,80,60,0.08)] space-y-6">
             {/* Topic Input */}
             <div className="space-y-2 text-left">
               <label className="block font-mono text-[11px] sm:text-xs font-bold uppercase tracking-wider text-stone-600">

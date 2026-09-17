@@ -232,7 +232,7 @@ export const EssayGraderGenerator: React.FC<EssayGraderGeneratorProps> = ({
       <div className="space-y-8">
         {/* Form Menu Column */}
         <div className="w-full">
-          <div className="p-6 sm:p-10 rounded-[2.5rem] bg-[#FAF4EC] border border-[#EFE5DA] shadow-[0_25px_60px_-15px_rgba(100,80,60,0.12),_0_10px_25px_-5px_rgba(100,80,60,0.06)] space-y-6">
+          <div className="p-6 sm:p-10 rounded-[2.5rem] bg-[#FAF4EC] border border-[#EFE5DA] shadow-[0_2px_10px_rgba(100,80,60,0.04),_0_12px_30px_rgba(100,80,60,0.08),_0_28px_56px_-6px_rgba(100,80,60,0.10),_0_45px_80px_-12px_rgba(100,80,60,0.08)] space-y-6">
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
