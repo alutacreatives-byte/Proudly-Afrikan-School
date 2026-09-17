@@ -121,7 +121,7 @@ export const BuildHero: React.FC<BuildHeroProps> = ({
             <div className="text-center border-r border-stone-200/80 px-2">
               <div className="font-mono text-lg sm:text-xl font-black text-stone-900">PDF</div>
               <div className="font-mono text-xs font-bold text-stone-600 uppercase tracking-wider">
-                DOCUMENT AI
+                DOCUMENT PARSER
               </div>
             </div>
 

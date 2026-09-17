@@ -25,7 +25,7 @@ import {
   Download
 } from 'lucide-react';
 import { UnifiedItem } from './MySetsWorkspace';
-import { exportUnifiedItem } from '../utils/exportUtils';
+import { exportUnifiedItem, getCleanWorksheetTitle } from '../utils/exportUtils';
 import { GlobalNavigationButtons } from '../components/GlobalNavigationButtons';
 
 interface SavedResultViewerProps {
@@ -588,54 +588,104 @@ export const SavedResultViewer: React.FC<SavedResultViewerProps> = ({
           {/* 4. WORKSHEET VIEWER */}
           {toolType === 'worksheet' && (
             <div className="space-y-6">
-              <div className="bg-white border border-[#EAE3D6] rounded-3xl p-6 sm:p-8 shadow-xs space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-stone-100 pb-4">
+              <div className="bg-white border-2 border-stone-300 rounded-3xl p-6 sm:p-8 shadow-xs space-y-5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b-2 border-stone-200 pb-4">
                   <div>
-                    <span className="text-xs font-mono font-bold text-[#E63956] uppercase">PRACTICE WORKSHEET</span>
-                    <h3 className="font-display font-black text-2xl uppercase text-[#161616] mt-0.5">
-                      {anyData.title || item.title}
+                    <span className="text-[18px] font-mono font-bold text-[#E63956] uppercase block">STUDENT CLASSROOM WORKSHEET</span>
+                    <h3 className="font-display font-black text-[26px] sm:text-[32px] uppercase text-[#161616] mt-1">
+                      {getCleanWorksheetTitle(anyData.title || item.title, anyData.topic || item.originalBuildResource?.topic, anyData.subject || item.categoryOrSubject)}
                     </h3>
                   </div>
-                  <div className="flex items-center gap-2 font-mono text-xs text-stone-600">
+                  <div className="flex items-center gap-2 font-mono text-[18px] font-bold text-stone-700">
                     <span>Grade: {anyData.gradeLevel || 'Standard'}</span>
                     <span>•</span>
-                    <span>Level: {anyData.difficulty || 'All'}</span>
+                    <span>Score: {anyData.totalMarks ? `Total ${anyData.totalMarks} Marks` : '100 Marks'}</span>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-[#FAF7F0] p-3 rounded-2xl text-xs font-mono text-stone-600">
-                  <div><span className="font-bold">Name:</span> __________________</div>
-                  <div><span className="font-bold">Date:</span> __________________</div>
-                  <div><span className="font-bold">Class:</span> _________________</div>
-                  <div><span className="font-bold">Score:</span> _____ / 100</div>
+                {anyData.description && (
+                  <p className="text-[18px] font-bold text-stone-800 leading-relaxed bg-stone-50 p-4 rounded-2xl border-2 border-stone-200">
+                    {anyData.description}
+                  </p>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 bg-[#FAF7F0] p-4 rounded-2xl text-[18px] font-mono font-bold text-stone-800 border-2 border-stone-200">
+                  <div>Name: __________________</div>
+                  <div>Date: __________________</div>
+                  <div>Class: _________________</div>
+                  <div>Score: _____ / {anyData.totalMarks || 100}</div>
                 </div>
 
                 {anyData.instructions && (
-                  <div className="text-xs sm:text-sm font-sans text-stone-700 bg-amber-50/60 p-4 rounded-2xl border border-amber-200/60">
-                    <span className="font-mono font-bold uppercase text-amber-900 block mb-1">Instructions:</span>
+                  <div className="text-[18px] font-sans font-bold text-amber-950 bg-amber-50/90 p-5 rounded-2xl border-2 border-amber-300">
+                    <span className="font-mono font-black uppercase text-amber-900 block mb-1.5 text-[18px]">General Instructions:</span>
                     {anyData.instructions}
                   </div>
                 )}
               </div>
 
-              {/* Exercises */}
-              <div className="space-y-4">
-                {(anyData.exercises || []).map((ex: any, eIdx: number) => (
-                  <div key={eIdx} className="bg-white border border-[#EAE3D6] rounded-2xl p-6 shadow-xs space-y-4">
-                    <h4 className="font-display font-black text-base uppercase text-[#161616] border-b border-stone-100 pb-2">
-                      {ex.sectionTitle || `Exercise ${eIdx + 1}`}
-                    </h4>
+              {/* Activities or Exercises */}
+              <div className="space-y-6">
+                {(anyData.activities || anyData.exercises || []).map((act: any, aIdx: number) => (
+                  <div key={aIdx} className="bg-white border-2 border-stone-300 rounded-3xl p-6 sm:p-8 shadow-xs space-y-5">
+                    <div className="border-b-2 border-stone-200 pb-3">
+                      <h4 className="font-display font-black text-[22px] sm:text-[24px] uppercase text-[#161616]">
+                        {act.title || act.sectionTitle || `Activity ${aIdx + 1}`}
+                      </h4>
+                      {act.instructions && (
+                        <p className="text-[18px] font-bold text-stone-700 mt-1">
+                          {act.instructions}
+                        </p>
+                      )}
+                    </div>
 
-                    <div className="space-y-3">
-                      {(ex.questions || []).map((q: any, qIdx: number) => (
-                        <div key={qIdx} className="p-3 bg-[#FAF7F0] rounded-xl space-y-2">
-                          <div className="flex items-start gap-2.5">
-                            <span className="font-mono text-xs font-bold text-[#E63956]">{q.number || qIdx + 1}.</span>
-                            <span className="font-sans text-sm text-stone-800 font-medium">{q.prompt}</span>
+                    {Array.isArray(act.wordBank) && act.wordBank.length > 0 && (
+                      <div className="p-4 bg-indigo-50/90 border-2 border-indigo-200 rounded-2xl space-y-2">
+                        <span className="text-[18px] font-black uppercase text-indigo-950 block">Word Bank:</span>
+                        <div className="flex flex-wrap gap-2">
+                          {act.wordBank.map((word: string, wIdx: number) => (
+                            <span key={wIdx} className="px-3.5 py-1.5 bg-white border-2 border-indigo-200 rounded-xl font-bold text-[18px] text-indigo-950 shadow-xs">
+                              {word}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {act.scenario && (
+                      <div className="p-5 bg-amber-50/80 border-2 border-amber-200 rounded-2xl space-y-1">
+                        <span className="text-[18px] font-black uppercase text-amber-950 block">Practical Scenario:</span>
+                        <p className="text-[18px] font-bold text-stone-900 leading-relaxed">{act.scenario}</p>
+                      </div>
+                    )}
+
+                    <div className="space-y-4">
+                      {(act.items || act.questions || []).map((itemObj: any, iIdx: number) => (
+                        <div key={iIdx} className="p-4 bg-[#FAF7F0] rounded-2xl space-y-3 border-2 border-stone-200/80">
+                          <div className="flex items-start gap-3">
+                            <span className="font-mono text-[19px] font-black text-[#E63956] shrink-0">
+                              {itemObj.itemNumber || itemObj.number || iIdx + 1}.
+                            </span>
+                            <div className="space-y-2 w-full">
+                              <span className="font-sans text-[19px] text-stone-900 font-black block leading-snug">
+                                {itemObj.prompt}
+                              </span>
+                              {itemObj.matchTarget && (
+                                <div className="p-3 bg-white rounded-xl border border-stone-200 text-[18px] font-bold text-stone-800">
+                                  {itemObj.matchTarget}
+                                </div>
+                              )}
+                              {itemObj.completionSpace && (
+                                <div className="text-[18px] font-mono font-bold text-stone-600 bg-white/80 p-3 rounded-xl border border-dashed border-stone-300 whitespace-pre-line">
+                                  {itemObj.completionSpace}
+                                </div>
+                              )}
+                            </div>
                           </div>
-                          {q.answer && (
-                            <div className="pl-6 pt-1 text-xs font-mono text-emerald-800 bg-emerald-50 p-2 rounded-lg border border-emerald-200">
-                              <span className="font-bold uppercase">Answer Key: </span> {q.answer}
+                          {(itemObj.answer || itemObj.explanation) && (
+                            <div className="text-[18px] font-mono font-bold text-emerald-900 bg-emerald-50 p-3.5 rounded-xl border-2 border-emerald-300">
+                              <span className="font-black uppercase">Answer Key: </span>
+                              {itemObj.answer || itemObj.explanation}
                             </div>
                           )}
                         </div>
@@ -643,6 +693,29 @@ export const SavedResultViewer: React.FC<SavedResultViewerProps> = ({
                     </div>
                   </div>
                 ))}
+
+                {/* Teacher Solutions / Answer Key */}
+                {Array.isArray(anyData.teacherAnswerKey) && anyData.teacherAnswerKey.length > 0 && (
+                  <div className="bg-emerald-50/90 border-2 border-emerald-300 rounded-3xl p-6 sm:p-8 space-y-4">
+                    <h4 className="font-display font-black text-[22px] uppercase text-emerald-950 border-b-2 border-emerald-200 pb-2">
+                      Teacher Solutions & Answer Key
+                    </h4>
+                    <div className="space-y-4">
+                      {anyData.teacherAnswerKey.map((keySec: any, kIdx: number) => (
+                        <div key={kIdx} className="space-y-2">
+                          <h5 className="font-sans font-black text-[19px] text-emerald-900">
+                            {keySec.activityTitle}
+                          </h5>
+                          <ul className="list-disc pl-6 space-y-1 text-[18px] font-bold text-emerald-950">
+                            {(keySec.answers || []).map((ans: string, aKeyIdx: number) => (
+                              <li key={aKeyIdx}>{ans}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}

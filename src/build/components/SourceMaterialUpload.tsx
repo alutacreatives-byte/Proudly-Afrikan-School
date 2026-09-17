@@ -144,8 +144,8 @@ export const SourceMaterialUpload: React.FC<SourceMaterialUploadProps> = ({
 
         {/* Active File Loaded Indicator */}
         {activeFileName && (
-          <div className="inline-flex items-center gap-2 mb-4 font-mono text-xs font-semibold text-emerald-900 bg-emerald-50 px-3.5 py-1.5 rounded-full border border-emerald-200 shadow-2xs">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+          <div className="inline-flex items-center gap-2 mb-4 font-mono text-xs font-semibold text-stone-900 bg-[#FAF7F0] px-3.5 py-1.5 rounded-full border border-stone-300 shadow-2xs">
+            <CheckCircle2 className="w-3.5 h-3.5 text-[#FF7A00] shrink-0" />
             <span className="truncate max-w-[200px] sm:max-w-[320px]">{activeFileName}</span>
             <button
               type="button"

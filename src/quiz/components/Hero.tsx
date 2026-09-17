@@ -53,18 +53,18 @@ export const Hero: React.FC<HeroProps> = ({ onStartClick, onSelectSample }) => {
 
         {/* Right Column: Instant Inspiration Card & Metrics */}
         <div className="lg:col-span-5 space-y-5 lg:pt-0">
-          {/* Instant Inspiration Elevated Rounded Card */}
-          <div className="bg-[#FAF8F5] border-2 border-stone-200/90 shadow-2xl rounded-3xl p-6 sm:p-7 space-y-4">
-            <div className="flex items-center justify-between border-b border-stone-200 pb-3 h-9">
+          {/* Instant Inspiration Clay Card */}
+          <div className="clay-card-3d p-6 sm:p-7 space-y-4">
+            <div className="flex items-center justify-between border-b border-stone-200/80 pb-3 h-9">
               <div className="flex items-center gap-2 font-display text-xs sm:text-sm font-black uppercase tracking-wider text-stone-900">
-                <span className="text-[#E52E5E] text-sm">❖</span>
+                <span className="text-[#FF7A00] text-sm">❖</span>
                 <span>INSTANT STUDY INSPIRATION</span>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={refreshTopics}
-                  className="p-1 text-stone-400 hover:text-[#E52E5E] transition-colors rounded-full hover:bg-stone-200/50 cursor-pointer"
+                  className="p-1 text-stone-400 hover:text-[#FF7A00] transition-colors rounded-full hover:bg-stone-200/50 cursor-pointer"
                   title="Shuffle topics"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
@@ -77,29 +77,36 @@ export const Hero: React.FC<HeroProps> = ({ onStartClick, onSelectSample }) => {
 
             {/* 2-Column Pill Button Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 min-h-[10.5rem]">
-              {inspirationTopics.map((item, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => onSelectSample(item.topic, item.category)}
-                  className="h-11 px-3.5 bg-white hover:bg-orange-50/60 border border-stone-200/90 hover:border-orange-300 text-stone-800 hover:text-[#E52E5E] font-medium text-xs sm:text-sm rounded-full transition-all shadow-sm flex items-center gap-2 text-left truncate cursor-pointer"
-                >
-                  <span className="truncate">{item.label}</span>
-                </button>
-              ))}
+              {inspirationTopics.map((item, idx) => {
+                const match = item.label.match(/^(\p{Extended_Pictographic}|\uD83C[\uDF00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|\uD83E[\uDD00-\uDFFF]|[\u2600-\u27BF])\s*(.*)$/u);
+                const emoji = match ? match[1] : '';
+                const title = match ? match[2] : item.label;
+
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => onSelectSample(item.topic, item.category)}
+                    className="h-11 px-3.5 clay-pill-3d hover:border-[#FF7A00]/40 hover:text-[#FF7A00] text-stone-800 font-medium text-xs sm:text-sm flex items-center gap-2 text-left truncate cursor-pointer transition-all"
+                  >
+                    {emoji && <span className="text-base shrink-0">{emoji}</span>}
+                    <span className="truncate">{title}</span>
+                  </button>
+                );
+              })}
             </div>
 
             <div className="pt-2 text-center">
               <span className="text-xs font-mono text-stone-500 font-medium">
-                * Click any topic above to launch pre-filled workbench.
+                * Click any topic above to launch pre-filled study workbench.
               </span>
             </div>
           </div>
 
-          {/* Quick Metrics Bar in Rounded Pill Container */}
-          <div className="grid grid-cols-3 gap-2 bg-white border border-stone-200/90 p-3.5 rounded-2xl shadow-sm">
-            <div className="text-center border-r border-stone-200 pr-2">
-              <div className="font-mono text-lg sm:text-xl font-black text-[#E52E5E] flex items-center justify-center gap-1">
-                <Flame className="w-4 h-4 fill-[#E52E5E]" />
+          {/* Quick Metrics Bar in Clay Lozenge */}
+          <div className="grid grid-cols-3 gap-2 clay-card-3d p-3.5 rounded-2xl">
+            <div className="text-center border-r border-stone-200/80 pr-2">
+              <div className="font-mono text-lg sm:text-xl font-black text-[#FF7A00] flex items-center justify-center gap-1">
+                <Flame className="w-4 h-4 fill-[#FF7A00]" />
                 100%
               </div>
               <div className="font-mono text-xs font-bold text-stone-600 uppercase tracking-wider">
@@ -107,8 +114,8 @@ export const Hero: React.FC<HeroProps> = ({ onStartClick, onSelectSample }) => {
               </div>
             </div>
 
-            <div className="text-center border-r border-stone-200 px-2">
-              <div className="font-mono text-lg sm:text-xl font-black text-stone-800">
+            <div className="text-center border-r border-stone-200/80 px-2">
+              <div className="font-mono text-lg sm:text-xl font-black text-stone-900">
                 CAPS
               </div>
               <div className="font-mono text-xs font-bold text-stone-600 uppercase tracking-wider">
@@ -117,7 +124,7 @@ export const Hero: React.FC<HeroProps> = ({ onStartClick, onSelectSample }) => {
             </div>
 
             <div className="text-center pl-2">
-              <div className="font-mono text-lg sm:text-xl font-black text-[#E52E5E]">
+              <div className="font-mono text-lg sm:text-xl font-black text-[#FF7A00]">
                 Fast
               </div>
               <div className="font-mono text-xs font-bold text-stone-600 uppercase tracking-wider">

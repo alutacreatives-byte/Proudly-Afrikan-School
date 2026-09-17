@@ -112,7 +112,7 @@ export const PricingView: React.FC<PricingViewProps> = ({ onNavigateToTab }) => 
                     {availableCredits.toLocaleString()} <span className="text-sm font-mono font-normal text-stone-600">Credits</span>
                   </div>
                   <p className="font-mono text-xs text-stone-600">
-                    Available balance for AI generation
+                    Available balance for study generation
                   </p>
                 </div>
 
@@ -331,7 +331,7 @@ export const PricingView: React.FC<PricingViewProps> = ({ onNavigateToTab }) => 
                 Normal platform use does NOT consume any credits
               </h3>
               <p className="font-sans text-stone-700 text-xs sm:text-sm max-w-3xl leading-relaxed">
-                Credits are used only for AI creation and generation. You can freely study existing sets, take revision quizzes, review saved collections, and manage study timetables without spending a single credit.
+                Credits are used only for content creation and generation. You can freely study existing sets, take revision quizzes, review saved collections, and manage study timetables without spending a single credit.
               </p>
             </div>
 
@@ -356,7 +356,7 @@ export const PricingView: React.FC<PricingViewProps> = ({ onNavigateToTab }) => 
           </div>
         </div>
 
-        {/* AI Credit Cost Breakdown Table */}
+        {/* Credit Cost Breakdown Table */}
         <div className="clay-card-3d p-6 sm:p-8 space-y-6">
           <div>
             <div className="flex items-center gap-2 mb-1">
@@ -366,7 +366,7 @@ export const PricingView: React.FC<PricingViewProps> = ({ onNavigateToTab }) => 
               </h3>
             </div>
             <p className="font-sans text-xs sm:text-sm text-stone-600">
-              Clear breakdown of AI credits required per generation tool:
+              Clear breakdown of credits required per generation tool:
             </p>
           </div>
 
