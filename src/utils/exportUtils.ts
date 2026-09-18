@@ -39,6 +39,128 @@ function sanitizeFilename(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'document';
 }
 
+export interface DocumentMeta {
+  brand: string;
+  subject: string;
+  documentType: string;
+  toolUsed: string;
+  combinedHeading: string; // e.g. "Proudly Afrikan | Metaphysics Quiz Assessment | Quiz Tool"
+  filenameBase: string;    // e.g. "Proudly-Afrikan-Metaphysics-Quiz-Assessment"
+}
+
+/**
+ * Strips any unwanted "AI" mentions from titles, headers, footers, and metadata
+ */
+export function removeAiReferences(text: string): string {
+  if (!text) return '';
+  return text
+    .replace(/Proudly\s+Afrikan\s+AI\s+Study\s+Platform/gi, 'Proudly Afrikan Study Platform')
+    .replace(/Proudly\s+Afrikan\s+AI\s+Study/gi, 'Proudly Afrikan Study')
+    .replace(/Proudly\s+Afrikan\s+AI/gi, 'Proudly Afrikan')
+    .replace(/\bAI\b/g, '')
+    .replace(/\bA\.I\.\b/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
+/**
+ * Converts a string into PascalCase words joined by hyphens for clean, professional filenames.
+ * e.g. "Metaphysics Quiz Assessment" -> "Metaphysics-Quiz-Assessment"
+ * e.g. "African History & Philosophy" -> "African-History-And-Philosophy"
+ */
+export function toPascalHyphenated(text: string): string {
+  if (!text) return 'Study-Document';
+  const cleaned = text
+    .replace(/&/g, ' And ')
+    .replace(/[^a-zA-Z0-9\s]+/g, ' ')
+    .trim();
+
+  const words = cleaned.split(/\s+/).filter(Boolean);
+  if (words.length === 0) return 'Study-Document';
+
+  return words
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join('-');
+}
+
+/**
+ * Cleans a subject string, removing duplicate document type or brand words
+ */
+export function cleanSubjectForMeta(rawSubject: string, docType: string): string {
+  let s = (rawSubject || '').trim();
+  s = removeAiReferences(s);
+  s = s.replace(/^proudly[\s\-_]+afrikan[\s\-_]*/i, '');
+
+  // Remove file extensions if someone uploaded a file name (e.g. "Metaphysics_Notes.pdf")
+  s = s.replace(/\.(pdf|docx?|txt|md|csv)$/i, '');
+  s = s.replace(/[_\-]+/g, ' ');
+
+  // If generic filename like "download", "document", "export", etc.
+  if (/^(?:download|document|export|file|temp|data|afrikan-resource|study-guide|practice-quiz)$/i.test(s)) {
+    return '';
+  }
+
+  // Remove trailing document type words from subject to avoid redundancy
+  const docTypeWords = docType.split(/\s+/).filter(Boolean);
+  for (const w of docTypeWords) {
+    const reg = new RegExp(`\\b${w}\\b`, 'gi');
+    s = s.replace(reg, ' ');
+  }
+  s = s.replace(/\s{2,}/g, ' ').trim();
+  s = s.replace(/^[-–—:\s|]+|[-–—:\s|]+$/g, '').trim();
+
+  return s;
+}
+
+/**
+ * Dynamically resolves document heading and content-based filename
+ * Format: "Proudly Afrikan | [Subject] [Document Type] | [Tool Used]"
+ * Filename: "Proudly-Afrikan-[Subject]-[Document-Type].[ext]"
+ */
+export function resolveDocumentMeta(options: {
+  subject?: string;
+  topic?: string;
+  title?: string;
+  filename?: string;
+  documentType?: string;
+  toolUsed?: string;
+}): DocumentMeta {
+  const brand = 'Proudly Afrikan';
+  const docType = options.documentType || 'Study Resource';
+  const toolName = options.toolUsed || 'Study Tool';
+
+  const rawCandidate =
+    options.subject ||
+    options.topic ||
+    options.title ||
+    options.filename ||
+    '';
+
+  const cleanedSubject = cleanSubjectForMeta(rawCandidate, docType);
+  const fallbackSubject = 'Metaphysics';
+  const subjectFinal = cleanedSubject || fallbackSubject;
+
+  const subjectWords = subjectFinal
+    .split(/\s+/)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+
+  const subjectAndDocType = `${subjectWords} ${docType}`.trim();
+  const combinedHeading = `${brand} | ${subjectAndDocType} | ${toolName}`;
+
+  const hyphenatedContent = toPascalHyphenated(subjectAndDocType);
+  const filenameBase = `Proudly-Afrikan-${hyphenatedContent}`;
+
+  return {
+    brand,
+    subject: subjectWords,
+    documentType: docType,
+    toolUsed: toolName,
+    combinedHeading,
+    filenameBase,
+  };
+}
+
 export interface PdfSection {
   heading?: string;
   content?: string;
@@ -49,15 +171,30 @@ export interface PdfSection {
 /**
  * Downloads a structured .doc file (Microsoft Word compatible HTML)
  */
-export function downloadDocFile(filename: string, title: string, htmlBody: string) {
-  const baseName = sanitizeFilename(filename.replace(/\.[^/.]+$/, ''));
-  const cleanFilename = `${baseName}.doc`;
+export function downloadDocFile(
+  filename: string,
+  title: string,
+  htmlBody: string,
+  meta?: Partial<DocumentMeta>
+) {
+  const resolvedMeta = resolveDocumentMeta({
+    filename,
+    title,
+    subject: meta?.subject,
+    documentType: meta?.documentType,
+    toolUsed: meta?.toolUsed,
+  });
+
+  const ext = filename && filename.toLowerCase().endsWith('.docx') ? 'docx' : 'doc';
+  const cleanFilename = `${resolvedMeta.filenameBase}.${ext}`;
+
+  const displayTitle = removeAiReferences(title || resolvedMeta.subject);
 
   const docHtml = `<!DOCTYPE html>
 <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
 <head>
   <meta charset="utf-8">
-  <title>${escapeHtml(title)}</title>
+  <title>${escapeHtml(resolvedMeta.combinedHeading)}</title>
   <style>
     body {
       font-family: 'Segoe UI', Calibri, Arial, sans-serif;
@@ -66,12 +203,30 @@ export function downloadDocFile(filename: string, title: string, htmlBody: strin
       color: #1f2937;
       padding: 30pt;
     }
+    .doc-heading-frame {
+      background-color: #faf5f8;
+      border: 1.5pt solid #f3d1e4;
+      border-left: 5pt solid #D92B8A;
+      padding: 10pt 14pt;
+      margin-bottom: 18pt;
+      border-radius: 4pt;
+    }
+    .doc-heading-title {
+      font-family: 'Segoe UI', Calibri, Arial, sans-serif;
+      font-size: 12pt;
+      font-weight: 800;
+      color: #D92B8A;
+      margin: 0;
+      letter-spacing: 0.4pt;
+      text-transform: uppercase;
+    }
     h1 {
-      font-size: 22pt;
+      font-size: 20pt;
       color: #111827;
       font-weight: 800;
       border-bottom: 2.5pt solid #D92B8A;
       padding-bottom: 8pt;
+      margin-top: 6pt;
       margin-bottom: 14pt;
       text-transform: uppercase;
       letter-spacing: 0.5pt;
@@ -136,13 +291,20 @@ export function downloadDocFile(filename: string, title: string, htmlBody: strin
       color: #9ca3af;
       text-align: center;
     }
+    .footer a {
+      color: #2563eb;
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
-  <h1>${escapeHtml(title)}</h1>
+  <div class="doc-heading-frame">
+    <p class="doc-heading-title">${escapeHtml(resolvedMeta.combinedHeading)}</p>
+  </div>
+  ${displayTitle && displayTitle.toUpperCase() !== resolvedMeta.combinedHeading.toUpperCase() ? `<h1>${escapeHtml(displayTitle)}</h1>` : ''}
   ${htmlBody}
   <div class="footer">
-    Proudly Afrikan AI Study Platform • Generated on ${new Date().toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
+    Proudly Afrikan Study Platform • <a href="http://www.proudlyafrikan.com" target="_blank" style="color: #2563eb; text-decoration: underline;">www.proudlyafrikan.com</a> • Page 1 of 1
   </div>
 </body>
 </html>`;
@@ -152,19 +314,77 @@ export function downloadDocFile(filename: string, title: string, htmlBody: strin
 }
 
 /**
+ * Renders the standardized footer across all PDF pages:
+ * Proudly Afrikan Study Platform • www.proudlyafrikan.com • Page X of Y
+ * with www.proudlyafrikan.com as a clickable hyperlink to http://www.proudlyafrikan.com
+ */
+function renderPdfFooter(doc: jsPDF) {
+  const totalPages = (doc as any).internal.getNumberOfPages();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+
+    const part1 = 'Proudly Afrikan Study Platform • ';
+    const urlText = 'www.proudlyafrikan.com';
+    const part3 = ` • Page ${i} of ${totalPages}`;
+
+    const w1 = doc.getTextWidth(part1);
+    const wUrl = doc.getTextWidth(urlText);
+    const w3 = doc.getTextWidth(part3);
+    const totalW = w1 + wUrl + w3;
+
+    const startX = (pageWidth - totalW) / 2;
+    const footerY = pageHeight - 20;
+
+    // Part 1: Platform name
+    doc.setTextColor(140, 140, 140);
+    doc.text(part1, startX, footerY);
+
+    // Part 2: Clickable link to website
+    doc.setTextColor(37, 99, 235);
+    doc.textWithLink(urlText, startX + w1, footerY, { url: 'http://www.proudlyafrikan.com' });
+    doc.setDrawColor(37, 99, 235);
+    doc.setLineWidth(0.5);
+    doc.line(startX + w1, footerY + 1.5, startX + w1 + wUrl, footerY + 1.5);
+
+    // Part 3: Page count
+    doc.setTextColor(140, 140, 140);
+    doc.text(part3, startX + w1 + wUrl, footerY);
+  }
+}
+
+/**
  * Downloads a formatted PDF using jsPDF
  */
 export function downloadPdfFile(
   filename: string,
   title: string,
-  sections: PdfSection[]
+  sections: PdfSection[],
+  meta?: Partial<DocumentMeta>
 ) {
-  const baseName = sanitizeFilename(filename.replace(/\.[^/.]+$/, ''));
-  const cleanFilename = `${baseName}.pdf`;
+  const resolvedMeta = resolveDocumentMeta({
+    filename,
+    title,
+    subject: meta?.subject,
+    documentType: meta?.documentType,
+    toolUsed: meta?.toolUsed,
+  });
+  const cleanFilename = `${resolvedMeta.filenameBase}.pdf`;
 
   const doc = new jsPDF({
     unit: 'pt',
     format: 'a4',
+  });
+
+  doc.setProperties({
+    title: resolvedMeta.combinedHeading,
+    subject: `${resolvedMeta.subject} - ${resolvedMeta.documentType}`,
+    author: 'Proudly Afrikan Study Platform',
+    creator: 'Proudly Afrikan Study Platform',
   });
 
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -180,19 +400,31 @@ export function downloadPdfFile(
     }
   };
 
-  // Title
+  // Top Document Heading: e.g. "Proudly Afrikan | Metaphysics Quiz Assessment | Quiz Tool"
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(15);
-  doc.setTextColor(22, 22, 22);
-  const splitTitle = doc.splitTextToSize(title.toUpperCase(), contentWidth);
-  doc.text(splitTitle, margin, y + 14);
-  y += splitTitle.length * 18 + 8;
+  doc.setFontSize(10.5);
+  doc.setTextColor(217, 43, 138); // #D92B8A
+  const headingText = resolvedMeta.combinedHeading;
+  const splitHeading = doc.splitTextToSize(headingText, contentWidth);
+  doc.text(splitHeading, margin, y + 10);
+  y += splitHeading.length * 14 + 6;
 
-  // Accent Line
+  // Accent Line under heading
   doc.setDrawColor(217, 43, 138); // #D92B8A
-  doc.setLineWidth(2);
+  doc.setLineWidth(1.5);
   doc.line(margin, y, margin + contentWidth, y);
   y += 16;
+
+  // Document specific title (if distinct from combined heading)
+  const cleanTitle = removeAiReferences(title || '').trim();
+  if (cleanTitle && cleanTitle.toUpperCase() !== resolvedMeta.combinedHeading.toUpperCase()) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.setTextColor(22, 22, 22);
+    const splitTitle = doc.splitTextToSize(cleanTitle.toUpperCase(), contentWidth);
+    doc.text(splitTitle, margin, y + 12);
+    y += splitTitle.length * 17 + 8;
+  }
 
   // Sections
   for (const sec of sections) {
@@ -201,7 +433,8 @@ export function downloadPdfFile(
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(11);
       doc.setTextColor(217, 43, 138);
-      const splitHeading = doc.splitTextToSize(sec.heading.toUpperCase(), contentWidth);
+      const cleanHeading = removeAiReferences(sec.heading);
+      const splitHeading = doc.splitTextToSize(cleanHeading.toUpperCase(), contentWidth);
       doc.text(splitHeading, margin, y + 10);
       y += splitHeading.length * 14 + 6;
     }
@@ -210,7 +443,8 @@ export function downloadPdfFile(
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9.5);
       doc.setTextColor(40, 40, 40);
-      const splitContent = doc.splitTextToSize(sec.content, contentWidth);
+      const cleanContent = removeAiReferences(sec.content);
+      const splitContent = doc.splitTextToSize(cleanContent, contentWidth);
       checkPageBreak(splitContent.length * 13 + 6);
       doc.text(splitContent, margin, y + 9);
       y += splitContent.length * 13 + 6;
@@ -221,7 +455,8 @@ export function downloadPdfFile(
       doc.setFontSize(9.5);
       doc.setTextColor(50, 50, 50);
       for (const bp of sec.bulletPoints) {
-        const splitBp = doc.splitTextToSize(`•  ${bp}`, contentWidth - 12);
+        const cleanBp = removeAiReferences(bp);
+        const splitBp = doc.splitTextToSize(`•  ${cleanBp}`, contentWidth - 12);
         checkPageBreak(splitBp.length * 13 + 4);
         doc.text(splitBp, margin + 12, y + 9);
         y += splitBp.length * 13 + 4;
@@ -230,7 +465,8 @@ export function downloadPdfFile(
     }
 
     if (sec.callout) {
-      const splitCallout = doc.splitTextToSize(sec.callout, contentWidth - 16);
+      const cleanCallout = removeAiReferences(sec.callout);
+      const splitCallout = doc.splitTextToSize(cleanCallout, contentWidth - 16);
       const boxHeight = splitCallout.length * 12 + 14;
       checkPageBreak(boxHeight + 8);
       doc.setFillColor(248, 248, 248);
@@ -245,20 +481,8 @@ export function downloadPdfFile(
     }
   }
 
-  // Footer page numbers
-  const totalPages = (doc as any).internal.getNumberOfPages();
-  for (let i = 1; i <= totalPages; i++) {
-    doc.setPage(i);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.setTextColor(140, 140, 140);
-    doc.text(
-      `Proudly Afrikan AI Study Platform • Page ${i} of ${totalPages}`,
-      pageWidth / 2,
-      pageHeight - 20,
-      { align: 'center' }
-    );
-  }
+  // Standardized footer with clickable website hyperlink and page numbers
+  renderPdfFooter(doc);
 
   doc.save(cleanFilename);
 }
@@ -268,7 +492,12 @@ export function downloadPdfFile(
 // ----------------------------------------------------------------------
 
 export function exportStudyGuide(guide: StudyGuideResult, format: 'doc' | 'pdf') {
-  const filename = guide.title || 'study-guide';
+  const meta = resolveDocumentMeta({
+    subject: guide.subject || guide.topic || guide.title,
+    documentType: 'Study Guide',
+    toolUsed: 'Study Guide Tool',
+  });
+  const filename = meta.filenameBase;
 
   if (format === 'doc') {
     let html = '';
@@ -301,7 +530,7 @@ export function exportStudyGuide(guide: StudyGuideResult, format: 'doc' | 'pdf')
         html += `<div class="answer-key"><strong>Answer:</strong> ${escapeHtml(q.answer)}</div></div>`;
       });
     }
-    downloadDocFile(filename, guide.title, html);
+    downloadDocFile(filename, guide.title, html, meta);
   } else {
     const sections: PdfSection[] = [];
     if (guide.subject) {
@@ -340,12 +569,17 @@ export function exportStudyGuide(guide: StudyGuideResult, format: 'doc' | 'pdf')
         });
       });
     }
-    downloadPdfFile(filename, guide.title, sections);
+    downloadPdfFile(filename, guide.title, sections, meta);
   }
 }
 
 export function exportCourse(course: CourseResult, format: 'doc' | 'pdf') {
-  const filename = course.title || 'course-curriculum';
+  const meta = resolveDocumentMeta({
+    subject: course.subject || course.topic || course.title,
+    documentType: 'Course Curriculum',
+    toolUsed: 'Course Curriculum Tool',
+  });
+  const filename = meta.filenameBase;
 
   if (format === 'doc') {
     let html = '';
@@ -379,7 +613,7 @@ export function exportCourse(course: CourseResult, format: 'doc' | 'pdf') {
         }
       });
     }
-    downloadDocFile(filename, course.title, html);
+    downloadDocFile(filename, course.title, html, meta);
   } else {
     const sections: PdfSection[] = [];
     if (course.subject) {
@@ -407,12 +641,17 @@ export function exportCourse(course: CourseResult, format: 'doc' | 'pdf') {
         }
       });
     }
-    downloadPdfFile(filename, course.title, sections);
+    downloadPdfFile(filename, course.title, sections, meta);
   }
 }
 
 export function exportQuiz(quiz: QuizResult, format: 'doc' | 'pdf') {
-  const filename = quiz.title || 'practice-quiz';
+  const meta = resolveDocumentMeta({
+    subject: quiz.subject || quiz.topic || quiz.title,
+    documentType: 'Quiz Assessment',
+    toolUsed: 'Quiz Tool',
+  });
+  const filename = meta.filenameBase;
 
   if (format === 'doc') {
     let html = '';
@@ -438,7 +677,7 @@ export function exportQuiz(quiz: QuizResult, format: 'doc' | 'pdf') {
         html += `</div>`;
       });
     }
-    downloadDocFile(filename, quiz.title, html);
+    downloadDocFile(filename, quiz.title, html, meta);
   } else {
     const sections: PdfSection[] = [];
     if (quiz.subject || quiz.difficulty) {
@@ -459,30 +698,41 @@ export function exportQuiz(quiz: QuizResult, format: 'doc' | 'pdf') {
         });
       });
     }
-    downloadPdfFile(filename, quiz.title, sections);
+    downloadPdfFile(filename, quiz.title, sections, meta);
   }
 }
 
 export function exportPdfQuiz(quiz: PdfQuizResult, format: 'doc' | 'pdf') {
+  const rawSubject = quiz.documentName || quiz.title || 'Document Quiz';
+  const meta = resolveDocumentMeta({
+    subject: rawSubject,
+    documentType: 'Quiz Assessment',
+    toolUsed: 'Quiz Tool',
+  });
   if (quiz.questions && quiz.questions.length > 0) {
     const adapted: QuizResult = {
       title: quiz.title,
-      subject: quiz.documentName || 'Document Quiz',
+      subject: meta.subject,
       questions: quiz.questions,
     };
     exportQuiz(adapted, format);
   } else {
-    const filename = quiz.title || 'pdf-quiz';
+    const filename = meta.filenameBase;
     if (format === 'doc') {
-      downloadDocFile(filename, quiz.title, `<p>${escapeHtml(quiz.sourceSnippet || 'Quiz content')}</p>`);
+      downloadDocFile(filename, quiz.title, `<p>${escapeHtml(quiz.sourceSnippet || 'Quiz content')}</p>`, meta);
     } else {
-      downloadPdfFile(filename, quiz.title, [{ content: quiz.sourceSnippet || 'Quiz content' }]);
+      downloadPdfFile(filename, quiz.title, [{ content: quiz.sourceSnippet || 'Quiz content' }], meta);
     }
   }
 }
 
 export function exportFlashcards(deck: FlashcardResult, format: 'doc' | 'pdf') {
-  const filename = deck.title || 'flashcards';
+  const meta = resolveDocumentMeta({
+    subject: deck.subject || deck.topic || deck.title,
+    documentType: 'Study Flashcards',
+    toolUsed: 'Flashcard Tool',
+  });
+  const filename = meta.filenameBase;
 
   if (format === 'doc') {
     let html = '';
@@ -500,7 +750,7 @@ export function exportFlashcards(deck: FlashcardResult, format: 'doc' | 'pdf') {
         html += `</div>`;
       });
     }
-    downloadDocFile(filename, deck.title, html);
+    downloadDocFile(filename, deck.title, html, meta);
   } else {
     const sections: PdfSection[] = [];
     if (deck.subject) {
@@ -518,12 +768,17 @@ export function exportFlashcards(deck: FlashcardResult, format: 'doc' | 'pdf') {
         });
       });
     }
-    downloadPdfFile(filename, deck.title, sections);
+    downloadPdfFile(filename, deck.title, sections, meta);
   }
 }
 
 export function exportLearningPath(path: LearningPathResult, format: 'doc' | 'pdf') {
-  const filename = path.title || 'learning-path';
+  const meta = resolveDocumentMeta({
+    subject: path.subject || path.topic || path.title || path.targetGoal,
+    documentType: 'Learning Path Roadmap',
+    toolUsed: 'Learning Path Tool',
+  });
+  const filename = meta.filenameBase;
 
   if (format === 'doc') {
     let html = '';
@@ -545,7 +800,7 @@ export function exportLearningPath(path: LearningPathResult, format: 'doc' | 'pd
         }
       });
     }
-    downloadDocFile(filename, path.title, html);
+    downloadDocFile(filename, path.title, html, meta);
   } else {
     const sections: PdfSection[] = [];
     if (path.subject || path.targetGoal) {
@@ -561,12 +816,17 @@ export function exportLearningPath(path: LearningPathResult, format: 'doc' | 'pd
         });
       });
     }
-    downloadPdfFile(filename, path.title, sections);
+    downloadPdfFile(filename, path.title, sections, meta);
   }
 }
 
 export function exportPresentation(pres: PresentationResult, format: 'doc' | 'pdf') {
-  const filename = pres.title || 'presentation-slides';
+  const meta = resolveDocumentMeta({
+    subject: pres.subject || pres.topic || pres.title,
+    documentType: 'Presentation Slide Deck',
+    toolUsed: 'Presentation Tool',
+  });
+  const filename = meta.filenameBase;
 
   if (format === 'doc') {
     let html = '';
@@ -589,7 +849,7 @@ export function exportPresentation(pres: PresentationResult, format: 'doc' | 'pd
         html += `</div>`;
       });
     }
-    downloadDocFile(filename, pres.title, html);
+    downloadDocFile(filename, pres.title, html, meta);
   } else {
     const sections: PdfSection[] = [];
     if (pres.subtitle) {
@@ -604,12 +864,17 @@ export function exportPresentation(pres: PresentationResult, format: 'doc' | 'pd
         });
       });
     }
-    downloadPdfFile(filename, pres.title, sections);
+    downloadPdfFile(filename, pres.title, sections, meta);
   }
 }
 
 export function exportTutorChat(tutor: TutorChatResult, format: 'doc' | 'pdf') {
-  const filename = tutor.title || 'tutor-chat-session';
+  const meta = resolveDocumentMeta({
+    subject: tutor.documentName || tutor.title,
+    documentType: 'Socratic Tutoring Session',
+    toolUsed: 'Tutor Mentoring Tool',
+  });
+  const filename = meta.filenameBase;
 
   if (format === 'doc') {
     let html = '<h2>Dialogue History</h2>';
@@ -617,7 +882,7 @@ export function exportTutorChat(tutor: TutorChatResult, format: 'doc' | 'pdf') {
       const isTutor = msg.sender === 'tutor';
       html += `<div class="box" style="${isTutor ? 'background-color: #fdf2f8; border-color: #fbcfe8;' : ''}"><p><strong>${isTutor ? 'Afrikan Study Tutor' : 'Student'}:</strong></p><p>${escapeHtml(msg.text)}</p></div>`;
     });
-    downloadDocFile(filename, tutor.title, html);
+    downloadDocFile(filename, tutor.title, html, meta);
   } else {
     const sections: PdfSection[] = [
       {
@@ -631,12 +896,17 @@ export function exportTutorChat(tutor: TutorChatResult, format: 'doc' | 'pdf') {
         content: msg.text,
       });
     });
-    downloadPdfFile(filename, tutor.title, sections);
+    downloadPdfFile(filename, tutor.title, sections, meta);
   }
 }
 
 export function exportEssayGrader(essay: EssayGraderResult, format: 'doc' | 'pdf') {
-  const filename = essay.title || 'essay-evaluation';
+  const meta = resolveDocumentMeta({
+    subject: essay.subject || essay.topic || essay.title,
+    documentType: 'Essay Evaluation & Feedback',
+    toolUsed: 'Essay Grader Tool',
+  });
+  const filename = meta.filenameBase;
 
   if (format === 'doc') {
     let html = `<h2>Score: ${essay.score} / ${essay.maxScore || 100} (${essay.gradeLetter || 'B'})</h2>`;
@@ -654,7 +924,7 @@ export function exportEssayGrader(essay: EssayGraderResult, format: 'doc' | 'pdf
         html += `<div class="box"><p><strong>${escapeHtml(imp.category)}:</strong> ${escapeHtml(imp.suggestion)}</p><p><em>Fix:</em> ${escapeHtml(imp.actionableFix)}</p></div>`;
       });
     }
-    downloadDocFile(filename, essay.title, html);
+    downloadDocFile(filename, essay.title, html, meta);
   } else {
     const sections: PdfSection[] = [
       {
@@ -674,12 +944,57 @@ export function exportEssayGrader(essay: EssayGraderResult, format: 'doc' | 'pdf
         bulletPoints: essay.weaknesses,
       },
     ];
-    downloadPdfFile(filename, essay.title, sections);
+    downloadPdfFile(filename, essay.title, sections, meta);
   }
 }
 
+export function resolveBuildResourceMeta(resource: any): DocumentMeta {
+  const toolType = (resource?.toolType || resource?.kind || '').toLowerCase();
+  const rawSubject = resource?.subject || resource?.topic || resource?.categoryOrSubject || resource?.title || 'Resource';
+
+  let documentType = 'Study Resource';
+  let toolUsed = 'Study Tool';
+
+  if (toolType.includes('worksheet')) {
+    documentType = 'Classroom Worksheet';
+    toolUsed = 'Worksheet Tool';
+  } else if (toolType.includes('quiz') || toolType.includes('exam') || toolType.includes('assessment')) {
+    documentType = 'Quiz Assessment';
+    toolUsed = 'Quiz Tool';
+  } else if (toolType.includes('flashcard')) {
+    documentType = 'Study Flashcards';
+    toolUsed = 'Flashcard Tool';
+  } else if (toolType.includes('course') || toolType.includes('curriculum')) {
+    documentType = 'Course Curriculum';
+    toolUsed = 'Course Curriculum Tool';
+  } else if (toolType.includes('path') || toolType.includes('roadmap')) {
+    documentType = 'Learning Path Roadmap';
+    toolUsed = 'Learning Path Tool';
+  } else if (toolType.includes('presentation') || toolType.includes('slide')) {
+    documentType = 'Presentation Slide Deck';
+    toolUsed = 'Presentation Tool';
+  } else if (toolType.includes('essay') || toolType.includes('grader')) {
+    documentType = 'Essay Evaluation & Feedback';
+    toolUsed = 'Essay Grader Tool';
+  } else if (toolType.includes('tutor')) {
+    documentType = 'Socratic Tutoring Session';
+    toolUsed = 'Tutor Mentoring Tool';
+  } else if (toolType.includes('guide')) {
+    documentType = 'Study Guide';
+    toolUsed = 'Study Guide Tool';
+  } else if (resource?.kindLabel) {
+    documentType = resource.kindLabel;
+    toolUsed = `${resource.kindLabel} Tool`;
+  }
+
+  return resolveDocumentMeta({
+    subject: rawSubject,
+    documentType,
+    toolUsed,
+  });
+}
+
 export function exportUnifiedItem(item: any, format: 'doc' | 'pdf') {
-  const filename = item.title || 'study-resource';
   const studySet = item.originalStudySet;
   const quiz = item.originalQuiz;
   const buildResource = item.originalBuildResource;
@@ -687,6 +1002,12 @@ export function exportUnifiedItem(item: any, format: 'doc' | 'pdf') {
   const toolType = item.toolType || buildResource?.toolType || item.kind;
 
   if (studySet && studySet.concepts) {
+    const meta = resolveDocumentMeta({
+      subject: item.title || item.categoryOrSubject,
+      documentType: 'Study Vocabulary & Concepts',
+      toolUsed: 'Study Set Tool',
+    });
+    const filename = meta.filenameBase;
     if (format === 'doc') {
       let html = `<p><span class="badge">${escapeHtml(item.categoryOrSubject || 'General')}</span></p>`;
       if (studySet.description) html += `<p>${escapeHtml(studySet.description)}</p>`;
@@ -699,7 +1020,7 @@ export function exportUnifiedItem(item: any, format: 'doc' | 'pdf') {
         }
         html += `</div>`;
       });
-      downloadDocFile(filename, item.title, html);
+      downloadDocFile(filename, item.title, html, meta);
     } else {
       const sections: PdfSection[] = [
         {
@@ -715,7 +1036,7 @@ export function exportUnifiedItem(item: any, format: 'doc' | 'pdf') {
           callout: c.whyItMatters ? `Why it matters: ${c.whyItMatters}` : undefined,
         });
       });
-      downloadPdfFile(filename, item.title, sections);
+      downloadPdfFile(filename, item.title, sections, meta);
     }
     return;
   }
@@ -736,7 +1057,6 @@ export function exportUnifiedItem(item: any, format: 'doc' | 'pdf') {
     return;
   }
 
-  // Check if item itself has sections or questions directly (e.g. from GeneratorModal)
   // Check if item itself has sections, questions, or activities directly (e.g. from GeneratorModal or SavedResultViewer)
   if (item.sections || item.questions || item.activities || anyData.activities || anyData.exercises || item.exercises) {
     exportBuildResource({ ...item, ...anyData }, format);
@@ -744,17 +1064,18 @@ export function exportUnifiedItem(item: any, format: 'doc' | 'pdf') {
   }
 
   // Fallback for generic build resources
+  const fallbackMeta = resolveBuildResourceMeta(item);
   if (format === 'doc') {
-    let html = `<p><span class="badge">${escapeHtml(item.kindLabel || toolType)}</span></p>`;
+    let html = `<p><span class="badge">${escapeHtml(item.kindLabel || toolType || 'Study Resource')}</span></p>`;
     html += `<div class="box"><pre style="font-family: inherit; white-space: pre-wrap;">${escapeHtml(JSON.stringify(anyData, null, 2))}</pre></div>`;
-    downloadDocFile(filename, item.title, html);
+    downloadDocFile(fallbackMeta.filenameBase, item.title, html, fallbackMeta);
   } else {
-    downloadPdfFile(filename, item.title, [
+    downloadPdfFile(fallbackMeta.filenameBase, item.title, [
       {
         heading: item.kindLabel || 'Saved Resource',
         content: JSON.stringify(anyData, null, 2),
       },
-    ]);
+    ], fallbackMeta);
   }
 }
 
@@ -851,7 +1172,12 @@ export function getWorksheetResponseType(act: any, item: any): 'long' | 'medium'
  */
 function exportWorksheetDoc(resource: any) {
   const cleanTitle = getCleanWorksheetTitle(resource.title, resource.topic, resource.subject);
-  const filename = cleanTitle || resource.title || 'student-worksheet';
+  const meta = resolveDocumentMeta({
+    subject: cleanTitle,
+    documentType: 'Classroom Worksheet',
+    toolUsed: 'Worksheet Tool',
+  });
+  const filename = meta.filenameBase;
   const activities = resource.activities || resource.exercises || [];
 
   let html = `<p><span class="badge" style="background-color: #fff7ed; border-color: #ffedd5; color: #ea580c; font-size: 10pt; padding: 4pt 10pt;">STUDENT CLASSROOM WORKSHEET &bull; ${escapeHtml(resource.gradeLevel || 'Standard')}</span></p>`;
@@ -973,7 +1299,7 @@ function exportWorksheetDoc(resource: any) {
     html += `</div>`;
   }
 
-  downloadDocFile(filename, cleanTitle, html);
+  downloadDocFile(filename, cleanTitle, html, meta);
 }
 
 /**
@@ -982,12 +1308,23 @@ function exportWorksheetDoc(resource: any) {
  */
 function downloadWorksheetPdf(filename: string, resource: any) {
   const cleanTitle = getCleanWorksheetTitle(resource.title, resource.topic, resource.subject);
-  const baseName = sanitizeFilename((cleanTitle || filename).replace(/\.[^/.]+$/, ''));
-  const cleanFilename = `${baseName}.pdf`;
+  const meta = resolveDocumentMeta({
+    subject: cleanTitle,
+    documentType: 'Classroom Worksheet',
+    toolUsed: 'Worksheet Tool',
+  });
+  const cleanFilename = `${meta.filenameBase}.pdf`;
 
   const doc = new jsPDF({
     unit: 'pt',
     format: 'a4',
+  });
+
+  doc.setProperties({
+    title: meta.combinedHeading,
+    subject: `${meta.subject} - ${meta.documentType}`,
+    author: 'Proudly Afrikan Study Platform',
+    creator: 'Proudly Afrikan Study Platform',
   });
 
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -1004,6 +1341,21 @@ function downloadWorksheetPdf(filename: string, resource: any) {
     }
     return false;
   };
+
+  // Top Document Heading Format: Proudly Afrikan | [Subject] [DocumentType] | [Tool]
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9.5);
+  doc.setTextColor(255, 122, 0); // #FF7A00
+  const headingText = meta.combinedHeading;
+  const splitHeading = doc.splitTextToSize(headingText, contentWidth);
+  doc.text(splitHeading, margin, y + 10);
+  y += splitHeading.length * 13 + 4;
+
+  // Thin separator rule
+  doc.setDrawColor(229, 231, 235);
+  doc.setLineWidth(0.8);
+  doc.line(margin, y, margin + contentWidth, y);
+  y += 12;
 
   // Top header metadata: grade level & duration
   doc.setFont('helvetica', 'bold');
@@ -1284,27 +1636,16 @@ function downloadWorksheetPdf(filename: string, resource: any) {
     });
   }
 
-  // Footer page numbers
-  const totalPages = (doc as any).internal.getNumberOfPages();
-  for (let i = 1; i <= totalPages; i++) {
-    doc.setPage(i);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.setTextColor(140, 140, 140);
-    doc.text(
-      `Proudly Afrikan AI Study Platform • Page ${i} of ${totalPages}`,
-      pageWidth / 2,
-      pageHeight - 20,
-      { align: 'center' }
-    );
-  }
+  // Standardized footer with clickable website hyperlink and page numbers
+  renderPdfFooter(doc);
 
   doc.save(cleanFilename);
 }
 
 export function exportBuildResource(rawResource: any, format: 'doc' | 'pdf') {
   const resource = rawResource?.data ? { ...rawResource.data, ...rawResource } : (rawResource || {});
-  const filename = resource.title || 'afrikan-resource';
+  const meta = resolveBuildResourceMeta(resource);
+  const filename = meta.filenameBase;
 
   const activities = resource.activities || resource.exercises || [];
   const isWorksheet =
@@ -1384,7 +1725,7 @@ export function exportBuildResource(rawResource: any, format: 'doc' | 'pdf') {
       });
     }
 
-    downloadDocFile(filename, resource.title, html);
+    downloadDocFile(filename, resource.title, html, meta);
   } else {
     const sections: PdfSection[] = [];
     if (resource.description) {
@@ -1424,7 +1765,7 @@ export function exportBuildResource(rawResource: any, format: 'doc' | 'pdf') {
       });
     }
 
-    downloadPdfFile(filename, resource.title, sections);
+    downloadPdfFile(filename, resource.title, sections, meta);
   }
 }
 
