@@ -145,6 +145,11 @@ export const StudyPresentationGenerator: React.FC<StudyPresentationGeneratorProp
     exportPresentation(presentation, 'pdf');
   };
 
+  const handlePrint = () => {
+    if (!presentation) return;
+    exportPresentation(presentation, 'print');
+  };
+
   const currentSlide = presentation?.slides?.[activeSlideIndex];
 
   return (
@@ -209,7 +214,7 @@ export const StudyPresentationGenerator: React.FC<StudyPresentationGeneratorProp
               </button>
               <button
                 type="button"
-                onClick={() => window.print()}
+                onClick={handlePrint}
                 className={`px-4 py-2 rounded-xl border font-mono text-xs font-bold uppercase flex items-center gap-1.5 transition-colors cursor-pointer ${
                   isFullscreen ? 'bg-stone-800 text-white border-stone-700' : 'bg-white border-stone-200 text-stone-800 hover:bg-stone-50'
                 }`}

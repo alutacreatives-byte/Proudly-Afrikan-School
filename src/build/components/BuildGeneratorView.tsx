@@ -600,7 +600,7 @@ Return valid JSON with:
                         <span>PDF</span>
                       </button>
                       <button
-                        onClick={() => window.print()}
+                        onClick={() => exportItem(generatedResult, 'print')}
                         className="px-4 py-3 bg-white hover:bg-stone-50 border-2 border-stone-300 rounded-2xl font-bold text-[18px] uppercase text-stone-900 flex items-center gap-2 shadow-xs cursor-pointer transition-all"
                       >
                         <Printer className="w-5 h-5" />
@@ -832,7 +832,7 @@ Return valid JSON with:
                         <span>PDF</span>
                       </button>
                       <button
-                        onClick={() => window.print()}
+                        onClick={() => exportItem(generatedResult, 'print')}
                         className="px-3 py-2 bg-white hover:bg-stone-50 border border-stone-200 rounded-xl font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 shadow-xs cursor-pointer transition-all"
                       >
                         <Printer className="w-3.5 h-3.5" />

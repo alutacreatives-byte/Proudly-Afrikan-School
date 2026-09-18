@@ -138,6 +138,11 @@ export const StudyCourseGenerator: React.FC<StudyCourseGeneratorProps> = ({
     exportCourse(course, 'pdf');
   };
 
+  const handlePrint = () => {
+    if (!course) return;
+    exportCourse(course, 'print');
+  };
+
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
       {/* Top Header */}
@@ -184,7 +189,7 @@ export const StudyCourseGenerator: React.FC<StudyCourseGeneratorProps> = ({
               </button>
               <button
                 type="button"
-                onClick={() => window.print()}
+                onClick={handlePrint}
                 className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
               >
                 <Printer className="w-3.5 h-3.5" />

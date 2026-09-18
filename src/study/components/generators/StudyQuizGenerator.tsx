@@ -166,6 +166,11 @@ export const StudyQuizGenerator: React.FC<StudyQuizGeneratorProps> = ({
     exportQuiz(quiz, 'pdf');
   };
 
+  const handlePrint = () => {
+    if (!quiz) return;
+    exportQuiz(quiz, 'print');
+  };
+
   const score = calculateScore();
 
   return (
@@ -213,7 +218,7 @@ export const StudyQuizGenerator: React.FC<StudyQuizGeneratorProps> = ({
             </button>
             <button
               type="button"
-              onClick={() => window.print()}
+              onClick={handlePrint}
               className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <Printer className="w-3.5 h-3.5" />

@@ -314,6 +314,83 @@ export function downloadDocFile(
 }
 
 /**
+ * Renders and triggers the browser print dialog for the current document/resource.
+ * Preserves the document content, headings, formatting, and page layout.
+ */
+export function printDocumentHtml(
+  title: string,
+  htmlBody: string,
+  meta?: Partial<DocumentMeta>
+) {
+  const resolvedMeta = resolveDocumentMeta({
+    title,
+    subject: meta?.subject,
+    documentType: meta?.documentType,
+    toolUsed: meta?.toolUsed,
+  });
+
+  const displayTitle = removeAiReferences(title || resolvedMeta.subject);
+
+  // Retrieve or dynamically create the dedicated print container
+  let container = document.getElementById('proudly-afrikan-print-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'proudly-afrikan-print-container';
+    document.body.appendChild(container);
+  }
+
+  // Populate formatted document with heading, content, and Proudly Afrikan footer
+  container.innerHTML = `
+    <div class="print-document-container">
+      <div class="doc-heading-frame">
+        <p class="doc-heading-title">${escapeHtml(resolvedMeta.combinedHeading)}</p>
+      </div>
+      ${displayTitle && displayTitle.toUpperCase() !== resolvedMeta.combinedHeading.toUpperCase() ? `<h1 class="print-doc-h1">${escapeHtml(displayTitle)}</h1>` : ''}
+      <div class="print-doc-body">
+        ${htmlBody}
+      </div>
+      <div class="footer">
+        Proudly Afrikan Study Platform • <a href="http://www.proudlyafrikan.com" target="_blank" style="color: #2563eb; text-decoration: underline;">www.proudlyafrikan.com</a> • Page 1 of 1
+      </div>
+    </div>
+  `;
+
+  // Preserve original title and set document title for clean print preview header
+  const originalTitle = document.title;
+  if (displayTitle) {
+    document.title = `${displayTitle} - Proudly Afrikan`;
+  }
+
+  document.body.classList.add('is-printing-document');
+
+  let cleanedUp = false;
+  const cleanup = () => {
+    if (cleanedUp) return;
+    cleanedUp = true;
+    document.body.classList.remove('is-printing-document');
+    document.title = originalTitle;
+    if (container) {
+      container.innerHTML = '';
+    }
+    window.removeEventListener('afterprint', cleanup);
+  };
+
+  // Register cleanup on afterprint
+  window.addEventListener('afterprint', cleanup, { once: true });
+
+  // Direct synchronous invocation guarantees browser print dialog opens without delay
+  try {
+    window.focus();
+    window.print();
+  } catch (err) {
+    console.error('Failed to trigger window.print():', err);
+  }
+
+  // Safety fallback cleanup in case afterprint does not fire in some browsers or cancellation
+  setTimeout(cleanup, 2500);
+}
+
+/**
  * Renders the standardized footer across all PDF pages:
  * Proudly Afrikan Study Platform • www.proudlyafrikan.com • Page X of Y
  * with www.proudlyafrikan.com as a clickable hyperlink to http://www.proudlyafrikan.com
@@ -491,7 +568,7 @@ export function downloadPdfFile(
 // Specific Typed Exporters
 // ----------------------------------------------------------------------
 
-export function exportStudyGuide(guide: StudyGuideResult, format: 'doc' | 'pdf') {
+export function exportStudyGuide(guide: StudyGuideResult, format: 'doc' | 'pdf' | 'print') {
   const meta = resolveDocumentMeta({
     subject: guide.subject || guide.topic || guide.title,
     documentType: 'Study Guide',
@@ -499,7 +576,7 @@ export function exportStudyGuide(guide: StudyGuideResult, format: 'doc' | 'pdf')
   });
   const filename = meta.filenameBase;
 
-  if (format === 'doc') {
+  if (format === 'doc' || format === 'print') {
     let html = '';
     if (guide.subject) {
       html += `<p><span class="badge">${escapeHtml(guide.subject)}</span></p>`;
@@ -530,7 +607,11 @@ export function exportStudyGuide(guide: StudyGuideResult, format: 'doc' | 'pdf')
         html += `<div class="answer-key"><strong>Answer:</strong> ${escapeHtml(q.answer)}</div></div>`;
       });
     }
-    downloadDocFile(filename, guide.title, html, meta);
+    if (format === 'print') {
+      printDocumentHtml(guide.title, html, meta);
+    } else {
+      downloadDocFile(filename, guide.title, html, meta);
+    }
   } else {
     const sections: PdfSection[] = [];
     if (guide.subject) {
@@ -573,7 +654,7 @@ export function exportStudyGuide(guide: StudyGuideResult, format: 'doc' | 'pdf')
   }
 }
 
-export function exportCourse(course: CourseResult, format: 'doc' | 'pdf') {
+export function exportCourse(course: CourseResult, format: 'doc' | 'pdf' | 'print') {
   const meta = resolveDocumentMeta({
     subject: course.subject || course.topic || course.title,
     documentType: 'Course Curriculum',
@@ -581,7 +662,7 @@ export function exportCourse(course: CourseResult, format: 'doc' | 'pdf') {
   });
   const filename = meta.filenameBase;
 
-  if (format === 'doc') {
+  if (format === 'doc' || format === 'print') {
     let html = '';
     if (course.subject) {
       html += `<p><span class="badge">${escapeHtml(course.subject)}</span> <span class="badge">${course.durationWeeks || 4} Weeks</span></p>`;
@@ -613,7 +694,11 @@ export function exportCourse(course: CourseResult, format: 'doc' | 'pdf') {
         }
       });
     }
-    downloadDocFile(filename, course.title, html, meta);
+    if (format === 'print') {
+      printDocumentHtml(course.title, html, meta);
+    } else {
+      downloadDocFile(filename, course.title, html, meta);
+    }
   } else {
     const sections: PdfSection[] = [];
     if (course.subject) {
@@ -645,7 +730,7 @@ export function exportCourse(course: CourseResult, format: 'doc' | 'pdf') {
   }
 }
 
-export function exportQuiz(quiz: QuizResult, format: 'doc' | 'pdf') {
+export function exportQuiz(quiz: QuizResult, format: 'doc' | 'pdf' | 'print') {
   const meta = resolveDocumentMeta({
     subject: quiz.subject || quiz.topic || quiz.title,
     documentType: 'Quiz Assessment',
@@ -653,7 +738,7 @@ export function exportQuiz(quiz: QuizResult, format: 'doc' | 'pdf') {
   });
   const filename = meta.filenameBase;
 
-  if (format === 'doc') {
+  if (format === 'doc' || format === 'print') {
     let html = '';
     if (quiz.subject) {
       html += `<p><span class="badge">${escapeHtml(quiz.subject)}</span> <span class="badge">${escapeHtml(quiz.difficulty || 'All Levels')}</span></p>`;
@@ -677,7 +762,11 @@ export function exportQuiz(quiz: QuizResult, format: 'doc' | 'pdf') {
         html += `</div>`;
       });
     }
-    downloadDocFile(filename, quiz.title, html, meta);
+    if (format === 'print') {
+      printDocumentHtml(quiz.title, html, meta);
+    } else {
+      downloadDocFile(filename, quiz.title, html, meta);
+    }
   } else {
     const sections: PdfSection[] = [];
     if (quiz.subject || quiz.difficulty) {
@@ -702,7 +791,7 @@ export function exportQuiz(quiz: QuizResult, format: 'doc' | 'pdf') {
   }
 }
 
-export function exportPdfQuiz(quiz: PdfQuizResult, format: 'doc' | 'pdf') {
+export function exportPdfQuiz(quiz: PdfQuizResult, format: 'doc' | 'pdf' | 'print') {
   const rawSubject = quiz.documentName || quiz.title || 'Document Quiz';
   const meta = resolveDocumentMeta({
     subject: rawSubject,
@@ -718,7 +807,9 @@ export function exportPdfQuiz(quiz: PdfQuizResult, format: 'doc' | 'pdf') {
     exportQuiz(adapted, format);
   } else {
     const filename = meta.filenameBase;
-    if (format === 'doc') {
+    if (format === 'print') {
+      printDocumentHtml(quiz.title, `<p>${escapeHtml(quiz.sourceSnippet || 'Quiz content')}</p>`, meta);
+    } else if (format === 'doc') {
       downloadDocFile(filename, quiz.title, `<p>${escapeHtml(quiz.sourceSnippet || 'Quiz content')}</p>`, meta);
     } else {
       downloadPdfFile(filename, quiz.title, [{ content: quiz.sourceSnippet || 'Quiz content' }], meta);
@@ -726,7 +817,7 @@ export function exportPdfQuiz(quiz: PdfQuizResult, format: 'doc' | 'pdf') {
   }
 }
 
-export function exportFlashcards(deck: FlashcardResult, format: 'doc' | 'pdf') {
+export function exportFlashcards(deck: FlashcardResult, format: 'doc' | 'pdf' | 'print') {
   const meta = resolveDocumentMeta({
     subject: deck.subject || deck.topic || deck.title,
     documentType: 'Study Flashcards',
@@ -734,7 +825,7 @@ export function exportFlashcards(deck: FlashcardResult, format: 'doc' | 'pdf') {
   });
   const filename = meta.filenameBase;
 
-  if (format === 'doc') {
+  if (format === 'doc' || format === 'print') {
     let html = '';
     if (deck.subject) {
       html += `<p><span class="badge">${escapeHtml(deck.subject)}</span> <span class="badge">${deck.cards?.length || 0} Cards</span></p>`;
@@ -750,7 +841,11 @@ export function exportFlashcards(deck: FlashcardResult, format: 'doc' | 'pdf') {
         html += `</div>`;
       });
     }
-    downloadDocFile(filename, deck.title, html, meta);
+    if (format === 'print') {
+      printDocumentHtml(deck.title, html, meta);
+    } else {
+      downloadDocFile(filename, deck.title, html, meta);
+    }
   } else {
     const sections: PdfSection[] = [];
     if (deck.subject) {
@@ -772,7 +867,7 @@ export function exportFlashcards(deck: FlashcardResult, format: 'doc' | 'pdf') {
   }
 }
 
-export function exportLearningPath(path: LearningPathResult, format: 'doc' | 'pdf') {
+export function exportLearningPath(path: LearningPathResult, format: 'doc' | 'pdf' | 'print') {
   const meta = resolveDocumentMeta({
     subject: path.subject || path.topic || path.title || path.targetGoal,
     documentType: 'Learning Path Roadmap',
@@ -780,7 +875,7 @@ export function exportLearningPath(path: LearningPathResult, format: 'doc' | 'pd
   });
   const filename = meta.filenameBase;
 
-  if (format === 'doc') {
+  if (format === 'doc' || format === 'print') {
     let html = '';
     if (path.subject) {
       html += `<p><span class="badge">${escapeHtml(path.subject)}</span> <span class="badge">${path.targetGoal || 'Roadmap'}</span></p>`;
@@ -800,7 +895,11 @@ export function exportLearningPath(path: LearningPathResult, format: 'doc' | 'pd
         }
       });
     }
-    downloadDocFile(filename, path.title, html, meta);
+    if (format === 'print') {
+      printDocumentHtml(path.title, html, meta);
+    } else {
+      downloadDocFile(filename, path.title, html, meta);
+    }
   } else {
     const sections: PdfSection[] = [];
     if (path.subject || path.targetGoal) {
@@ -820,7 +919,7 @@ export function exportLearningPath(path: LearningPathResult, format: 'doc' | 'pd
   }
 }
 
-export function exportPresentation(pres: PresentationResult, format: 'doc' | 'pdf') {
+export function exportPresentation(pres: PresentationResult, format: 'doc' | 'pdf' | 'print') {
   const meta = resolveDocumentMeta({
     subject: pres.subject || pres.topic || pres.title,
     documentType: 'Presentation Slide Deck',
@@ -828,7 +927,7 @@ export function exportPresentation(pres: PresentationResult, format: 'doc' | 'pd
   });
   const filename = meta.filenameBase;
 
-  if (format === 'doc') {
+  if (format === 'doc' || format === 'print') {
     let html = '';
     if (pres.subtitle) {
       html += `<p><em>${escapeHtml(pres.subtitle)}</em></p>`;
@@ -849,7 +948,11 @@ export function exportPresentation(pres: PresentationResult, format: 'doc' | 'pd
         html += `</div>`;
       });
     }
-    downloadDocFile(filename, pres.title, html, meta);
+    if (format === 'print') {
+      printDocumentHtml(pres.title, html, meta);
+    } else {
+      downloadDocFile(filename, pres.title, html, meta);
+    }
   } else {
     const sections: PdfSection[] = [];
     if (pres.subtitle) {
@@ -868,7 +971,7 @@ export function exportPresentation(pres: PresentationResult, format: 'doc' | 'pd
   }
 }
 
-export function exportTutorChat(tutor: TutorChatResult, format: 'doc' | 'pdf') {
+export function exportTutorChat(tutor: TutorChatResult, format: 'doc' | 'pdf' | 'print') {
   const meta = resolveDocumentMeta({
     subject: tutor.documentName || tutor.title,
     documentType: 'Socratic Tutoring Session',
@@ -876,13 +979,17 @@ export function exportTutorChat(tutor: TutorChatResult, format: 'doc' | 'pdf') {
   });
   const filename = meta.filenameBase;
 
-  if (format === 'doc') {
+  if (format === 'doc' || format === 'print') {
     let html = '<h2>Dialogue History</h2>';
     tutor.messages.forEach((msg) => {
       const isTutor = msg.sender === 'tutor';
       html += `<div class="box" style="${isTutor ? 'background-color: #fdf2f8; border-color: #fbcfe8;' : ''}"><p><strong>${isTutor ? 'Afrikan Study Tutor' : 'Student'}:</strong></p><p>${escapeHtml(msg.text)}</p></div>`;
     });
-    downloadDocFile(filename, tutor.title, html, meta);
+    if (format === 'print') {
+      printDocumentHtml(tutor.title, html, meta);
+    } else {
+      downloadDocFile(filename, tutor.title, html, meta);
+    }
   } else {
     const sections: PdfSection[] = [
       {
@@ -900,7 +1007,7 @@ export function exportTutorChat(tutor: TutorChatResult, format: 'doc' | 'pdf') {
   }
 }
 
-export function exportEssayGrader(essay: EssayGraderResult, format: 'doc' | 'pdf') {
+export function exportEssayGrader(essay: EssayGraderResult, format: 'doc' | 'pdf' | 'print') {
   const meta = resolveDocumentMeta({
     subject: essay.subject || essay.topic || essay.title,
     documentType: 'Essay Evaluation & Feedback',
@@ -908,7 +1015,7 @@ export function exportEssayGrader(essay: EssayGraderResult, format: 'doc' | 'pdf
   });
   const filename = meta.filenameBase;
 
-  if (format === 'doc') {
+  if (format === 'doc' || format === 'print') {
     let html = `<h2>Score: ${essay.score} / ${essay.maxScore || 100} (${essay.gradeLetter || 'B'})</h2>`;
     html += `<h2>Executive Evaluation</h2><p>${escapeHtml(essay.overviewSummary)}</p>`;
     html += `<h2>Detailed Feedback</h2><p>${escapeHtml(essay.detailedFeedback)}</p>`;
@@ -924,7 +1031,11 @@ export function exportEssayGrader(essay: EssayGraderResult, format: 'doc' | 'pdf
         html += `<div class="box"><p><strong>${escapeHtml(imp.category)}:</strong> ${escapeHtml(imp.suggestion)}</p><p><em>Fix:</em> ${escapeHtml(imp.actionableFix)}</p></div>`;
       });
     }
-    downloadDocFile(filename, essay.title, html, meta);
+    if (format === 'print') {
+      printDocumentHtml(essay.title, html, meta);
+    } else {
+      downloadDocFile(filename, essay.title, html, meta);
+    }
   } else {
     const sections: PdfSection[] = [
       {
@@ -994,7 +1105,7 @@ export function resolveBuildResourceMeta(resource: any): DocumentMeta {
   });
 }
 
-export function exportUnifiedItem(item: any, format: 'doc' | 'pdf') {
+export function exportUnifiedItem(item: any, format: 'doc' | 'pdf' | 'print') {
   const studySet = item.originalStudySet;
   const quiz = item.originalQuiz;
   const buildResource = item.originalBuildResource;
@@ -1008,7 +1119,7 @@ export function exportUnifiedItem(item: any, format: 'doc' | 'pdf') {
       toolUsed: 'Study Set Tool',
     });
     const filename = meta.filenameBase;
-    if (format === 'doc') {
+    if (format === 'doc' || format === 'print') {
       let html = `<p><span class="badge">${escapeHtml(item.categoryOrSubject || 'General')}</span></p>`;
       if (studySet.description) html += `<p>${escapeHtml(studySet.description)}</p>`;
       html += `<h2>Concepts & Study Vocabulary</h2>`;
@@ -1020,7 +1131,11 @@ export function exportUnifiedItem(item: any, format: 'doc' | 'pdf') {
         }
         html += `</div>`;
       });
-      downloadDocFile(filename, item.title, html, meta);
+      if (format === 'print') {
+        printDocumentHtml(item.title, html, meta);
+      } else {
+        downloadDocFile(filename, item.title, html, meta);
+      }
     } else {
       const sections: PdfSection[] = [
         {
@@ -1065,10 +1180,14 @@ export function exportUnifiedItem(item: any, format: 'doc' | 'pdf') {
 
   // Fallback for generic build resources
   const fallbackMeta = resolveBuildResourceMeta(item);
-  if (format === 'doc') {
+  if (format === 'doc' || format === 'print') {
     let html = `<p><span class="badge">${escapeHtml(item.kindLabel || toolType || 'Study Resource')}</span></p>`;
     html += `<div class="box"><pre style="font-family: inherit; white-space: pre-wrap;">${escapeHtml(JSON.stringify(anyData, null, 2))}</pre></div>`;
-    downloadDocFile(fallbackMeta.filenameBase, item.title, html, fallbackMeta);
+    if (format === 'print') {
+      printDocumentHtml(item.title, html, fallbackMeta);
+    } else {
+      downloadDocFile(fallbackMeta.filenameBase, item.title, html, fallbackMeta);
+    }
   } else {
     downloadPdfFile(fallbackMeta.filenameBase, item.title, [
       {
@@ -1170,7 +1289,7 @@ export function getWorksheetResponseType(act: any, item: any): 'long' | 'medium'
  * Downloads a structured DOC file for a Worksheet with clearly defined writing areas
  * and ample vertical space for all written-response questions.
  */
-function exportWorksheetDoc(resource: any) {
+function exportWorksheetDoc(resource: any, format: 'doc' | 'print' = 'doc') {
   const cleanTitle = getCleanWorksheetTitle(resource.title, resource.topic, resource.subject);
   const meta = resolveDocumentMeta({
     subject: cleanTitle,
@@ -1299,7 +1418,11 @@ function exportWorksheetDoc(resource: any) {
     html += `</div>`;
   }
 
-  downloadDocFile(filename, cleanTitle, html, meta);
+  if (format === 'print') {
+    printDocumentHtml(cleanTitle, html, meta);
+  } else {
+    downloadDocFile(filename, cleanTitle, html, meta);
+  }
 }
 
 /**
@@ -1642,7 +1765,7 @@ function downloadWorksheetPdf(filename: string, resource: any) {
   doc.save(cleanFilename);
 }
 
-export function exportBuildResource(rawResource: any, format: 'doc' | 'pdf') {
+export function exportBuildResource(rawResource: any, format: 'doc' | 'pdf' | 'print') {
   const resource = rawResource?.data ? { ...rawResource.data, ...rawResource } : (rawResource || {});
   const meta = resolveBuildResourceMeta(resource);
   const filename = meta.filenameBase;
@@ -1662,14 +1785,16 @@ export function exportBuildResource(rawResource: any, format: 'doc' | 'pdf') {
     );
     const worksheetResource = { ...resource, title: cleanTitle };
     if (format === 'doc') {
-      exportWorksheetDoc(worksheetResource);
+      exportWorksheetDoc(worksheetResource, 'doc');
+    } else if (format === 'print') {
+      exportWorksheetDoc(worksheetResource, 'print');
     } else {
       downloadWorksheetPdf(cleanTitle, worksheetResource);
     }
     return;
   }
 
-  if (format === 'doc') {
+  if (format === 'doc' || format === 'print') {
     let html = `<p><span class="badge">${escapeHtml(resource.toolType || resource.gradeLevel || 'Study Resource')}</span></p>`;
     if (resource.description) {
       html += `<p style="font-size: 14pt; color: #333; margin-bottom: 16pt; font-weight: bold;">${escapeHtml(resource.description)}</p>`;
@@ -1725,7 +1850,11 @@ export function exportBuildResource(rawResource: any, format: 'doc' | 'pdf') {
       });
     }
 
-    downloadDocFile(filename, resource.title, html, meta);
+    if (format === 'print') {
+      printDocumentHtml(resource.title, html, meta);
+    } else {
+      downloadDocFile(filename, resource.title, html, meta);
+    }
   } else {
     const sections: PdfSection[] = [];
     if (resource.description) {

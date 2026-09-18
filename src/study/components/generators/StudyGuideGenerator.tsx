@@ -134,7 +134,8 @@ export const StudyGuideGenerator: React.FC<StudyGuideGeneratorProps> = ({
   };
 
   const handlePrint = () => {
-    window.print();
+    if (!guide) return;
+    exportStudyGuide(guide, 'print');
   };
 
   const handleExportDoc = () => {

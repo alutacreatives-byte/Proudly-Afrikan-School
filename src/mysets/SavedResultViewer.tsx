@@ -171,7 +171,7 @@ export const SavedResultViewer: React.FC<SavedResultViewerProps> = ({
   };
 
   const handlePrint = () => {
-    window.print();
+    exportUnifiedItem(item, 'print');
   };
 
   return (
