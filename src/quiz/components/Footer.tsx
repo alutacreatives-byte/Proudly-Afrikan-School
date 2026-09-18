@@ -86,7 +86,7 @@ export const Footer: React.FC<FooterProps> = ({
             © {new Date().getFullYear()} PROUDLY AFRIKAN EDUCATION. ALL RIGHTS RESERVED.
           </div>
           <div className="flex items-center gap-2">
-            <span>DESIGNED WITH EDITORIAL RIGOR</span>
+            <span>BUILT WITH PURPOSE</span>
             <span>•</span>
             <a
               href="https://sifisos.com/"

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, Loader2, CheckCircle2, Printer, Download, ArrowLeft, ArrowRight, FileSpreadsheet, Check } from 'lucide-react';
+import { Sparkles, Loader2, CheckCircle2, Download, ArrowLeft, ArrowRight, FileSpreadsheet, Check } from 'lucide-react';
 import { GlobalNavigationButtons } from '../../components/GlobalNavigationButtons';
 import { callAIAndParseJson } from '../../study/services/aiService';
 import { saveResourceToStorage } from '../utils/storage';
@@ -599,13 +599,6 @@ Return valid JSON with:
                         <Download className="w-5 h-5 text-[#FF7A00]" />
                         <span>PDF</span>
                       </button>
-                      <button
-                        onClick={() => exportItem(generatedResult, 'print')}
-                        className="px-4 py-3 bg-white hover:bg-stone-50 border-2 border-stone-300 rounded-2xl font-bold text-[18px] uppercase text-stone-900 flex items-center gap-2 shadow-xs cursor-pointer transition-all"
-                      >
-                        <Printer className="w-5 h-5" />
-                        <span>Print</span>
-                      </button>
                     </div>
                   </div>
 
@@ -830,13 +823,6 @@ Return valid JSON with:
                       >
                         <Download className="w-3.5 h-3.5 text-[#D92B8A]" />
                         <span>PDF</span>
-                      </button>
-                      <button
-                        onClick={() => exportItem(generatedResult, 'print')}
-                        className="px-3 py-2 bg-white hover:bg-stone-50 border border-stone-200 rounded-xl font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 shadow-xs cursor-pointer transition-all"
-                      >
-                        <Printer className="w-3.5 h-3.5" />
-                        <span>Print</span>
                       </button>
                     </div>
                   </div>

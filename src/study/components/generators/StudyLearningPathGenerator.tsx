@@ -2,15 +2,13 @@ import React, { useState } from 'react';
 import { 
   GitBranch, 
   Sparkles, 
-  Printer, 
-  Copy, 
   Bookmark, 
   Check, 
-  CheckCircle2,
-  Clock,
-  Flag,
-  Lightbulb,
-  Download
+  CheckCircle2, 
+  Clock, 
+  Flag, 
+  Lightbulb, 
+  Download 
 } from 'lucide-react';
 import { LearningPathResult, StudyToolInput } from '../../types';
 import { generateStudyTool } from '../../services/aiService';
@@ -49,7 +47,6 @@ export const StudyLearningPathGenerator: React.FC<StudyLearningPathGeneratorProp
   const [path, setPath] = useState<LearningPathResult | null>(null);
   const [completedStages, setCompletedStages] = useState<Record<number, boolean>>({});
   const [saved, setSaved] = useState<boolean>(false);
-  const [copied, setCopied] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   const resultRef = useScrollToResult(path, isGenerating);
@@ -111,21 +108,6 @@ export const StudyLearningPathGenerator: React.FC<StudyLearningPathGeneratorProp
     setTimeout(() => setSaved(false), 2500);
   };
 
-  const handleCopy = () => {
-    if (!path) return;
-    let text = `# ${path.title}\nTarget Goal: ${path.targetGoal || targetGoal}\nEstimated Duration: ${path.totalEstimatedWeeks || 8} Weeks\n\n`;
-    path.stages.forEach((st) => {
-      text += `## Stage ${st.stepNumber}: ${st.title} (~${st.estimatedHours || 15} hours)\n${st.description}\n`;
-      if (st.skillsAcquired) text += 'Skills Acquired: ' + st.skillsAcquired.join(', ') + '\n';
-      if (st.suggestedActivities) text += 'Activities:\n' + st.suggestedActivities.map((a) => `  - ${a}`).join('\n') + '\n';
-      if (st.checkpointAssessment) text += `Checkpoint Assessment: ${st.checkpointAssessment}\n`;
-      text += '\n---\n\n';
-    });
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
   const handleExportDoc = () => {
     if (!path) return;
     exportLearningPath(path, 'doc');
@@ -134,11 +116,6 @@ export const StudyLearningPathGenerator: React.FC<StudyLearningPathGeneratorProp
   const handleExportPdf = () => {
     if (!path) return;
     exportLearningPath(path, 'pdf');
-  };
-
-  const handlePrint = () => {
-    if (!path) return;
-    exportLearningPath(path, 'print');
   };
 
   return (
@@ -161,14 +138,6 @@ export const StudyLearningPathGenerator: React.FC<StudyLearningPathGeneratorProp
             <div className="flex items-center gap-2 flex-wrap">
               <button
                 type="button"
-                onClick={handleCopy}
-                className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
-              >
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                {copied ? 'Copied' : 'Copy'}
-              </button>
-              <button
-                type="button"
                 onClick={handleExportDoc}
                 className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
                 title="Download Word Document (.doc)"
@@ -184,14 +153,6 @@ export const StudyLearningPathGenerator: React.FC<StudyLearningPathGeneratorProp
               >
                 <Download className="w-3.5 h-3.5 text-[#D92B8A]" />
                 PDF
-              </button>
-              <button
-                type="button"
-                onClick={handlePrint}
-                className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
-              >
-                <Printer className="w-3.5 h-3.5" />
-                Print
               </button>
               <button
                 type="button"

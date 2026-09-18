@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import { 
   FileCheck2, 
   Sparkles, 
-  Printer, 
-  Copy, 
   Bookmark, 
   Check, 
   Award,
@@ -55,7 +53,6 @@ export const EssayGraderGenerator: React.FC<EssayGraderGeneratorProps> = ({
       : null
   );
   const [saved, setSaved] = useState<boolean>(false);
-  const [copied, setCopied] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   const resultRef = useScrollToResult(result, isGenerating);
@@ -131,22 +128,6 @@ export const EssayGraderGenerator: React.FC<EssayGraderGeneratorProps> = ({
     setTimeout(() => setSaved(false), 2500);
   };
 
-  const handleCopy = () => {
-    if (!result) return;
-    let text = `# ${result.title}\nScore: ${result.score}/${result.maxScore || 100} (${result.gradeLetter || 'N/A'})\n\n`;
-    text += `Overview: ${result.overviewSummary}\n\n`;
-    text += `Detailed Feedback:\n${result.detailedFeedback}\n\n`;
-    text += `Strengths:\n${result.strengths.map(s => `- ${s}`).join('\n')}\n\n`;
-    text += `Weaknesses:\n${result.weaknesses.map(w => `- ${w}`).join('\n')}\n\n`;
-    text += `Specific Improvements:\n`;
-    result.specificImprovements.forEach((imp, i) => {
-      text += `${i + 1}. [${imp.category}] ${imp.suggestion} -> Fix: ${imp.actionableFix}\n`;
-    });
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
   const handleExportDoc = () => {
     if (!result) return;
     exportEssayGrader(result, 'doc');
@@ -155,11 +136,6 @@ export const EssayGraderGenerator: React.FC<EssayGraderGeneratorProps> = ({
   const handleExportPdf = () => {
     if (!result) return;
     exportEssayGrader(result, 'pdf');
-  };
-
-  const handlePrint = () => {
-    if (!result) return;
-    exportEssayGrader(result, 'print');
   };
 
   return (
@@ -182,14 +158,6 @@ export const EssayGraderGenerator: React.FC<EssayGraderGeneratorProps> = ({
             <div className="flex items-center gap-2 flex-wrap">
               <button
                 type="button"
-                onClick={handleCopy}
-                className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
-              >
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                {copied ? 'Copied' : 'Copy'}
-              </button>
-              <button
-                type="button"
                 onClick={handleExportDoc}
                 className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
                 title="Download Word Document (.doc)"
@@ -205,14 +173,6 @@ export const EssayGraderGenerator: React.FC<EssayGraderGeneratorProps> = ({
               >
                 <Download className="w-3.5 h-3.5 text-[#D92B8A]" />
                 PDF
-              </button>
-              <button
-                type="button"
-                onClick={handlePrint}
-                className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
-              >
-                <Printer className="w-3.5 h-3.5" />
-                Print
               </button>
               <button
                 type="button"

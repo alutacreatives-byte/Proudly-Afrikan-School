@@ -2,10 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { 
   MessageSquare, 
   Sparkles, 
-  Printer, 
-  Copy, 
   Bookmark, 
-  Check, 
   RotateCcw,
   Send,
   FileText,
@@ -54,7 +51,6 @@ export const TutorChatGenerator: React.FC<TutorChatGeneratorProps> = ({
   const [inputValue, setInputValue] = useState<string>('');
   const [isSending, setIsSending] = useState<boolean>(false);
   const [saved, setSaved] = useState<boolean>(false);
-  const [copied, setCopied] = useState<boolean>(false);
 
   const latestTutorMsgRef = useRef<HTMLDivElement>(null);
 
@@ -207,16 +203,6 @@ export const TutorChatGenerator: React.FC<TutorChatGeneratorProps> = ({
     setTimeout(() => setSaved(false), 2500);
   };
 
-  const handleCopy = () => {
-    let transcript = `TUTOR CHAT TRANSCRIPT: ${documentTitle || sourceFileName || 'Document'}\n\n`;
-    messages.forEach(m => {
-      transcript += `[${m.timestamp}] ${m.sender === 'user' ? 'Student' : 'Mentor'}: ${m.text}\n\n`;
-    });
-    navigator.clipboard.writeText(transcript);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
   const handleExportDoc = () => {
     if (messages.length === 0) return;
     const sessionTitle = documentTitle || sourceFileName || 'Tutor Chat';
@@ -245,21 +231,6 @@ export const TutorChatGenerator: React.FC<TutorChatGeneratorProps> = ({
       createdAt: new Date().toISOString(),
     };
     exportTutorChat(resource, 'pdf');
-  };
-
-  const handlePrint = () => {
-    if (messages.length === 0) return;
-    const sessionTitle = documentTitle || sourceFileName || 'Tutor Chat';
-    const resource: TutorChatResult = {
-      id: existingResource?.id || `tutorchat-${Date.now()}`,
-      title: sessionTitle,
-      documentName: sourceFileName,
-      sourceSnippet: fileBase64 ? 'Document attached' : '',
-      messages,
-      toolType: 'pdf-quiz',
-      createdAt: new Date().toISOString(),
-    };
-    exportTutorChat(resource, 'print');
   };
 
   const isChatActive = messages.length > 0 && !!sourceFileName;
@@ -320,14 +291,6 @@ export const TutorChatGenerator: React.FC<TutorChatGeneratorProps> = ({
             <div className="flex items-center gap-2 flex-wrap">
               <button
                 type="button"
-                onClick={handleCopy}
-                className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
-              >
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                {copied ? 'Copied' : 'Copy'}
-              </button>
-              <button
-                type="button"
                 onClick={handleExportDoc}
                 className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
                 title="Download Word Document (.doc)"
@@ -343,14 +306,6 @@ export const TutorChatGenerator: React.FC<TutorChatGeneratorProps> = ({
               >
                 <Download className="w-3.5 h-3.5 text-[#D92B8A]" />
                 PDF
-              </button>
-              <button
-                type="button"
-                onClick={handlePrint}
-                className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
-              >
-                <Printer className="w-3.5 h-3.5" />
-                Print
               </button>
               <button
                 type="button"

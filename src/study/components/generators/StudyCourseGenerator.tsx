@@ -2,10 +2,7 @@ import React, { useState } from 'react';
 import { 
   GraduationCap, 
   Sparkles, 
-  Printer, 
-  Copy, 
   Bookmark, 
-  Check, 
   BookOpen,
   Calendar,
   CheckCircle2,
@@ -49,7 +46,6 @@ export const StudyCourseGenerator: React.FC<StudyCourseGeneratorProps> = ({
   const [course, setCourse] = useState<CourseResult | null>(null);
   const [activeModuleIdx, setActiveModuleIdx] = useState<number>(0);
   const [saved, setSaved] = useState<boolean>(false);
-  const [copied, setCopied] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   const resultRef = useScrollToResult(course, isGenerating);
@@ -106,28 +102,6 @@ export const StudyCourseGenerator: React.FC<StudyCourseGeneratorProps> = ({
     setTimeout(() => setSaved(false), 2500);
   };
 
-  const handleCopy = () => {
-    if (!course) return;
-    let text = `# ${course.title}\nSubject: ${course.subject || category}\nDuration: ${course.durationWeeks || 6} Weeks\n\n`;
-    text += `## Course Overview\n${course.courseOverview}\n\n`;
-    if (course.learningOutcomes) {
-      text += '## Learning Outcomes\n' + course.learningOutcomes.map((lo) => `- ${lo}`).join('\n') + '\n\n';
-    }
-    course.modules.forEach((mod) => {
-      text += `### Module ${mod.moduleNumber}: ${mod.title}\n${mod.description}\n`;
-      if (mod.keyTopics) text += 'Key Topics: ' + mod.keyTopics.join(', ') + '\n';
-      if (mod.practicalProjectOrTask) text += `Practical Capstone: ${mod.practicalProjectOrTask}\n`;
-      text += '\nLessons:\n';
-      mod.lessons.forEach((l) => {
-        text += `- ${l.lessonTitle} (${l.estimatedMinutes || 45} mins): ${l.summary || l.learningObjective}\n`;
-      });
-      text += '\n---\n\n';
-    });
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
   const handleExportDoc = () => {
     if (!course) return;
     exportCourse(course, 'doc');
@@ -136,11 +110,6 @@ export const StudyCourseGenerator: React.FC<StudyCourseGeneratorProps> = ({
   const handleExportPdf = () => {
     if (!course) return;
     exportCourse(course, 'pdf');
-  };
-
-  const handlePrint = () => {
-    if (!course) return;
-    exportCourse(course, 'print');
   };
 
   return (
@@ -163,14 +132,6 @@ export const StudyCourseGenerator: React.FC<StudyCourseGeneratorProps> = ({
             <div className="flex items-center gap-2 flex-wrap">
               <button
                 type="button"
-                onClick={handleCopy}
-                className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
-              >
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                {copied ? 'Copied' : 'Copy'}
-              </button>
-              <button
-                type="button"
                 onClick={handleExportDoc}
                 className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
                 title="Download Word Document (.doc)"
@@ -186,14 +147,6 @@ export const StudyCourseGenerator: React.FC<StudyCourseGeneratorProps> = ({
               >
                 <Download className="w-3.5 h-3.5 text-[#D92B8A]" />
                 PDF
-              </button>
-              <button
-                type="button"
-                onClick={handlePrint}
-                className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
-              >
-                <Printer className="w-3.5 h-3.5" />
-                Print
               </button>
               <button
                 type="button"

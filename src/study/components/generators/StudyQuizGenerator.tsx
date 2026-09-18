@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import { 
   CheckSquare, 
   Sparkles, 
-  Printer, 
-  Copy, 
   Bookmark, 
   Check, 
   RotateCcw,
@@ -50,7 +48,6 @@ export const StudyQuizGenerator: React.FC<StudyQuizGeneratorProps> = ({
   const [userAnswers, setUserAnswers] = useState<Record<number, number>>({});
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
   const [saved, setSaved] = useState<boolean>(false);
-  const [copied, setCopied] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   const resultRef = useScrollToResult(quiz, isGenerating);
@@ -139,23 +136,6 @@ export const StudyQuizGenerator: React.FC<StudyQuizGeneratorProps> = ({
     setTimeout(() => setSaved(false), 2500);
   };
 
-  const handleCopy = () => {
-    if (!quiz || !Array.isArray(quiz.questions)) return;
-    let text = `# ${quiz.title}\nSubject: ${quiz.subject || category}\n\n`;
-    quiz.questions.forEach((q, idx) => {
-      text += `Question ${idx + 1}: ${q.prompt}\n`;
-      q.options.forEach((opt, oIdx) => {
-        text += `  ${String.fromCharCode(65 + oIdx)}. ${opt}\n`;
-      });
-      text += `Correct Answer: ${String.fromCharCode(65 + (Number(q.correctAnswer) || 0))} - ${q.options[Number(q.correctAnswer) || 0]}\n`;
-      if (q.explanation) text += `Explanation: ${q.explanation}\n`;
-      text += '\n';
-    });
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
   const handleExportDoc = () => {
     if (!quiz) return;
     exportQuiz(quiz, 'doc');
@@ -164,11 +144,6 @@ export const StudyQuizGenerator: React.FC<StudyQuizGeneratorProps> = ({
   const handleExportPdf = () => {
     if (!quiz) return;
     exportQuiz(quiz, 'pdf');
-  };
-
-  const handlePrint = () => {
-    if (!quiz) return;
-    exportQuiz(quiz, 'print');
   };
 
   const score = calculateScore();
@@ -192,14 +167,6 @@ export const StudyQuizGenerator: React.FC<StudyQuizGeneratorProps> = ({
           <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
             <button
               type="button"
-              onClick={handleCopy}
-              className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
-            >
-              {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-              {copied ? 'Copied' : 'Copy'}
-            </button>
-            <button
-              type="button"
               onClick={handleExportDoc}
               className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
               title="Download Word Document (.doc)"
@@ -215,14 +182,6 @@ export const StudyQuizGenerator: React.FC<StudyQuizGeneratorProps> = ({
             >
               <Download className="w-3.5 h-3.5 text-[#D92B8A]" />
               PDF
-            </button>
-            <button
-              type="button"
-              onClick={handlePrint}
-              className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
-            >
-              <Printer className="w-3.5 h-3.5" />
-              Print
             </button>
             <button
               type="button"

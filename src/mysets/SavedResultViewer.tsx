@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
   X, 
-  Printer, 
-  Copy, 
   Check, 
   BookOpen, 
   GraduationCap, 
@@ -45,7 +43,6 @@ export const SavedResultViewer: React.FC<SavedResultViewerProps> = ({
   onBack,
   onGoHome,
 }) => {
-  const [copied, setCopied] = useState(false);
   const [showMarkingGuide, setShowMarkingGuide] = useState(false);
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
   const [activeFlashcardIndex, setActiveFlashcardIndex] = useState(0);
@@ -70,110 +67,6 @@ export const SavedResultViewer: React.FC<SavedResultViewerProps> = ({
   const toolType = buildRes?.toolType || (studySet ? 'study-set' : quiz ? 'quiz' : 'custom');
 
   // Handle Copy full text representation
-  const handleCopy = () => {
-    let text = `${item.title.toUpperCase()}\n`;
-    text += `Category: ${item.categoryOrSubject} | Type: ${item.kindLabel}\n`;
-    text += `Created: ${new Date(item.createdAt).toLocaleDateString()}\n\n`;
-
-    if (studySet && studySet.concepts) {
-      text += `CONCEPTS & VOCABULARY:\n`;
-      studySet.concepts.forEach((c, idx) => {
-        text += `\n${idx + 1}. ${c.title}\n`;
-        text += `Explanation: ${c.explanation}\n`;
-        if (c.whyItMatters) text += `Why it matters: ${c.whyItMatters}\n`;
-        if (c.keyFacts && c.keyFacts.length) text += `Key Facts: ${c.keyFacts.join(', ')}\n`;
-      });
-    } else if (quiz && quiz.questions) {
-      text += `QUIZ QUESTIONS:\n`;
-      quiz.questions.forEach((q, idx) => {
-        text += `\nQuestion ${idx + 1}: ${q.question}\n`;
-        q.options.forEach((opt, oIdx) => {
-          text += `  [${String.fromCharCode(65 + oIdx)}] ${opt} ${Number(oIdx) === Number(q.correctAnswer) ? '✓' : ''}\n`;
-        });
-        if (q.explanation) text += `Explanation: ${q.explanation}\n`;
-      });
-    } else if (toolType === 'exam' && anyData.sections) {
-      text += `EXAMINATION PAPER\nDuration: ${anyData.durationMinutes || 60} mins | Total Marks: ${anyData.totalMarks || 50}\n\n`;
-      anyData.sections.forEach((sec: any) => {
-        text += `\n--- ${sec.name.toUpperCase()} (${sec.totalMarks} Marks) ---\n`;
-        (sec.questions || []).forEach((q: any) => {
-          text += `\nQ${q.questionNumber}. ${q.questionText} [${q.marks} Marks]\n`;
-          if (q.options) {
-            q.options.forEach((opt: string, i: number) => {
-              text += `   (${String.fromCharCode(65 + i)}) ${opt}\n`;
-            });
-          }
-          if (q.correctAnswer) text += `Answer: ${q.correctAnswer}\n`;
-        });
-      });
-    } else if (toolType === 'worksheet' && anyData.exercises) {
-      text += `WORKSHEET\nInstructions: ${anyData.instructions || ''}\n\n`;
-      anyData.exercises.forEach((ex: any) => {
-        text += `\n${ex.sectionTitle.toUpperCase()}\n`;
-        (ex.questions || []).forEach((q: any) => {
-          text += `${q.number || '•'}. ${q.prompt}\n`;
-          if (q.answer) text += `Answer: ${q.answer}\n`;
-        });
-      });
-    } else if (toolType === 'lesson-plan' && anyData.phases) {
-      text += `LESSON PLAN\nGrade: ${anyData.gradeLevel} | Duration: ${anyData.durationMinutes} mins\n\n`;
-      if (anyData.objectives) {
-        text += `Objectives:\n${anyData.objectives.map((o: string) => `• ${o}`).join('\n')}\n\n`;
-      }
-      anyData.phases.forEach((p: any) => {
-        text += `[${p.phase} - ${p.durationMinutes}m]\nTeacher: ${p.teacherActivity}\nStudents: ${p.studentActivity}\n\n`;
-      });
-    } else if (toolType === 'presentation' && anyData.slides) {
-      text += `PRESENTATION SLIDE DECK\n\n`;
-      anyData.slides.forEach((s: any) => {
-        text += `Slide ${s.slideNumber}: ${s.title}\n`;
-        (s.bullets || []).forEach((b: string) => (text += `• ${b}\n`));
-        if (s.speakerNotes) text += `Notes: ${s.speakerNotes}\n`;
-        text += '\n';
-      });
-    } else if ((toolType === 'course' || toolType === 'course-builder') && anyData.modules) {
-      text += `CURRICULUM COURSE\nDuration: ${anyData.totalWeeksOrHours}\n\n`;
-      anyData.modules.forEach((m: any) => {
-        text += `Module ${m.moduleNumber}: ${m.title}\n`;
-        (m.lessons || []).forEach((l: any) => (text += `  - ${l.title} (${l.duration}): ${l.keyTakeaway}\n`));
-      });
-    } else if (toolType === 'learning-path' && anyData.milestones) {
-      text += `LEARNING ROADMAP\n\n`;
-      anyData.milestones.forEach((m: any) => {
-        text += `Milestone ${m.milestoneNumber}: ${m.title} (${m.timeframe})\n`;
-        if (m.skillsAcquired) text += `Skills: ${m.skillsAcquired.join(', ')}\n`;
-        if (m.checkpointAssessment) text += `Assessment: ${m.checkpointAssessment}\n\n`;
-      });
-    } else if (toolType === 'mind-map' && (anyData.rootNode || anyData.topic)) {
-      text += `MIND MAP: ${anyData.rootNode?.title || anyData.topic}\n`;
-      const dumpNodes = (node: any, depth = 0) => {
-        if (!node) return;
-        text += `${'  '.repeat(depth)}• ${node.title || node.name || ''}\n`;
-        if (node.notes) text += `${'  '.repeat(depth)}  Notes: ${node.notes}\n`;
-        (node.children || []).forEach((c: any) => dumpNodes(c, depth + 1));
-      };
-      dumpNodes(anyData.rootNode);
-    } else if (toolType === 'study-guide') {
-      text += `STUDY GUIDE\n${anyData.executiveSummary || item.description}\n\n`;
-      (anyData.sections || []).forEach((sec: any) => {
-        text += `--- ${sec.title} ---\n${sec.content}\n\n`;
-      });
-    } else {
-      text += item.description + '\n\n';
-      if (anyData.content) text += anyData.content + '\n';
-      if (anyData.summary) text += anyData.summary + '\n';
-      if (anyData.keyPoints) text += anyData.keyPoints.map((p: string) => `• ${p}`).join('\n') + '\n';
-    }
-
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handlePrint = () => {
-    exportUnifiedItem(item, 'print');
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-6 bg-black/60 backdrop-blur-xs overflow-hidden">
       <div 
@@ -193,24 +86,6 @@ export const SavedResultViewer: React.FC<SavedResultViewerProps> = ({
 
             {/* Top Actions */}
             <div className="flex items-center gap-2 flex-wrap">
-              <button
-                onClick={handleCopy}
-                className="px-3 py-1.5 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-700 font-mono text-xs font-bold uppercase flex items-center gap-1.5 transition-colors cursor-pointer"
-                title="Copy to clipboard"
-              >
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                <span className="hidden sm:inline">{copied ? 'COPIED' : 'COPY'}</span>
-              </button>
-
-              <button
-                onClick={handlePrint}
-                className="px-3 py-1.5 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-700 font-mono text-xs font-bold uppercase flex items-center gap-1.5 transition-colors cursor-pointer"
-                title="Print document"
-              >
-                <Printer className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">PRINT</span>
-              </button>
-
               <button
                 onClick={() => exportUnifiedItem(item, 'doc')}
                 className="px-3 py-1.5 rounded-full bg-white border border-stone-200 hover:bg-stone-50 text-stone-700 font-mono text-xs font-bold uppercase flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"

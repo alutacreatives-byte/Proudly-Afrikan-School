@@ -2,10 +2,7 @@ import React, { useState } from 'react';
 import { 
   Layers, 
   Sparkles, 
-  Printer, 
-  Copy, 
   Bookmark, 
-  Check, 
   ArrowLeft,
   ArrowRight,
   RotateCw,
@@ -52,7 +49,6 @@ export const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({
   const [isFlipped, setIsFlipped] = useState<boolean>(false);
   const [showHint, setShowHint] = useState<boolean>(false);
   const [saved, setSaved] = useState<boolean>(false);
-  const [copied, setCopied] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   const resultRef = useScrollToResult(flashcards, isGenerating);
@@ -135,16 +131,6 @@ export const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({
     setTimeout(() => setSaved(false), 2500);
   };
 
-  const handleCopy = () => {
-    if (!flashcards || !Array.isArray(flashcards.cards)) return;
-    const text = flashcards.cards
-      .map((c, i) => `Card ${i + 1}\nFront: ${c.front}\nBack: ${c.back}\n${c.hint ? `Hint: ${c.hint}\n` : ''}`)
-      .join('\n---\n\n');
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
   const handleExportDoc = () => {
     if (!flashcards) return;
     exportFlashcards(flashcards, 'doc');
@@ -153,11 +139,6 @@ export const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({
   const handleExportPdf = () => {
     if (!flashcards) return;
     exportFlashcards(flashcards, 'pdf');
-  };
-
-  const handlePrint = () => {
-    if (!flashcards) return;
-    exportFlashcards(flashcards, 'print');
   };
 
   const currentCard = flashcards?.cards?.[currentIndex];
@@ -190,14 +171,6 @@ export const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({
               </button>
               <button
                 type="button"
-                onClick={handleCopy}
-                className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
-              >
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                {copied ? 'Copied' : 'Copy'}
-              </button>
-              <button
-                type="button"
                 onClick={handleExportDoc}
                 className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
                 title="Download Word Document (.doc)"
@@ -213,14 +186,6 @@ export const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({
               >
                 <Download className="w-3.5 h-3.5 text-[#D92B8A]" />
                 PDF
-              </button>
-              <button
-                type="button"
-                onClick={handlePrint}
-                className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
-              >
-                <Printer className="w-3.5 h-3.5" />
-                Print
               </button>
               <button
                 type="button"

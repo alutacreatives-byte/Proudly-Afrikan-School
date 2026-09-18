@@ -2,10 +2,7 @@ import React, { useState } from 'react';
 import { 
   FileText, 
   Sparkles, 
-  Printer, 
-  Copy, 
   Bookmark, 
-  Check, 
   BookOpen,
   HelpCircle,
   Key,
@@ -47,7 +44,6 @@ export const StudyGuideGenerator: React.FC<StudyGuideGeneratorProps> = ({
   // Output States
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [guide, setGuide] = useState<StudyGuideResult | null>(null);
-  const [copied, setCopied] = useState<boolean>(false);
   const [saved, setSaved] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [revealedAnswers, setRevealedAnswers] = useState<Record<number, boolean>>({});
@@ -105,39 +101,6 @@ export const StudyGuideGenerator: React.FC<StudyGuideGeneratorProps> = ({
     setTimeout(() => setSaved(false), 2500);
   };
 
-  const handleCopy = () => {
-    if (!guide) return;
-    let text = `# ${guide.title}\nSubject: ${guide.subject || category}\n\n`;
-    text += `## Executive Overview\n${guide.overview}\n\n`;
-    guide.sections.forEach((sec) => {
-      text += `### ${sec.heading}\n${sec.content}\n`;
-      if (sec.bulletPoints && sec.bulletPoints.length > 0) {
-        text += sec.bulletPoints.map((b) => `- ${b}`).join('\n') + '\n';
-      }
-      if (sec.keyTerms && sec.keyTerms.length > 0) {
-        text += '\nKey Terms:\n' + sec.keyTerms.map((kt) => `* **${kt.term}**: ${kt.definition}`).join('\n') + '\n';
-      }
-      text += '\n';
-    });
-
-    if (guide.importantTakeaways && guide.importantTakeaways.length > 0) {
-      text += '## Key Takeaways\n' + guide.importantTakeaways.map((t) => `- ${t}`).join('\n') + '\n\n';
-    }
-
-    if (guide.reviewQuestions && guide.reviewQuestions.length > 0) {
-      text += '## Review Questions\n' + guide.reviewQuestions.map((q, i) => `${i + 1}. ${q.question}\nAnswer: ${q.answer}`).join('\n\n');
-    }
-
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handlePrint = () => {
-    if (!guide) return;
-    exportStudyGuide(guide, 'print');
-  };
-
   const handleExportDoc = () => {
     if (!guide) return;
     exportStudyGuide(guide, 'doc');
@@ -172,14 +135,6 @@ export const StudyGuideGenerator: React.FC<StudyGuideGeneratorProps> = ({
             <div className="flex items-center gap-2 flex-wrap">
               <button
                 type="button"
-                onClick={handleCopy}
-                className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
-              >
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                {copied ? 'Copied' : 'Copy'}
-              </button>
-              <button
-                type="button"
                 onClick={handleExportDoc}
                 className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
                 title="Download Word Document (.doc)"
@@ -195,14 +150,6 @@ export const StudyGuideGenerator: React.FC<StudyGuideGeneratorProps> = ({
               >
                 <Download className="w-3.5 h-3.5 text-[#D92B8A]" />
                 PDF
-              </button>
-              <button
-                type="button"
-                onClick={handlePrint}
-                className="px-4 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
-              >
-                <Printer className="w-3.5 h-3.5" />
-                Print
               </button>
               <button
                 type="button"

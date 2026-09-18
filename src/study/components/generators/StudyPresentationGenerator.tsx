@@ -2,10 +2,7 @@ import React, { useState } from 'react';
 import { 
   Presentation, 
   Sparkles, 
-  Printer, 
-  Copy, 
   Bookmark, 
-  Check, 
   ArrowLeft,
   ArrowRight,
   Maximize2,
@@ -52,7 +49,6 @@ export const StudyPresentationGenerator: React.FC<StudyPresentationGeneratorProp
   const [showSpeakerNotes, setShowSpeakerNotes] = useState<boolean>(true);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [saved, setSaved] = useState<boolean>(false);
-  const [copied, setCopied] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   const resultRef = useScrollToResult(presentation, isGenerating);
@@ -120,21 +116,6 @@ export const StudyPresentationGenerator: React.FC<StudyPresentationGeneratorProp
     setTimeout(() => setSaved(false), 2500);
   };
 
-  const handleCopy = () => {
-    if (!presentation || !Array.isArray(presentation.slides)) return;
-    let text = `# ${presentation.title}\nSubtitle: ${presentation.subtitle || ''}\nSubject: ${presentation.subject || category}\n\n`;
-    presentation.slides.forEach((s, idx) => {
-      text += `## Slide ${idx + 1}: ${s.title}\n`;
-      s.bullets.forEach((b) => (text += `- ${b}\n`));
-      if (s.speakerNotes) text += `\nSpeaker Notes: ${s.speakerNotes}\n`;
-      if (s.discussionPrompt) text += `Discussion Prompt: ${s.discussionPrompt}\n`;
-      text += '\n---\n\n';
-    });
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
   const handleExportDoc = () => {
     if (!presentation) return;
     exportPresentation(presentation, 'doc');
@@ -143,11 +124,6 @@ export const StudyPresentationGenerator: React.FC<StudyPresentationGeneratorProp
   const handleExportPdf = () => {
     if (!presentation) return;
     exportPresentation(presentation, 'pdf');
-  };
-
-  const handlePrint = () => {
-    if (!presentation) return;
-    exportPresentation(presentation, 'print');
   };
 
   const currentSlide = presentation?.slides?.[activeSlideIndex];
@@ -182,16 +158,6 @@ export const StudyPresentationGenerator: React.FC<StudyPresentationGeneratorProp
               </button>
               <button
                 type="button"
-                onClick={handleCopy}
-                className={`px-4 py-2 rounded-xl border font-mono text-xs font-bold uppercase flex items-center gap-1.5 transition-colors cursor-pointer ${
-                  isFullscreen ? 'bg-stone-800 text-white border-stone-700' : 'bg-white border-stone-200 text-stone-800 hover:bg-stone-50'
-                }`}
-              >
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                {copied ? 'Copied' : 'Copy'}
-              </button>
-              <button
-                type="button"
                 onClick={handleExportDoc}
                 className={`px-4 py-2 rounded-xl border font-mono text-xs font-bold uppercase flex items-center gap-1.5 transition-colors cursor-pointer ${
                   isFullscreen ? 'bg-stone-800 text-white border-stone-700' : 'bg-white border-stone-200 text-stone-800 hover:bg-stone-50'
@@ -211,16 +177,6 @@ export const StudyPresentationGenerator: React.FC<StudyPresentationGeneratorProp
               >
                 <Download className="w-3.5 h-3.5 text-[#D92B8A]" />
                 PDF
-              </button>
-              <button
-                type="button"
-                onClick={handlePrint}
-                className={`px-4 py-2 rounded-xl border font-mono text-xs font-bold uppercase flex items-center gap-1.5 transition-colors cursor-pointer ${
-                  isFullscreen ? 'bg-stone-800 text-white border-stone-700' : 'bg-white border-stone-200 text-stone-800 hover:bg-stone-50'
-                }`}
-              >
-                <Printer className="w-3.5 h-3.5" />
-                Print
               </button>
               <button
                 type="button"
