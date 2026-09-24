@@ -6,7 +6,7 @@ import type {
   PdfQuizResult,
   FlashcardResult,
   LearningPathResult,
-  PresentationResult,
+  FocusQuestResult,
   TutorChatResult,
   EssayGraderResult,
 } from '../study/types';
@@ -919,55 +919,29 @@ export function exportLearningPath(path: LearningPathResult, format: 'doc' | 'pd
   }
 }
 
-export function exportPresentation(pres: PresentationResult, format: 'doc' | 'pdf' | 'print') {
+export function exportFocusQuest(quest: FocusQuestResult, format: 'doc' | 'pdf' | 'print') {
   const meta = resolveDocumentMeta({
-    subject: pres.subject || pres.topic || pres.title,
-    documentType: 'Presentation Slide Deck',
-    toolUsed: 'Presentation Tool',
+    subject: quest.subject || quest.topic || quest.title,
+    documentType: 'Focus Quest Session',
+    toolUsed: 'Focus Quest Tool',
   });
   const filename = meta.filenameBase;
 
   if (format === 'doc' || format === 'print') {
-    let html = '';
-    if (pres.subtitle) {
-      html += `<p><em>${escapeHtml(pres.subtitle)}</em></p>`;
-    }
-    if (pres.slides && pres.slides.length > 0) {
-      html += `<h2>Slide Outline & Speaker Notes (${pres.slides.length} Slides)</h2>`;
-      pres.slides.forEach((s) => {
-        html += `<div class="box"><h2>Slide ${s.slideNumber}: ${escapeHtml(s.title)}</h2>`;
-        if (s.bullets && s.bullets.length > 0) {
-          html += `<ul>${s.bullets.map((b) => `<li>${escapeHtml(b)}</li>`).join('')}</ul>`;
-        }
-        if (s.speakerNotes) {
-          html += `<p><strong>Speaker Notes:</strong> ${escapeHtml(s.speakerNotes)}</p>`;
-        }
-        if (s.discussionPrompt) {
-          html += `<p><strong>Discussion Prompt:</strong> ${escapeHtml(s.discussionPrompt)}</p>`;
-        }
-        html += `</div>`;
-      });
-    }
+    let html = `<h2>Topic: ${escapeHtml(quest.topic)}</h2>`;
+    html += `<p><strong>Duration:</strong> ${quest.durationMinutes} Minutes</p>`;
+    html += `<p><strong>World Environment:</strong> ${escapeHtml(quest.worldType)}</p>`;
+    html += `<p><strong>Completed At:</strong> ${new Date(quest.completedAt).toLocaleString()}</p>`;
     if (format === 'print') {
-      printDocumentHtml(pres.title, html, meta);
+      printDocumentHtml(quest.title, html, meta);
     } else {
-      downloadDocFile(filename, pres.title, html, meta);
+      downloadDocFile(filename, quest.title, html, meta);
     }
   } else {
-    const sections: PdfSection[] = [];
-    if (pres.subtitle) {
-      sections.push({ content: pres.subtitle });
-    }
-    if (pres.slides && pres.slides.length > 0) {
-      pres.slides.forEach((s) => {
-        sections.push({
-          heading: `Slide ${s.slideNumber}: ${s.title}`,
-          bulletPoints: s.bullets,
-          callout: s.speakerNotes ? `Speaker Notes: ${s.speakerNotes}` : undefined,
-        });
-      });
-    }
-    downloadPdfFile(filename, pres.title, sections, meta);
+    const sections: PdfSection[] = [
+      { heading: 'Quest Details', bulletPoints: [`Topic: ${quest.topic}`, `Duration: ${quest.durationMinutes} minutes`, `World Environment: ${quest.worldType}`] }
+    ];
+    downloadPdfFile(filename, quest.title, sections, meta);
   }
 }
 
@@ -1081,9 +1055,9 @@ export function resolveBuildResourceMeta(resource: any): DocumentMeta {
   } else if (toolType.includes('path') || toolType.includes('roadmap')) {
     documentType = 'Learning Path Roadmap';
     toolUsed = 'Learning Path Tool';
-  } else if (toolType.includes('presentation') || toolType.includes('slide')) {
-    documentType = 'Presentation Slide Deck';
-    toolUsed = 'Presentation Tool';
+  } else if (toolType.includes('focus-quest') || toolType.includes('quest')) {
+    documentType = 'Focus Quest Session';
+    toolUsed = 'Focus Quest Tool';
   } else if (toolType.includes('essay') || toolType.includes('grader')) {
     documentType = 'Essay Evaluation & Feedback';
     toolUsed = 'Essay Grader Tool';

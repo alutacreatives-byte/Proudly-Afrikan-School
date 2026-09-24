@@ -116,7 +116,11 @@ export const StudyHero: React.FC<StudyHeroProps> = ({
 
           {/* Quick Metrics Bar in Clay Lozenge */}
           <div className="grid grid-cols-3 gap-2 clay-card-3d p-3.5 rounded-2xl">
-            <div className="text-center border-r border-stone-200/80 pr-2">
+            <div 
+              onClick={onStartClick}
+              className="text-center border-r border-stone-200/80 pr-2 cursor-pointer hover:opacity-80 transition-opacity"
+              title="View all 6 Study Tools"
+            >
               <div className="font-mono text-lg sm:text-xl font-black text-[#FF7A00]">
                 6
               </div>

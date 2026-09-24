@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { StudyHero } from './StudyHero';
+import { StudyToolsMenu } from './StudyToolsMenu';
 import { StudyThreeWaysSection, StudyCreationMethod } from './StudyThreeWaysSection';
 import { StudyGeneratorsSection } from './StudyGeneratorsSection';
 import { StudyFaqSection } from './StudyFaqSection';
@@ -56,26 +57,34 @@ export const StudyHome: React.FC<StudyHomeProps> = ({
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12 sm:space-y-14">
-      {/* 1. Study Header Section with Instant Inspiration */}
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-10 sm:space-y-12">
+      {/* 1. Primary Study Tools Menu (Top Entry Point) */}
+      <div id="study-menu-entry-point" className="w-full">
+        <StudyToolsMenu
+          activeTool={null}
+          onSelectTool={handleLaunchTool}
+        />
+      </div>
+
+      {/* 2. Study Header Section with Instant Inspiration */}
       <StudyHero
         onStartClick={handleStartClick}
         onSelectSample={handleSelectSample}
         onUploadPdfClick={handleUploadPdfClick}
       />
 
-      {/* 2. 4 Ways to Study Section */}
+      {/* 3. 4 Ways to Study Section */}
       <StudyThreeWaysSection
         activeMethod={activeMethod}
         onSelectMethod={handleSelectMethod}
       />
 
-      {/* 3. All 6 Study Tools Section */}
+      {/* 4. All 6 Study Tools Section */}
       <StudyGeneratorsSection
         onSelectTool={(toolId) => handleLaunchTool(toolId)}
       />
 
-      {/* 4. Frequently Asked Questions Section */}
+      {/* 5. Frequently Asked Questions Section */}
       <StudyFaqSection />
     </div>
   );
