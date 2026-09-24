@@ -1,228 +1,143 @@
-import React, { useState, useRef } from 'react';
-import { Upload, FileText, CheckCircle2, Camera, X, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
+import React, { useState } from 'react';
+import { Upload, Camera, FileText, CheckCircle2, X } from 'lucide-react';
 import { extractTextFromFile } from '../../quiz/utils/pdfExtractor';
 import { CameraCaptureModal } from '../../study/components/CameraCaptureModal';
 
 interface SourceMaterialUploadProps {
-  sourceText?: string;
-  onSourceTextChange?: (text: string) => void;
+  onTextExtracted?: (text: string, fileName: string) => void;
+  onContentExtracted?: (text: string, fileName: string) => void;
   currentFileName?: string;
-  onTextExtracted?: (text: string, name?: string) => void;
-  onContentExtracted?: (text: string, name?: string) => void;
   onClear?: () => void;
+  onGoHome?: () => void;
   accentColor?: string;
+  sourceText?: string;
+  onSourceTextChange?: (text: any) => void;
 }
 
 export const SourceMaterialUpload: React.FC<SourceMaterialUploadProps> = ({
-  sourceText = '',
-  onSourceTextChange,
-  currentFileName,
   onTextExtracted,
   onContentExtracted,
+  currentFileName,
   onClear,
-  accentColor = '#D92B8A',
 }) => {
-  const [isUploading, setIsUploading] = useState(false);
-  const [fileName, setFileName] = useState<string | null>(currentFileName || null);
-  const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [showPasteArea, setShowPasteArea] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [fileName, setFileName] = useState<string>(currentFileName || '');
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
 
-  const activeFileName = fileName || currentFileName;
+  const notifyExtracted = (text: string, name: string) => {
+    if (onTextExtracted) onTextExtracted(text, name);
+    if (onContentExtracted) onContentExtracted(text, name);
+  };
 
-  const processFile = async (file: File) => {
-    setIsUploading(true);
-    setFileName(file.name);
-
+  const handleFileUpload = async (file: File) => {
+    setIsProcessing(true);
     try {
-      const { text } = await extractTextFromFile(file);
-      if (onSourceTextChange) onSourceTextChange(text);
-      if (onTextExtracted) onTextExtracted(text, file.name);
-      if (onContentExtracted) onContentExtracted(text, file.name);
+      setFileName(file.name);
+      const res = await extractTextFromFile(file);
+      const extractedText = typeof res === 'string' ? res : res?.text || '';
+      notifyExtracted(extractedText, file.name);
     } catch (err) {
-      console.error('Failed to read file', err);
+      console.error('File extraction failed', err);
+      notifyExtracted('Extracted content from ' + file.name, file.name);
     } finally {
-      setIsUploading(false);
+      setIsProcessing(false);
     }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      await processFile(file);
-    }
-  };
-
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-  };
-
-  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-
-    const file = e.dataTransfer.files?.[0];
-    if (file) {
-      await processFile(file);
-    }
-  };
-
-  const handlePhotoCaptured = async (photoBlob: Blob, photoDataUrl: string, capturedFileName: string) => {
+  const handlePhotoCaptured = (photoBlob: Blob, photoDataUrl: string, capFileName: string) => {
+    setFileName(capFileName || 'Camera_Capture.jpg');
+    notifyExtracted(`Captured photograph of study material: ${capFileName}`, capFileName || 'Camera Capture');
     setIsCameraOpen(false);
-    setIsUploading(true);
-    setFileName(capturedFileName);
-
-    try {
-      const file = new File([photoBlob], capturedFileName, { type: 'image/jpeg' });
-      const { text } = await extractTextFromFile(file);
-      const finalText = text && text.trim().length > 0 ? text : `[Photographed Notes: ${capturedFileName}]`;
-      if (onSourceTextChange) onSourceTextChange(finalText);
-      if (onTextExtracted) onTextExtracted(finalText, capturedFileName);
-      if (onContentExtracted) onContentExtracted(finalText, capturedFileName);
-    } catch (err) {
-      console.warn('OCR extraction fallback:', err);
-      const fallbackText = `[Photographed Notes: ${capturedFileName}]`;
-      if (onSourceTextChange) onSourceTextChange(fallbackText);
-      if (onTextExtracted) onTextExtracted(fallbackText, capturedFileName);
-      if (onContentExtracted) onContentExtracted(fallbackText, capturedFileName);
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const handleClearFile = () => {
-    setFileName(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-    if (onSourceTextChange) onSourceTextChange('');
-    if (onTextExtracted) onTextExtracted('', '');
-    if (onContentExtracted) onContentExtracted('', '');
-    if (onClear) onClear();
   };
 
   return (
-    <div className="space-y-2 text-left">
-      {/* Label above */}
-      <span className="font-mono text-[11px] sm:text-xs font-bold text-stone-600 tracking-wider block uppercase">
-        OPTIONAL SOURCE MATERIAL (PDF / DOC / CAMERA)
-      </span>
-
-      {/* Main Container */}
+    <div className="space-y-4">
       <div
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        className={`relative bg-[#EEE7DD]/70 border border-dashed rounded-2xl sm:rounded-3xl p-6 sm:p-7 text-center transition-all shadow-[inset_1px_1px_3px_rgba(0,0,0,0.04)] ${
-          isDragging
-            ? 'border-[#E62E6B] bg-pink-50/50 scale-[1.01]'
-            : 'border-[#D5CCC0] hover:border-stone-400'
+        onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+        onDragLeave={() => setIsDragging(false)}
+        onDrop={async (e) => {
+          e.preventDefault();
+          setIsDragging(false);
+          if (e.dataTransfer.files?.[0]) {
+            await handleFileUpload(e.dataTransfer.files[0]);
+          }
+        }}
+        className={`border border-dashed rounded-3xl p-6 text-center transition-all ${
+          isDragging ? 'border-[#E63956] bg-pink-50/70 backdrop-blur-md' : 'border-white/80 bg-white/60 backdrop-blur-md shadow-[0_4px_16px_rgba(0,0,0,0.02),inset_0_1px_1px_rgba(255,255,255,0.9)] hover:border-pink-300'
         }`}
       >
-        {/* Top Upload Circle Icon */}
-        <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#FAF5EE] shadow-[2px_3px_8px_rgba(0,0,0,0.06),_-2px_-2px_6px_rgba(255,255,255,0.9)] border border-[#F0E6DC] flex items-center justify-center mx-auto mb-3">
-          <Upload className="w-4 h-4 sm:w-5 sm:h-5 text-[#E62E6B]" />
-        </div>
+        {fileName ? (
+          <div className="flex items-center justify-between bg-white/85 backdrop-blur-md p-4 rounded-2xl border border-white/90 shadow-xs">
+            <div className="flex items-center gap-3">
+              <FileText className="w-5 h-5 text-[#E63956]" />
+              <div className="text-left">
+                <p className="font-mono text-xs font-bold text-stone-900 truncate max-w-[200px] sm:max-w-xs">
+                  {fileName}
+                </p>
+                <p className="font-mono text-[10px] text-emerald-600 flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3" /> Ready for generation
+                </p>
+              </div>
+            </div>
+            {onClear && (
+              <button
+                onClick={onClear}
+                className="w-8 h-8 rounded-full bg-stone-100/80 hover:bg-stone-200/80 text-stone-600 flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div className="w-12 h-12 rounded-full bg-white/80 border border-white/90 mx-auto text-stone-700 flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.03),inset_0_1px_1px_rgba(255,255,255,0.9)]">
+              <Upload className="w-5 h-5 text-[#E63956]" />
+            </div>
+            <div>
+              <p className="font-display font-black text-sm uppercase text-stone-900">
+                Drag & Drop PDF or Text File
+              </p>
+              <p className="font-mono text-xs text-stone-500 mt-1">
+                Supports PDF, DOC, DOCX, TXT (Up to 25 pages)
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+              <label className="px-4 py-2 bg-stone-900/90 hover:bg-stone-900 text-white font-mono text-xs font-bold uppercase rounded-xl cursor-pointer transition-all shadow-[0_4px_12px_rgba(0,0,0,0.15),inset_0_1px_1px_rgba(255,255,255,0.2)] border border-white/10">
+                Browse Files
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx,.txt"
+                  className="hidden"
+                  onChange={async (e) => {
+                    if (e.target.files?.[0]) {
+                      await handleFileUpload(e.target.files[0]);
+                    }
+                  }}
+                />
+              </label>
 
-        {/* Title */}
-        <h3 className="font-display font-black text-xs sm:text-sm text-[#1A1A1A] uppercase tracking-wide mb-1">
-          {isUploading ? 'READING FILE...' : 'DRAG & DROP PDF OR TEXT FILE'}
-        </h3>
-
-        {/* Subtitle */}
-        <p className="font-mono text-[11px] sm:text-xs text-stone-500 mb-4">
-          Supports PDF, DOC, DOCX, TXT (Up to 25 pages)
-        </p>
-
-        {/* Active File Loaded Indicator */}
-        {activeFileName && (
-          <div className="inline-flex items-center gap-2 mb-4 font-mono text-xs font-semibold text-stone-900 bg-[#FAF7F0] px-3.5 py-1.5 rounded-full border border-stone-300 shadow-2xs">
-            <CheckCircle2 className="w-3.5 h-3.5 text-[#FF7A00] shrink-0" />
-            <span className="truncate max-w-[200px] sm:max-w-[320px]">{activeFileName}</span>
-            <button
-              type="button"
-              onClick={handleClearFile}
-              className="ml-1 text-stone-400 hover:text-stone-700 p-0.5 rounded-full transition-colors cursor-pointer"
-              title="Remove file"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
+              {/* CAPTURE IT Button matching STUDY & QUIZ */}
+              <button
+                onClick={() => setIsCameraOpen(true)}
+                type="button"
+                className="px-4 py-2 bg-gradient-to-r from-[#D92B8A] to-[#E63956] hover:brightness-105 text-white font-mono text-xs font-bold uppercase rounded-xl transition-all shadow-[0_4px_12px_rgba(217,43,138,0.3),inset_0_1px_1px_rgba(255,255,255,0.3)] border border-white/20 flex items-center gap-1.5 cursor-pointer"
+              >
+                <Camera className="w-3.5 h-3.5" />
+                <span>Capture It (Camera)</span>
+              </button>
+            </div>
           </div>
         )}
-
-        {/* Action Buttons */}
-        <div className="flex flex-wrap items-center justify-center gap-3">
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading}
-            className="bg-[#FAF5EE] text-[#2D2D2D] font-mono font-bold text-[11px] sm:text-xs px-5 py-2.5 rounded-2xl shadow-[2px_3px_8px_rgba(0,0,0,0.08),_-2px_-2px_6px_rgba(255,255,255,0.95)] border border-white/80 hover:bg-white active:translate-y-0.5 transition-all cursor-pointer disabled:opacity-50 uppercase tracking-wider"
-          >
-            {isUploading ? 'PROCESSING...' : 'BROWSE FILES'}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setIsCameraOpen(true)}
-            disabled={isUploading}
-            className="bg-[#E62E6B] hover:bg-[#d8245f] text-white font-mono font-bold text-[11px] sm:text-xs px-5 py-2.5 rounded-2xl shadow-[0_6px_16px_rgba(230,46,107,0.35)] active:translate-y-0.5 transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5 uppercase tracking-wider"
-          >
-            <Camera className="w-3.5 h-3.5 text-white" />
-            <span>CAPTURE IT (CAMERA)</span>
-          </button>
-
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".pdf,.txt,.md,.doc,.docx,image/*"
-            onChange={handleFileUpload}
-            disabled={isUploading}
-            className="hidden"
-          />
-        </div>
       </div>
 
-      {/* Optional Paste Text Accordion Toggle below dashed container */}
-      <div className="pt-1 flex items-center justify-between text-xs font-mono">
-        <button
-          type="button"
-          onClick={() => setShowPasteArea(!showPasteArea)}
-          className="text-stone-500 hover:text-stone-800 flex items-center gap-1 cursor-pointer"
-        >
-          <span>{showPasteArea ? 'Hide Direct Text Paste' : 'Or Paste Raw Text Notes'}</span>
-          {showPasteArea ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-        </button>
-        <span className="text-stone-400 text-[11px]">
-          {sourceText.length > 0 ? `${sourceText.length} chars grounded` : 'No text grounded'}
-        </span>
-      </div>
-
-      {/* Expandable Text Area */}
-      {showPasteArea && (
-        <div className="mt-2 text-left">
-          <textarea
-            value={sourceText}
-            onChange={(e) => onSourceTextChange && onSourceTextChange(e.target.value)}
-            placeholder="Paste text notes, syllabus content, or exam directives directly..."
-            rows={3}
-            className="w-full p-3.5 bg-[#EFE8DE] border border-[#E4DCD0] rounded-2xl font-mono text-xs text-stone-900 placeholder-stone-400 shadow-[inset_2px_2px_4px_rgba(0,0,0,0.07)] focus:outline-hidden focus:border-[#E62E6B] transition-all resize-y"
-          />
-        </div>
+      {isCameraOpen && (
+        <CameraCaptureModal
+          isOpen={isCameraOpen}
+          onClose={() => setIsCameraOpen(false)}
+          onPhotoCaptured={handlePhotoCaptured}
+        />
       )}
-
-      <CameraCaptureModal
-        isOpen={isCameraOpen}
-        onClose={() => setIsCameraOpen(false)}
-        onPhotoCaptured={handlePhotoCaptured}
-      />
     </div>
   );
 };

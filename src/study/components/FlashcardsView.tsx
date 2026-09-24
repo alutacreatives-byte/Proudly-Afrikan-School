@@ -63,21 +63,12 @@ export const FlashcardsView: React.FC<FlashcardsViewProps> = ({
 
   const currentRating = currentConcept ? sessionRatings[currentConcept.id] : undefined;
 
-  // Keyboard navigation shortcuts
+  // Keyboard rating shortcuts (1–4 when card is flipped)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) return;
 
-      if (e.code === 'Space') {
-        e.preventDefault();
-        setIsFlipped(prev => !prev);
-      } else if (e.code === 'ArrowRight' || e.code === 'KeyN') {
-        e.preventDefault();
-        handleNext();
-      } else if (e.code === 'ArrowLeft' || e.code === 'KeyP') {
-        e.preventDefault();
-        handlePrev();
-      } else if (isFlipped) {
+      if (isFlipped) {
         if (e.key === '1') handleRate('did_not_know');
         if (e.key === '2') handleRate('almost');
         if (e.key === '3') handleRate('knew_it');
@@ -260,6 +251,8 @@ export const FlashcardsView: React.FC<FlashcardsViewProps> = ({
         deckTitle={studySet.title}
         deckCategory={studySet.category}
         ratingComponent={ratingSection}
+        isFlipped={isFlipped}
+        onFlipChange={(flipped) => setIsFlipped(flipped)}
       />
     </div>
   );

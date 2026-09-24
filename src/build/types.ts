@@ -1,40 +1,21 @@
-export type BuildToolType =
-  | 'lessonplan'
-  | 'lesson-plan'
-  | 'rubric'
-  | 'syllabus'
-  | 'worksheet'
-  | 'activity'
-  | 'assessment'
-  | 'discussion'
-  | 'curriculum'
-  | 'course'
-  | 'course-builder'
-  | 'classroompack'
-  | 'exam'
-  | 'mindmap'
-  | 'mind-map'
-  | 'presentation'
+export type BuildToolType = 
   | 'study-guide'
   | 'flashcards'
-  | 'quiz'
+  | 'learning-path'
   | 'essay-grader'
   | 'pdf-quiz'
-  | 'tutor-chat'
-  | 'learning-path'
-  | 'search-result'
-  | 'custom'
-  | string;
+  | 'focus-quest'
+  | 'course';
 
 export interface SavedResource {
   id: string;
-  toolType: BuildToolType;
+  toolType: BuildToolType | string;
   title: string;
   subject?: string;
   topic?: string;
   gradeLevel?: string;
   createdAt: string;
   data: any;
-  documentName?: string;
-  sourceSnippet?: string;
+  itemCount?: number;
+  itemCountLabel?: string;
 }

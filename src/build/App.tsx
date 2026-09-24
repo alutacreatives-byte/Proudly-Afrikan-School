@@ -5,6 +5,7 @@ import { BuildToolsMenu } from './components/BuildToolsMenu';
 import { AllGeneratorsSection } from './components/AllGeneratorsSection';
 import { BuildThreeWaysSection } from './components/BuildThreeWaysSection';
 import { BuildGeneratorView } from './components/BuildGeneratorView';
+import { BuildFaqSection } from './components/BuildFaqSection';
 
 export interface BuildAppProps {
   initialResource?: SavedResource | null;
@@ -73,6 +74,8 @@ export default function BuildApp({ initialResource, onGoHome, onBack }: BuildApp
       <AllGeneratorsSection
         onSelectTool={handleSelectTool}
       />
+
+      <BuildFaqSection />
     </div>
   );
 }
