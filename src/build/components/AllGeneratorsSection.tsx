@@ -41,19 +41,19 @@ export const AllGeneratorsSection: React.FC<AllGeneratorsSectionProps> = ({
                   <span className="font-mono font-black text-xl text-stone-900 tracking-tight">
                     {tool.num}
                   </span>
-                  <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#E63956] bg-[#FFF0F2] border border-[#FFCCD4] px-3.5 py-1.5 rounded-full shadow-xs">
+                  <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#FF7A00] bg-[#FFF8F0] border border-[#FFE0C4] px-3.5 py-1.5 rounded-full shadow-xs">
                     {tool.badge}
                   </span>
                 </div>
 
                 {/* Dark Icon Box */}
                 <div className="w-12 h-12 rounded-2xl bg-[#18181B] text-white flex items-center justify-center group-hover:scale-110 transition-transform shadow-md">
-                  <Icon className="w-6 h-6 text-[#E63956]" />
+                  <Icon className="w-6 h-6 text-[#FF7A00]" />
                 </div>
 
                 {/* Title & Description */}
                 <div className="space-y-2">
-                  <h3 className="font-display font-black text-xl text-[#161616] uppercase tracking-tight group-hover:text-[#E63956] transition-colors">
+                  <h3 className="font-display font-black text-xl text-[#161616] uppercase tracking-tight group-hover:text-[#FF7A00] transition-colors">
                     {tool.title}
                   </h3>
                   <p className="font-sans text-xs sm:text-sm text-stone-600 leading-relaxed">
@@ -63,9 +63,9 @@ export const AllGeneratorsSection: React.FC<AllGeneratorsSectionProps> = ({
               </div>
 
               {/* Bottom Row Action */}
-              <div className="flex items-center justify-between pt-5 border-t border-stone-200/80 font-mono text-xs font-bold text-[#E63956] uppercase tracking-wider">
+              <div className="flex items-center justify-between pt-5 border-t border-stone-200/80 font-mono text-xs font-bold text-[#FF7A00] uppercase tracking-wider">
                 <span>Launch Tool →</span>
-                <div className="w-7 h-7 rounded-full bg-[#FFF0F2] flex items-center justify-center group-hover:bg-[#E63956] group-hover:text-white transition-colors shadow-xs">
+                <div className="w-7 h-7 rounded-full bg-[#FFF8F0] flex items-center justify-center group-hover:bg-[#FF7A00] group-hover:text-white transition-colors shadow-xs">
                   <ArrowUpRight className="w-3.5 h-3.5" />
                 </div>
               </div>

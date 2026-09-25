@@ -11,31 +11,33 @@ interface FaqItem {
 const FAQS: FaqItem[] = [
   {
     id: 'faq-1',
-    question: 'HOW DOES THE BUILD SUITE GENERATE CURRICULUM RESOURCES?',
-    answer:
-      'Our intelligent curriculum engine leverages advanced AI models grounded in African history, mathematics, sciences, literature, and cultural heritage to instantly construct high-yield study sets, interactive quizzes, flashcard decks, and pedagogical lesson plans.',
+    question: "HOW DOES PROUDLY AFRIKAN SCHOOL GENERATE LEARNING RESOURCES?",
+    answer: "Our intelligent curriculum engine leverages advanced AI models grounded in African history, mathematics, sciences, literature, and cultural heritage to instantly construct high-yield study sets, interactive quizzes, flashcard decks, and pedagogical lesson plans.",
     icon: Sparkles,
   },
   {
     id: 'faq-2',
-    question: 'CAN I UPLOAD MY OWN STUDY MATERIALS OR PDFS?',
-    answer:
-      'Yes! You can upload lecture notes, textbooks, syllabi, or past exam papers in PDF, TXT, or text paste format. Our generator will automatically synthesize your materials into structured flashcards, quizzes, and revision guides.',
+    question: "CAN I UPLOAD MY OWN STUDY MATERIALS OR PDFS?",
+    answer: "Yes! You can upload lecture notes, textbooks, syllabi, or past exam papers in PDF, TXT, or text paste format. Our generator will automatically synthesize your materials into structured flashcards, quizzes, and revision guides.",
     icon: FileText,
   },
   {
     id: 'faq-3',
-    question: 'ARE THE GENERATED QUIZZES ALIGNED WITH CURRICULUM STANDARDS?',
-    answer:
-      'All generated assessments follow rigorous pedagogical standards with clear explanations for correct answers, Bloom\'s taxonomy difficulty grading, and interactive feedback designed to maximize knowledge retention.',
+    question: "ARE THE GENERATED QUIZZES ALIGNED WITH CURRICULUM STANDARDS?",
+    answer: "All generated assessments follow rigorous pedagogical standards with clear explanations for correct answers, Bloom's taxonomy difficulty grading, and interactive feedback designed to maximize knowledge retention.",
     icon: Printer,
   },
   {
     id: 'faq-4',
-    question: 'WHERE ARE MY CREATED SETS AND RESOURCES STORED?',
-    answer:
-      'All generated study decks, quizzes, and lesson plans are automatically saved in your "My Sets" workspace, where you can organize them, study offline, or export them to share with students and study groups.',
+    question: "CAN I SAVE AND EXPORT MY CREATED SETS?",
+    answer: "Absolutely. All generated study decks, quizzes, and lesson plans are automatically saved in your 'My Sets' workspace, where you can organize them, study offline, or export them to share with students and study groups.",
     icon: BookmarkCheck,
+  },
+  {
+    id: 'faq-5',
+    question: "IS THERE A LIMIT ON HOW MANY RESOURCES I CAN GENERATE?",
+    answer: "Free accounts include generous starter credits, while Pro members enjoy unlimited generations, priority AI processing, advanced PDF parsing, and custom export formats.",
+    icon: Sparkles,
   },
 ];
 
@@ -59,7 +61,7 @@ export function BuildFaqSection() {
           </h2>
         </div>
         <p className="font-mono text-xs sm:text-sm text-stone-600 max-w-md leading-relaxed">
-          Everything you need to know about AI curriculum generators, PDF extraction, and resource building.
+          Everything you need to know about AI curriculum generators, PDF extraction, and resource exporting.
         </p>
       </div>
 
