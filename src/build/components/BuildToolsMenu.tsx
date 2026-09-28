@@ -1,50 +1,124 @@
 import React from 'react';
 import { 
-  GraduationCap, 
-  HelpCircle, 
-  FileCheck, 
-  Network, 
+  FileText, 
+  Presentation, 
   BookOpen, 
-  Presentation 
+  CheckSquare, 
+  Layers, 
+  HelpCircle, 
+  GraduationCap, 
+  FileCheck,
+  Sparkles,
+  ClipboardList
 } from 'lucide-react';
+import { BuildToolType } from '../types';
 
-export const BUILD_TOOLS_LIST = [
-  { id: 'course', num: '01', title: 'Course Syllabus Builder', badge: 'CURRICULUM & MODULES', icon: GraduationCap, desc: 'Design multi-week academic course modules with learning outcomes, pacing, and capstone projects.' },
-  { id: 'classroompack', num: '02', title: 'Exam & Quiz Generator', badge: 'ASSESSMENT & TESTING', icon: HelpCircle, desc: 'Build structured exams with multiple choice, essays, mark breakdowns, and teacher answer keys.' },
-  { id: 'worksheet', num: '03', title: 'Worksheet Generator', badge: 'PRACTICE & EXERCISES', icon: FileCheck, desc: 'Create engaging classroom worksheets with matching activities, fill-in-blanks, and full answer solutions.' },
-  { id: 'mindmap', num: '04', title: 'Mind Map Generator', badge: 'VISUAL HIERARCHY', icon: Network, desc: 'Transform topics, notes, or uploaded documents into interactive, editable visual mind maps with branching concepts.' },
-  { id: 'lessonplan', num: '05', title: 'Lesson Plan Generator', badge: 'TEACHING & PEDAGOGY', icon: BookOpen, desc: 'Create pedagogical lesson plans with timed phases, Bloom’s taxonomy objectives, and assessment checks.' },
-  { id: 'presentation', num: '06', title: 'Presentation Generator', badge: 'SLIDES & LECTURE', icon: Presentation, desc: 'Generate structured slide outlines with presenter notes, discussion prompts, and visual cues.' },
+export interface BuildToolMeta {
+  id: BuildToolType;
+  title: string;
+  description: string;
+  icon: any;
+  color: string;
+  badge: string;
+  num?: string | number;
+}
+
+export const BUILD_TOOLS_LIST: BuildToolMeta[] = [
+  {
+    id: 'presentation',
+    title: 'Interactive Presentation',
+    description: 'Create slide decks with speaker notes, key points, and visual diagrams.',
+    icon: Presentation,
+    color: 'from-amber-500 to-orange-600',
+    badge: 'Popular',
+    num: '01',
+  },
+  {
+    id: 'exam',
+    title: 'Examination Paper',
+    description: 'Generate comprehensive exams with marking rubrics and model answers.',
+    icon: FileCheck,
+    color: 'from-rose-500 to-pink-600',
+    badge: 'Formal',
+    num: '02',
+  },
+  {
+    id: 'worksheet',
+    title: 'Classroom Worksheet',
+    description: 'Printable student worksheets with matching, fill-in-blanks, and problem solving.',
+    icon: ClipboardList,
+    color: 'from-blue-500 to-indigo-600',
+    badge: 'Printable',
+    num: '03',
+  },
+  {
+    id: 'study-guide',
+    title: 'Comprehensive Study Guide',
+    description: 'Detailed study notes, key terms, summary sections, and review questions.',
+    icon: BookOpen,
+    color: 'from-emerald-500 to-teal-600',
+    badge: 'Core',
+    num: '04',
+  },
+  {
+    id: 'flashcards',
+    title: 'Smart Flashcards',
+    description: 'Interactive flashcards with definitions, memory tips, and self-testing.',
+    icon: Layers,
+    color: 'from-purple-500 to-violet-600',
+    badge: 'Quick Review',
+    num: '05',
+  },
+  {
+    id: 'lesson-plan',
+    title: 'Teacher Lesson Plan',
+    description: 'Structured timed pacing, engagement hooks, and assessment strategies.',
+    icon: GraduationCap,
+    color: 'from-cyan-500 to-blue-600',
+    badge: 'Pedagogy',
+    num: '06',
+  },
 ];
 
 interface BuildToolsMenuProps {
-  activeTool: string;
-  onSelectTool: (toolId: string) => void;
+  onSelectTool: (toolId: BuildToolType) => void;
 }
 
-export const BuildToolsMenu: React.FC<BuildToolsMenuProps> = ({ activeTool, onSelectTool }) => {
+export const BuildToolsMenu: React.FC<BuildToolsMenuProps> = ({ onSelectTool }) => {
   return (
-    <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none border-b border-stone-200/80">
-      {BUILD_TOOLS_LIST.map(tool => {
-        const Icon = tool.icon;
-        const isActive = activeTool === tool.id;
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      {BUILD_TOOLS_LIST.map((tool) => {
+        const IconComponent = tool.icon;
         return (
-          <button
+          <div
             key={tool.id}
-            type="button"
             onClick={() => onSelectTool(tool.id)}
-            className={`px-4 py-2.5 rounded-xl font-mono text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
-              isActive
-                ? 'bg-gradient-to-r from-[#FF7A00] via-[#D09500] to-[#A67A00] text-white shadow-md'
-                : 'bg-white border border-stone-200 text-stone-700 hover:bg-stone-50'
-            }`}
+            className="group relative bg-[#F7F2EB] border border-[#E4DCD0] hover:border-pink-500 rounded-3xl p-6 shadow-sm hover:shadow-xl transition-all cursor-pointer flex flex-col justify-between overflow-hidden"
           >
-            <Icon className="w-4 h-4" />
-            <span>{tool.title}</span>
-          </button>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-pink-500/5 to-transparent rounded-bl-full pointer-events-none transition-transform group-hover:scale-110" />
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${tool.color} flex items-center justify-center text-white shadow-md transition-transform group-hover:scale-105`}>
+                  <IconComponent className="w-6 h-6" />
+                </div>
+                <span className="font-mono text-[10px] font-bold uppercase tracking-wider px-3 py-1 bg-stone-200/70 text-stone-700 rounded-full">
+                  {tool.badge}
+                </span>
+              </div>
+              <h3 className="font-serif font-bold text-lg text-stone-900 mb-2 group-hover:text-pink-600 transition-colors">
+                {tool.title}
+              </h3>
+              <p className="font-mono text-xs text-stone-600 line-clamp-2 leading-relaxed">
+                {tool.description}
+              </p>
+            </div>
+            <div className="mt-6 pt-4 border-t border-[#E4DCD0]/60 flex items-center justify-between text-xs font-mono font-bold text-stone-700 group-hover:text-pink-600">
+              <span>Launch Creator</span>
+              <span className="transition-transform group-hover:translate-x-1">→</span>
+            </div>
+          </div>
         );
       })}
     </div>
   );
 };
-

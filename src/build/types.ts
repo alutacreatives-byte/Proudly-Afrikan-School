@@ -1,21 +1,26 @@
 export type BuildToolType = 
-  | 'study-guide'
-  | 'flashcards'
-  | 'learning-path'
-  | 'essay-grader'
-  | 'pdf-quiz'
-  | 'focus-quest'
-  | 'course';
+  | 'exam' 
+  | 'worksheet' 
+  | 'presentation' 
+  | 'syllabus' 
+  | 'lesson-plan' 
+  | 'rubric' 
+  | 'flashcards' 
+  | 'study-guide' 
+  | 'case-study' 
+  | 'cheat-sheet' 
+  | 'summary' 
+  | 'vocabulary' 
+  | 'practice-problems';
 
 export interface SavedResource {
   id: string;
   toolType: BuildToolType | string;
   title: string;
-  subject?: string;
-  topic?: string;
+  subject: string;
+  topic: string;
   gradeLevel?: string;
-  createdAt: string;
   data: any;
-  itemCount?: number;
-  itemCountLabel?: string;
+  createdAt: string;
+  previewText?: string;
 }
