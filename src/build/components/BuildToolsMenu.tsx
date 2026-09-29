@@ -21,6 +21,7 @@ export interface BuildToolMeta {
   color: string;
   badge: string;
   num?: string | number;
+  actionLabel?: string;
 }
 
 export const BUILD_TOOLS_LIST: BuildToolMeta[] = [

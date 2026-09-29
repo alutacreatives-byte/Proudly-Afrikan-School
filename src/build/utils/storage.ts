@@ -1,39 +1,60 @@
 import { SavedResource } from '../types';
 
-const STORAGE_KEY_BUILD_RESOURCES = 'proudly_afrikan_build_resources_v1';
+export const BUILD_STORAGE_KEY = 'proudly_afrikan_build_resources';
 
-export function getSavedResources(): SavedResource[] {
+export const getSavedResources = (): SavedResource[] => {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY_BUILD_RESOURCES);
+    const raw = localStorage.getItem(BUILD_STORAGE_KEY);
     if (!raw) return [];
-    return JSON.parse(raw);
-  } catch (e) {
-    console.error('Failed to load saved resources:', e);
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed;
+  } catch (err) {
+    console.error('Failed to parse saved build resources', err);
     return [];
   }
-}
+};
 
-export function saveResourceToStorage(resource: SavedResource): void {
+export const saveResourceToStorage = (resource: SavedResource): void => {
   try {
-    const existing = getSavedResources();
-    const index = existing.findIndex(r => r.id === resource.id);
-    if (index >= 0) {
-      existing[index] = resource;
+    const current = getSavedResources();
+    const existingIndex = current.findIndex((r) => r.id === resource.id);
+    let updated: SavedResource[];
+    if (existingIndex >= 0) {
+      updated = [...current];
+      updated[existingIndex] = {
+        ...current[existingIndex],
+        ...resource,
+        updatedAt: new Date().toISOString(),
+      };
     } else {
-      existing.unshift(resource);
+      updated = [resource, ...current];
     }
-    localStorage.setItem(STORAGE_KEY_BUILD_RESOURCES, JSON.stringify(existing));
-  } catch (e) {
-    console.error('Failed to save resource:', e);
+    localStorage.setItem(BUILD_STORAGE_KEY, JSON.stringify(updated));
+  } catch (err) {
+    console.error('Failed to save build resource', err);
   }
-}
+};
 
-export function deleteResourceFromStorage(id: string): void {
+export const deleteResourceFromStorage = (id: string): void => {
   try {
-    const existing = getSavedResources();
-    const filtered = existing.filter(r => r.id !== id);
-    localStorage.setItem(STORAGE_KEY_BUILD_RESOURCES, JSON.stringify(filtered));
-  } catch (e) {
-    console.error('Failed to delete resource:', e);
+    const current = getSavedResources();
+    const filtered = current.filter((r) => r.id !== id);
+    localStorage.setItem(BUILD_STORAGE_KEY, JSON.stringify(filtered));
+  } catch (err) {
+    console.error('Failed to delete build resource', err);
   }
-}
+};
+
+export const getSavedResourceById = (id: string): SavedResource | null => {
+  const current = getSavedResources();
+  return current.find((r) => r.id === id) || null;
+};
+
+export const clearSavedResources = (): void => {
+  try {
+    localStorage.removeItem(BUILD_STORAGE_KEY);
+  } catch (err) {
+    console.error('Failed to clear saved resources', err);
+  }
+};

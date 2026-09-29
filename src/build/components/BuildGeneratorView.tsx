@@ -1,1334 +1,980 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Sparkles, 
-  Loader2, 
-  CheckCircle2, 
-  Download, 
-  ArrowLeft, 
-  ArrowRight, 
-  FileSpreadsheet, 
+import {
+  Sparkles,
+  ArrowLeft,
+  Download,
+  Printer,
+  Copy,
   Check,
+  Bookmark,
+  Share2,
+  ChevronRight,
+  ChevronLeft,
   Maximize2,
   Minimize2,
-  ChevronLeft,
-  ChevronRight,
-  MessageSquare,
+  Layers,
+  FileText,
+  FileCheck2,
+  BookOpen,
+  Compass,
   Presentation as PresentationIcon,
-  Printer,
-  Edit3,
-  Save,
+  GitBranch,
+  GraduationCap,
+  RotateCcw,
+  CheckCircle2,
+  Clock,
+  Award,
+  AlertCircle,
+  HelpCircle,
   Eye,
-  Layers
+  EyeOff,
 } from 'lucide-react';
-import { GlobalNavigationButtons } from '../../components/GlobalNavigationButtons';
-import { callAIAndParseJson } from '../../study/services/aiService';
-import { saveResourceToStorage } from '../utils/storage';
-import { SavedResource } from '../types';
+import { BUILD_TOOLS_LIST } from './BuildToolsMenu';
 import { SourceMaterialUpload } from './SourceMaterialUpload';
-import { exportItem, getCleanWorksheetTitle, downloadPresentationHtml } from '../../utils/exportUtils';
-import { BuildToolsMenu, BUILD_TOOLS_LIST } from './BuildToolsMenu';
+import { SavedResource, BuildToolId } from '../types';
+import { saveResourceToStorage } from '../utils/storage';
+import { useAuthCredit } from '../../context/AuthCreditContext';
+import { AiActionType } from '../../types/authCredit';
+import { exportBuildResource, exportUnifiedItem } from '../../utils/exportUtils';
+import { GlobalNavigationButtons } from '../../components/GlobalNavigationButtons';
 import { useScrollToResult } from '../../utils/useScrollToResult';
-import { StackedPresentationDeck } from '../../study/components/StackedPresentationDeck';
 
 interface BuildGeneratorViewProps {
-  activeTool: string;
-  onSelectTool: (toolId: string) => void;
-  onBack: () => void;
-  onGoHome?: () => void;
+  initialToolId?: BuildToolId;
   initialTopic?: string;
   initialResource?: SavedResource | null;
-  onResourceSaved?: (resource: SavedResource) => void;
-}
-
-function generateClientPresentationFallback(params: {
-  topic: string;
-  subject: string;
-  gradeLevel: string;
-  slideCount: number;
-  theme: string;
-  format: string;
-  keyPoints?: string;
-}) {
-  const { topic, subject, gradeLevel, slideCount, theme, format } = params;
-  const count = Math.max(5, Math.min(slideCount || 8, 20));
-  const slides = [];
-
-  // Slide 1: Title
-  slides.push({
-    id: 's-1',
-    slideNumber: 1,
-    slideType: 'title',
-    title: topic.toUpperCase(),
-    subtitle: `${format} • Curriculum Level: ${gradeLevel}`,
-    bulletPoints: [
-      `Foundational exploration and critical inquiry into ${topic}.`,
-      `Pedagogical framework designed for ${gradeLevel} learners.`,
-      `Contextualized through African scholarship and empirical analysis.`
-    ],
-    suggestedVisualOrDiagram: `Hero title layout featuring an authentic archival map or diagram representing ${topic}.`,
-    discussionOrEngagementPrompt: `Hook question: What prior knowledge or everyday assumptions do we bring to our study of ${topic}?`,
-    speakerNotes: `Welcome the group. Establish the lesson objectives, framing ${topic} not as isolated facts, but as an interconnected conceptual inquiry.`
-  });
-
-  // Slide 2: Roadmap & Core Inquiries
-  slides.push({
-    id: 's-2',
-    slideNumber: 2,
-    slideType: 'roadmap',
-    title: 'INQUIRY ROADMAP & KEY OBJECTIVES',
-    subtitle: 'What We Will Discover & Analyze',
-    bulletPoints: [
-      `Deconstruct core mechanisms and theoretical definitions of ${topic}.`,
-      `Analyze historical and contemporary evidence across authentic case contexts.`,
-      `Engage in collaborative inquiry and hands-on conceptual evaluation.`,
-      `Formulate synthesized conclusions applicable to examination and real-world dilemmas.`
-    ],
-    suggestedVisualOrDiagram: 'Four-stage chronological or concept flow diagram illustrating the learning pathway.',
-    discussionOrEngagementPrompt: 'Which of these inquiry questions seems most challenging or unexpected to you?',
-    speakerNotes: 'Walk students through the roadmap so they understand the mental model and progression of ideas today.'
-  });
-
-  // Middle slides
-  const middleCount = Math.max(1, count - 3);
-  const slideTemplates = [
-    {
-      type: 'concept',
-      title: `FOUNDATIONAL PRINCIPLES OF ${topic.toUpperCase()}`,
-      sub: 'Core Definitions & Governing Principles',
-      bullets: [
-        `Primary theoretical framework establishes how key variables interact within ${topic}.`,
-        `Direct observation demonstrates clear cause-and-effect relationships.`,
-        `Scholarly consensus highlights the systemic nature of these foundational processes.`
-      ],
-      visual: `High-resolution infographic contrasting the primary definitions and key components of ${topic}.`,
-      prompt: `In your own words, how would you distinguish between the primary mechanism and secondary influences here?`,
-      notes: `Emphasize precise terminology. Model how to construct a concise scholarly definition without oversimplification.`
-    },
-    {
-      type: 'deep-dive',
-      title: `STRUCTURAL MECHANICS & PROCESS ANALYSIS`,
-      sub: 'How the System Functions in Practice',
-      bullets: [
-        `Step 1: Baseline conditions and input parameters that initiate the phenomenon.`,
-        `Step 2: Dynamic interactions, reactions, and intermediate states.`,
-        `Step 3: Measurable outputs, structural transformations, and long-term equilibrium.`
-      ],
-      visual: 'Detailed cyclic flowchart or annotated structural blueprint demonstrating operational dynamics.',
-      prompt: 'If one of the foundational input variables were altered by 50%, what cascading consequences would you anticipate?',
-      notes: 'Encourage learners to trace each step logically rather than jumping straight to the conclusion.'
-    },
-    {
-      type: 'case-study',
-      title: `AUTHENTIC EVIDENCE & CASE APPLICATION`,
-      sub: 'Empirical Verification in the African Context',
-      bullets: [
-        `Fieldwork data and primary records demonstrating concrete manifestations of ${topic}.`,
-        `Comparative analysis between regional applications and international benchmarks.`,
-        `Critical examination of variables that accelerate or constrain expected outcomes.`
-      ],
-      visual: 'Comparative data table or annotated geographic map highlighting regional case studies and historical evidence.',
-      prompt: 'How does examining authentic regional evidence challenge generalized textbook assumptions?',
-      notes: 'Highlight local and continental agency. Ask students to cite specific evidence from the case study.'
-    },
-    {
-      type: 'comparison',
-      title: `COMPARATIVE ANALYSIS & CRITICAL DEBATE`,
-      sub: 'Contrasting Perspectives & Competing Models',
-      bullets: [
-        `Perspective A: Focuses on materialist and deterministic structural drivers.`,
-        `Perspective B: Emphasizes human agency, cultural paradigms, and environmental adaptation.`,
-        `Synthesis: Modern scholarship integrates both frameworks for a holistic understanding.`
-      ],
-      visual: 'Side-by-side split screen visual contrasting two major perspectives with evidence callouts.',
-      prompt: 'Which argument presents more resilient empirical evidence? Defend your position.',
-      notes: 'Facilitate a structured 3-minute mini-debate. Ensure students cite reasoning rather than mere opinion.'
-    },
-    {
-      type: 'activity',
-      title: `COLLABORATIVE INQUIRY & PROBLEM SOLVING`,
-      sub: 'Classroom Application Exercise',
-      bullets: [
-        `Pair-share prompt: Apply the principles learned to solve an authentic scenario dilemma.`,
-        `Document your working step-by-step using standard analytical notation.`,
-        `Prepare to present your solution framework and defend key diagnostic assumptions.`
-      ],
-      visual: 'Scenario challenge briefing box with time indicator and step-by-step rubric checklist.',
-      prompt: 'Work with your partner: What is your primary intervention strategy and how will you evaluate success?',
-      notes: 'Circulate around the classroom. Provide differentiated hints to groups needing scaffolding.'
-    }
-  ];
-
-  for (let i = 0; i < middleCount; i++) {
-    const tmpl = slideTemplates[i % slideTemplates.length];
-    slides.push({
-      id: `s-${slides.length + 1}`,
-      slideNumber: slides.length + 1,
-      slideType: tmpl.type,
-      title: tmpl.title,
-      subtitle: tmpl.sub,
-      bulletPoints: tmpl.bullets,
-      suggestedVisualOrDiagram: tmpl.visual,
-      discussionOrEngagementPrompt: tmpl.prompt,
-      speakerNotes: tmpl.notes
-    });
-  }
-
-  // Final Slide: Summary & Exit Ticket
-  slides.push({
-    id: `s-${slides.length + 1}`,
-    slideNumber: slides.length + 1,
-    slideType: 'summary',
-    title: 'SYNTHESIS & CRITICAL TAKEAWAYS',
-    subtitle: 'Consolidating Core Concepts & Next Steps',
-    bulletPoints: [
-      `Key Takeaway 1: ${topic} represents a cohesive system governed by verifiable principles.`,
-      `Key Takeaway 2: Empirical evidence confirms significant real-world and historical impact.`,
-      `Key Takeaway 3: Critical thinking requires interrogating both assumptions and evidence.`,
-      `Exit Challenge: Formulate one evaluative question connecting today's learning to future lessons.`
-    ],
-    suggestedVisualOrDiagram: 'Visual summary icon grid capturing the central pillars of the lesson with an Exit Ticket badge.',
-    discussionOrEngagementPrompt: 'Exit reflection: What is the single most important concept from today that shifts your thinking?',
-    speakerNotes: 'Conclude the presentation. Collect exit tickets or student reflections. Assign targeted review readings.'
-  });
-
-  return {
-    title: `Presentation: ${topic.toUpperCase()}`,
-    subtitle: `${format} Masterclass Deck`,
-    subject,
-    topic,
-    gradeLevel,
-    targetAudience: gradeLevel,
-    themeOrColorMood: theme,
-    presentationStyle: format,
-    slidesCount: slides.length,
-    slides,
-    speakerGuideOverview: `Comprehensive ${slides.length}-slide instructional presentation deck on ${topic}, crafted for ${gradeLevel} instruction.`
-  };
+  onBack?: () => void;
+  onGoHome?: () => void;
 }
 
 export const BuildGeneratorView: React.FC<BuildGeneratorViewProps> = ({
-  activeTool,
-  onSelectTool,
+  initialToolId = 'exam',
+  initialTopic = '',
+  initialResource = null,
   onBack,
   onGoHome,
-  initialTopic = '',
-  initialResource,
-  onResourceSaved,
 }) => {
-  const [topicInput, setTopicInput] = useState<string>(initialResource?.topic || initialTopic || '');
-  const [gradeLevel, setGradeLevel] = useState<string>('Grade 10-12');
-  const [sourceText, setSourceText] = useState<string>('');
+  const { canAfford, consumeCredits, openAuthModal } = useAuthCredit();
+
+  // Active Tool selection
+  const [activeToolId, setActiveToolId] = useState<BuildToolId>(
+    initialResource?.toolType || initialToolId || 'exam'
+  );
+
+  // Form Fields
+  const [topic, setTopic] = useState<string>(
+    initialResource?.topic || initialResource?.title || initialTopic || ''
+  );
+  const [subject, setSubject] = useState<string>(
+    initialResource?.subject || 'African History & Heritage'
+  );
+  const [gradeLevel, setGradeLevel] = useState<string>(
+    initialResource?.gradeLevel || 'Senior Secondary (Grades 10-12)'
+  );
+  const [difficulty, setDifficulty] = useState<string>(
+    initialResource?.difficulty || 'Intermediate'
+  );
+  const [itemCount, setItemCount] = useState<number>(10);
+  const [durationMinutes, setDurationMinutes] = useState<number>(60);
+  const [instructions, setInstructions] = useState<string>('');
+  const [sourceMaterial, setSourceMaterial] = useState<string>('');
   const [sourceFileName, setSourceFileName] = useState<string>('');
-  const [questionCount, setQuestionCount] = useState<number>(activeTool === 'lessonplan' ? 60 : 10);
+
+  // Generation status
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
-  const [generatedResult, setGeneratedResult] = useState<any | null>(initialResource?.data || null);
-  const [showWorksheetAnswers, setShowWorksheetAnswers] = useState<boolean>(false);
-  const [worksheetStudentInputs, setWorksheetStudentInputs] = useState<Record<string, string>>({});
+  const [generatedResource, setGeneratedResource] = useState<SavedResource | null>(initialResource);
 
-  // Presentation-specific states
-  const [presentationSlideCount, setPresentationSlideCount] = useState<number>(8);
-  const [presentationTheme, setPresentationTheme] = useState<string>('African Earth & Ochre');
-  const [presentationFormat, setPresentationFormat] = useState<string>('Educational Lecture & Discussion');
-  const [presentationKeyPoints, setPresentationKeyPoints] = useState<string>('');
+  // Result UI controls
+  const [showMarkingGuide, setShowMarkingGuide] = useState<boolean>(false);
+  const [copied, setCopied] = useState<boolean>(false);
+  const [savedSuccess, setSavedSuccess] = useState<boolean>(false);
   const [activeSlideIndex, setActiveSlideIndex] = useState<number>(0);
   const [isFullscreenPresentation, setIsFullscreenPresentation] = useState<boolean>(false);
   const [showSpeakerNotes, setShowSpeakerNotes] = useState<boolean>(true);
-  const [isEditingSlide, setIsEditingSlide] = useState<boolean>(false);
-  const [editSlideData, setEditSlideData] = useState<{
-    title: string;
-    subtitle: string;
-    bullets: string;
-    visualCue: string;
-    discussionPrompt: string;
-    speakerNotes: string;
-  }>({
-    title: '',
-    subtitle: '',
-    bullets: '',
-    visualCue: '',
-    discussionPrompt: '',
-    speakerNotes: '',
-  });
 
-  const handleStudentInputChange = (id: string, value: string) => {
-    setWorksheetStudentInputs((prev) => ({ ...prev, [id]: value }));
-  };
+  const resultRef = useScrollToResult(generatedResource, isGenerating);
 
-  const resultRef = useScrollToResult(generatedResult, isGenerating);
-
+  // Sync if initialResource changes
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [activeTool]);
-
-  useEffect(() => {
-    if (initialTopic) {
-      setTopicInput(initialTopic);
-    }
-  }, [initialTopic]);
-
-  useEffect(() => {
-    if (initialResource?.data) {
-      setGeneratedResult(initialResource.data);
-      if (initialResource.topic) setTopicInput(initialResource.topic);
+    if (initialResource) {
+      setGeneratedResource(initialResource);
+      setActiveToolId(initialResource.toolType || 'exam');
+      setTopic(initialResource.topic || initialResource.title || '');
+      if (initialResource.subject) setSubject(initialResource.subject);
+      if (initialResource.gradeLevel) setGradeLevel(initialResource.gradeLevel);
+      if (initialResource.difficulty) setDifficulty(initialResource.difficulty);
     }
   }, [initialResource]);
 
-  // Adjust default count if tool switched to lessonplan
-  useEffect(() => {
-    if (activeTool === 'lessonplan' && (questionCount < 30 || questionCount > 180)) {
-      setQuestionCount(60);
-    } else if (activeTool !== 'lessonplan' && (questionCount > 25 || questionCount < 5)) {
-      setQuestionCount(10);
+  const currentToolConfig =
+    BUILD_TOOLS_LIST.find((t) => t.id === activeToolId) || BUILD_TOOLS_LIST[0];
+
+  const getActionType = (toolId: BuildToolId): AiActionType => {
+    switch (toolId) {
+      case 'worksheet':
+        return 'WORKSHEET';
+      case 'lesson-plan':
+        return 'LESSON_PLAN';
+      case 'presentation':
+        return 'PRESENTATION';
+      case 'course':
+        return 'COURSE';
+      case 'mind-map':
+        return 'MIND_MAP';
+      default:
+        return 'EXAM';
     }
-  }, [activeTool]);
-
-  // Keep slide edit fields in sync when active slide changes
-  useEffect(() => {
-    if (generatedResult?.slides && generatedResult.slides[activeSlideIndex]) {
-      const s = generatedResult.slides[activeSlideIndex];
-      setEditSlideData({
-        title: s.title || '',
-        subtitle: s.subtitle || '',
-        bullets: (s.bulletPoints || s.bullets || []).join('\n'),
-        visualCue: s.suggestedVisualOrDiagram || s.visualCue || '',
-        discussionPrompt: s.discussionOrEngagementPrompt || '',
-        speakerNotes: s.speakerNotes || '',
-      });
-      setIsEditingSlide(false);
-    }
-  }, [activeSlideIndex, generatedResult]);
-
-  // Presentation keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const isPresentationDeck = activeTool === 'presentation' || Array.isArray(generatedResult?.slides);
-      if (!isPresentationDeck || !generatedResult?.slides?.length) return;
-      if (isEditingSlide) return;
-
-      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
-        e.preventDefault();
-        setActiveSlideIndex((prev) => Math.min(generatedResult.slides.length - 1, prev + 1));
-      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
-        e.preventDefault();
-        setActiveSlideIndex((prev) => Math.max(0, prev - 1));
-      } else if (e.key === 'Escape') {
-        setIsFullscreenPresentation(false);
-      } else if (e.key === 'n' || e.key === 'N') {
-        setShowSpeakerNotes((prev) => !prev);
-      } else if (e.key === 'f' || e.key === 'F') {
-        setIsFullscreenPresentation((prev) => !prev);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeTool, generatedResult, isEditingSlide]);
-
-  const currentToolInfo = BUILD_TOOLS_LIST.find((t) => t.id === activeTool) || BUILD_TOOLS_LIST[1];
-  const ToolIcon = currentToolInfo.icon;
+  };
 
   const handleGenerate = async () => {
-    if (!topicInput.trim() && !sourceText.trim()) {
-      setGenerationError('Please enter a topic or upload source material before generating.');
+    if (!topic.trim() && !sourceMaterial.trim()) {
+      setGenerationError('Please provide a topic/title or upload source material.');
+      return;
+    }
+
+    const actionType = getActionType(activeToolId);
+    if (!canAfford(actionType)) {
+      openAuthModal('signin');
       return;
     }
 
     setIsGenerating(true);
     setGenerationError(null);
 
-    const isLessonPlan = activeTool === 'lessonplan';
-    const isWorksheet = activeTool === 'worksheet';
-    const isPresentation = activeTool === 'presentation';
+    const endpoint = currentToolConfig.endpoint || `/api/generate/${activeToolId}`;
 
-    if (isPresentation) {
-      try {
-        const presentationSubject = (topicInput || sourceFileName || 'Curriculum Subject').trim();
-        const res = await fetch('/api/generate/presentation', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            subject: presentationSubject,
-            topic: topicInput.trim() || presentationSubject,
-            audienceLevel: gradeLevel,
-            slidesCount: presentationSlideCount,
-            presentationStyle: `${presentationFormat} - Theme: ${presentationTheme}`,
-            keyPoints: presentationKeyPoints.trim(),
-            sourceMaterial: sourceText,
-          }),
-        });
-
-        if (res.ok) {
-          const json = await res.json();
-          if (json.success && json.data) {
-            const data = json.data;
-            setGeneratedResult(data);
-            setActiveSlideIndex(0);
-            const newResource: SavedResource = {
-              id: 'res-' + Date.now(),
-              toolType: 'presentation',
-              title: data.title || `Presentation: ${topicInput.trim() || 'Curriculum Subject'}`,
-              subject: data.subject || 'Curriculum',
-              topic: topicInput || sourceFileName || 'Generated Topic',
-              gradeLevel,
-              createdAt: new Date().toISOString(),
-              data,
-            };
-            saveResourceToStorage(newResource);
-            if (onResourceSaved) onResourceSaved(newResource);
-            setIsGenerating(false);
-            return;
-          }
-        }
-      } catch (err: any) {
-        console.warn('Backend presentation API call failed, generating presentation directly:', err);
-      }
-
-      // Robust fallback presentation generator
-      const fallbackPresentation = generateClientPresentationFallback({
-        topic: topicInput.trim() || 'Curriculum Subject',
-        subject: 'Curriculum Studies',
-        gradeLevel,
-        slideCount: presentationSlideCount,
-        theme: presentationTheme,
-        format: presentationFormat,
-        keyPoints: presentationKeyPoints.trim(),
-      });
-      setGeneratedResult(fallbackPresentation);
-      setActiveSlideIndex(0);
-      const newResource: SavedResource = {
-        id: 'res-' + Date.now(),
-        toolType: 'presentation',
-        title: fallbackPresentation.title,
-        subject: fallbackPresentation.subject,
-        topic: topicInput || 'Curriculum Topic',
-        gradeLevel,
-        createdAt: new Date().toISOString(),
-        data: fallbackPresentation,
-      };
-      saveResourceToStorage(newResource);
-      if (onResourceSaved) onResourceSaved(newResource);
-      setIsGenerating(false);
-      return;
-    }
-
-    let prompt = '';
-    if (isLessonPlan) {
-      prompt = `Generate a comprehensive pedagogical Lesson Plan for CAPS / African curriculum about "${topicInput || sourceFileName || 'Curriculum Subject'}".
-Target Grade Level: ${gradeLevel}.
-Lesson Duration: ${questionCount} minutes.
-Source Material Excerpt: "${sourceText.substring(0, 1500)}".
-Return valid JSON with:
-{
-  "title": "Lesson Plan: ${topicInput || 'Curriculum Subject'}",
-  "subject": "Curriculum / Pedagogy",
-  "topic": "${topicInput || 'Core Subject'}",
-  "description": "Comprehensive lesson plan featuring structured pedagogical phases, learning outcomes, and assessment strategies.",
-  "sections": [
-    {"heading": "1. Learning Objectives & Bloom's Taxonomy", "content": "Measurable cognitive and practical learning objectives for this lesson..."},
-    {"heading": "2. Hook & Anticipatory Inquiry (10 mins)", "content": "Engaging real-world hook question and activating prior knowledge..."},
-    {"heading": "3. Direct Instruction & Concept Modeling (25 mins)", "content": "Key concept breakdown, teacher demonstration, and visual frameworks..."},
-    {"heading": "4. Guided & Collaborative Group Practice (15 mins)", "content": "Scaffolded student activities, pair-share exercises, and active problem solving..."},
-    {"heading": "5. Formative Assessment & Exit Ticket (10 mins)", "content": "Diagnostic closure check and differentiated extension/support tasks..."}
-  ],
-  "questions": [
-    {
-      "question": "Formative Exit Ticket Diagnostic Question on ${topicInput || 'this lesson'}:",
-      "options": ["Option A: Accurate core principle demonstration", "Option B: Isolated terminology recall", "Option C: Partial application without reasoning", "Option D: Incorrect assumption"],
-      "correctAnswer": "Option A: Accurate core principle demonstration",
-      "explanation": "Demonstrates mastery of the lesson's central learning outcome."
-    }
-  ],
-  "answerKey": ["1. Option A"]
-}`;
-    } else if (isWorksheet) {
-      const topicSubjectTitle = (topicInput || sourceFileName || 'Curriculum Subject').trim();
-      prompt = `Generate an actual classroom student WORKSHEET (NOT a quiz, NO multiple-choice options) about "${topicSubjectTitle}".
-Target Grade Level: ${gradeLevel}.
-Activity Count: ${questionCount} exercises/activities.
-Source Material Excerpt: "${sourceText.substring(0, 1500)}".
-
-IMPORTANT REQUIREMENTS:
-- The worksheet title MUST strictly be the TOPIC / SUBJECT TITLE: "${topicSubjectTitle}" (do NOT prefix with "Worksheet:" or "Interactive Worksheet:").
-- This must be an actual printable and interactive student WORKSHEET with diverse activities for students to complete, NOT a quiz!
-- DO NOT generate a multiple choice quiz. DO NOT provide options A, B, C, D.
-- Include 5 distinct, well-structured student activities:
-  1. Vocabulary & Key Terms Match (Column A terms to match with Column B definitions, with write-in bracket).
-  2. Fill in the Blanks with a provided Word Bank box.
-  3. Structured Conceptual Questions with ruled answer completion lines for students to write explanations.
-  4. Practical Scenario & Problem-Solving Application with working space.
-  5. Critical Thinking & Reflection Inquiry with space for student response.
-- Include a complete Teacher Solutions & Answer Key.
-
-Return valid JSON matching this schema:
-{
-  "title": "${topicSubjectTitle}",
-  "subject": "Curriculum Subject",
-  "topic": "${topicSubjectTitle}",
-  "gradeLevel": "${gradeLevel}",
-  "description": "Comprehensive student classroom worksheet designed for active completion, critical thinking, and concept reinforcement.",
-  "instructions": "Read all directions carefully. Complete each activity and write your answers in the designated spaces.",
-  "estimatedTimeMinutes": 45,
-  "totalMarks": 40,
-  "studentHeader": {
-    "nameField": "Student Name: ____________________________________",
-    "dateField": "Date: ________________________",
-    "classField": "Grade / Class: ________________________",
-    "scoreField": "Score: _______ / 40"
-  },
-  "activities": [
-    {
-      "activityNumber": 1,
-      "title": "Activity 1: Vocabulary & Key Terms Match",
-      "type": "matching",
-      "instructions": "Match each term in Column A with its correct definition in Column B. Write the matching letter in the bracket provided.",
-      "items": [
-        { "itemNumber": 1, "prompt": "Foundational Concept", "matchTarget": "A. The primary governing framework", "completionSpace": "Write letter: [ _____ ]" },
-        { "itemNumber": 2, "prompt": "Operational Mechanism", "matchTarget": "B. Structured procedural process linking inputs to outcomes", "completionSpace": "Write letter: [ _____ ]" },
-        { "itemNumber": 3, "prompt": "Practical Application", "matchTarget": "C. Systematic execution in real-world contexts", "completionSpace": "Write letter: [ _____ ]" },
-        { "itemNumber": 4, "prompt": "Verification Benchmark", "matchTarget": "D. Measurable criteria confirming accuracy and performance", "completionSpace": "Write letter: [ _____ ]" }
-      ]
-    },
-    {
-      "activityNumber": 2,
-      "title": "Activity 2: Fill in the Blanks with Word Bank",
-      "type": "fill-in-blanks",
-      "instructions": "Complete each statement using the appropriate word or phrase from the Word Bank below.",
-      "wordBank": ["Mechanism", "Framework", "Empirical", "Application", "Benchmark"],
-      "items": [
-        { "itemNumber": 1, "prompt": "The primary theoretical ____________________ establishes how concepts interact within this domain.", "completionSpace": "Your Answer: ____________________________________" },
-        { "itemNumber": 2, "prompt": "Every observable outcome is driven by an underlying ____________________ that governs cause and effect.", "completionSpace": "Your Answer: ____________________________________" },
-        { "itemNumber": 3, "prompt": "Practitioners validate hypotheses through rigorous ____________________ evidence and testing.", "completionSpace": "Your Answer: ____________________________________" }
-      ]
-    },
-    {
-      "activityNumber": 3,
-      "title": "Activity 3: Structured Conceptual Questions",
-      "type": "short-answer",
-      "instructions": "Answer each question thoroughly using complete sentences. Explain your reasoning.",
-      "items": [
-        { "itemNumber": 1, "prompt": "Explain the foundational significance of ${topicInput || 'this concept'} and provide a concrete real-world example.", "completionSpace": "Write your response below:\\n______________________________________________________________________\\n______________________________________________________________________" },
-        { "itemNumber": 2, "prompt": "Contrast two primary components or perspectives relevant to ${topicInput || 'this topic'} and explain how they interact.", "completionSpace": "Write your response below:\\n______________________________________________________________________\\n______________________________________________________________________" }
-      ]
-    },
-    {
-      "activityNumber": 4,
-      "title": "Activity 4: Practical Scenario & Problem-Solving Application",
-      "type": "application",
-      "instructions": "Read the real-world scenario below and complete the analytical tasks. Show all work and logical reasoning.",
-      "scenario": "A community or school initiative requires applying ${topicInput || 'these core concepts'} to resolve a challenging practical dilemma...",
-      "items": [
-        { "itemNumber": 1, "prompt": "Analyze the scenario and identify the primary variables that must be controlled.", "completionSpace": "Analysis / Working:\\n______________________________________________________________________\\n______________________________________________________________________" },
-        { "itemNumber": 2, "prompt": "Formulate a step-by-step action plan to address the situation effectively.", "completionSpace": "Proposed Action Plan:\\n______________________________________________________________________\\n______________________________________________________________________" }
-      ]
-    },
-    {
-      "activityNumber": 5,
-      "title": "Activity 5: Critical Thinking & Synthesis Reflection",
-      "type": "critical-thinking",
-      "instructions": "Synthesize what you have learned by addressing the evaluative inquiry prompt below.",
-      "items": [
-        { "itemNumber": 1, "prompt": "Evaluate how mastery of ${topicInput || 'this topic'} equips individuals to make informed decisions in wider society.", "completionSpace": "Student Reflection:\\n______________________________________________________________________\\n______________________________________________________________________" }
-      ]
-    }
-  ],
-  "teacherAnswerKey": [
-    { "activityTitle": "Activity 1: Vocabulary & Key Terms Match", "answers": ["1. Foundational Concept -> A", "2. Operational Mechanism -> B", "3. Practical Application -> C", "4. Verification Benchmark -> D"] },
-    { "activityTitle": "Activity 2: Fill in the Blanks", "answers": ["1. Framework", "2. Mechanism", "3. Empirical"] },
-    { "activityTitle": "Activity 3: Structured Conceptual Questions", "answers": ["1. Exemplar response explaining conceptual mechanisms with authentic domain application.", "2. Model comparison highlighting core distinctions and interconnectedness."] },
-    { "activityTitle": "Activity 4: Practical Scenario Application", "answers": ["1. Primary variables include baseline conditions and environmental constraints.", "2. Action plan features diagnostic evaluation, intervention, and verification feedback."] },
-    { "activityTitle": "Activity 5: Critical Thinking & Synthesis", "answers": ["1. High-scoring criteria: demonstrates synthesis, real-world context, and coherent argumentation."] }
-  ]
-}`;
-    } else {
-      prompt = `Generate a comprehensive ${activeTool} resource about "${topicInput || sourceFileName || 'Curriculum Subject'}".
-Target Grade Level: ${gradeLevel}.
-Question Count / Items: ${questionCount}.
-Source Material Excerpt: "${sourceText.substring(0, 1500)}".
-Return valid JSON with:
-{
-  "title": "Title of the resource",
-  "subject": "Subject category",
-  "topic": "${topicInput || 'Core Curriculum'}",
-  "description": "Brief summary of the generated material",
-  "sections": [{"heading": "Section title", "content": "Detailed educational content..."}],
-  "questions": [{"question": "Question text...", "options": ["A", "B", "C", "D"], "correctAnswer": "A", "explanation": "Why..."}],
-  "answerKey": ["1. A", "2. B"]
-}`;
-    }
+    const payload = {
+      subject,
+      topic: topic.trim() || sourceFileName || 'Educational Resource',
+      gradeLevel,
+      difficulty,
+      questionCount: itemCount,
+      durationMinutes,
+      instructions: instructions.trim(),
+      sourceMaterial: sourceMaterial.trim(),
+      institutionHeader: 'Proudly Afrikan Examination Board',
+    };
 
     try {
-      const data = await callAIAndParseJson<any>(prompt);
-      if (isWorksheet) {
-        const topicSubjectTitle = topicInput.trim() || getCleanWorksheetTitle(data.title, data.topic, data.subject);
-        data.title = topicSubjectTitle;
-        data.topic = topicSubjectTitle;
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server returned ${response.status}: ${response.statusText}`);
       }
-      setGeneratedResult(data);
+
+      const data = await response.json();
+      await consumeCredits(actionType, `Generated ${currentToolConfig.title}`);
 
       const newResource: SavedResource = {
-        id: 'res-' + Date.now(),
-        toolType: activeTool,
-        title: isWorksheet
-          ? (topicInput.trim() || getCleanWorksheetTitle(data.title, data.topic, data.subject))
-          : (data.title || `${activeTool.toUpperCase()}: ${topicInput || 'Custom Resource'}`),
-        subject: data.subject || 'Curriculum',
-        topic: topicInput || sourceFileName || 'Generated Topic',
+        id: `res-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        toolType: activeToolId,
+        title: data.title || `${currentToolConfig.title}: ${payload.topic}`,
+        subject: data.subject || subject,
+        topic: payload.topic,
+        gradeLevel,
+        difficulty,
         createdAt: new Date().toISOString(),
         data,
       };
 
+      setGeneratedResource(newResource);
       saveResourceToStorage(newResource);
-      if (onResourceSaved) onResourceSaved(newResource);
+      setSavedSuccess(true);
+      setTimeout(() => setSavedSuccess(false), 3000);
     } catch (err: any) {
-      let fallbackData: any;
-      if (isLessonPlan) {
-        fallbackData = {
-          title: `Lesson Plan: ${topicInput || 'Curriculum Masterclass'}`,
-          subject: 'Educational Pedagogy',
-          topic: topicInput || 'Core Subject',
-          description: `Pedagogical ${questionCount}-minute lesson plan for ${gradeLevel} students featuring structured phases, Bloom's taxonomy objectives, and formative assessment checks.`,
-          sections: [
-            { heading: "1. Learning Objectives & Bloom's Taxonomy", content: `By the end of this lesson on ${topicInput || 'the topic'}, learners will be able to analyze foundational concepts, apply problem-solving frameworks, and evaluate authentic case scenarios.` },
-            { heading: '2. Hook & Inquiry (10 mins)', content: `Introduce an authentic inquiry prompt connecting ${topicInput || 'the topic'} to real-world applications. Learners engage in a quick pair-share brainstorm.` },
-            { heading: '3. Direct Instruction & Guided Modeling (25 mins)', content: `Teacher presents the theoretical framework and demonstrates step-by-step problem solving with guided visual examples.` },
-            { heading: '4. Collaborative & Independent Practice (15 mins)', content: `Learners work in small groups on structured problem sets, receiving targeted scaffolding and feedback.` },
-            { heading: '5. Formative Assessment & Exit Ticket (10 mins)', content: `Conduct an exit ticket check to verify individual understanding and assign differentiated reinforcement tasks.` }
-          ],
-          questions: [
-            {
-              question: `Exit Ticket Diagnostic: Which statement best reflects core mastery of ${topicInput || "today's lesson"}?`,
-              options: ['Option A: Accurately explaining the core principle and applying it to a novel problem', 'Option B: Memorizing isolated terminology without understanding context', 'Option C: Skipping foundational definitions', 'Option D: Ignoring practical constraints'],
-              correctAnswer: 'Option A: Accurately explaining the core principle and applying it to a novel problem',
-              explanation: 'Option A demonstrates conceptual understanding and higher-order application aligned with Bloom\'s taxonomy.'
-            }
-          ],
-          answerKey: ['1. A']
-        };
-      } else if (isWorksheet) {
-        const topicSubjectTitle = topicInput.trim() || 'Curriculum Subject';
-        fallbackData = {
-          title: topicSubjectTitle,
-          subject: 'Educational Studies',
-          topic: topicSubjectTitle,
-          gradeLevel: gradeLevel,
-          description: `Comprehensive student worksheet designed for active classroom completion, critical thinking, and concept reinforcement.`,
-          instructions: 'Read all directions carefully. Complete each activity and write your answers in the designated spaces.',
-          estimatedTimeMinutes: 45,
-          totalMarks: 40,
-          studentHeader: {
-            nameField: 'Student Name: ____________________________________',
-            dateField: 'Date: ________________________',
-            classField: 'Grade / Class: ________________________',
-            scoreField: 'Score: _______ / 40'
-          },
-          activities: [
-            {
-              activityNumber: 1,
-              title: 'Activity 1: Vocabulary & Key Terms Match',
-              type: 'matching',
-              instructions: 'Match each term in Column A with its correct definition in Column B. Write the matching letter in the bracket provided.',
-              items: [
-                { itemNumber: 1, prompt: `Foundational Principle of ${topicInput || 'the Subject'}`, matchTarget: 'A. The underlying governing rule establishing core operational frameworks.', completionSpace: 'Write letter: [ _____ ]' },
-                { itemNumber: 2, prompt: 'Operational Mechanism', matchTarget: 'B. Structured procedural process linking theoretical inputs to observable outcomes.', completionSpace: 'Write letter: [ _____ ]' },
-                { itemNumber: 3, prompt: 'Empirical Verification', matchTarget: 'C. Systematic criteria and evidence used to validate real-world results.', completionSpace: 'Write letter: [ _____ ]' },
-                { itemNumber: 4, prompt: 'Authentic Application', matchTarget: 'D. Adapting foundational principles to complex real-world challenges.', completionSpace: 'Write letter: [ _____ ]' }
-              ]
-            },
-            {
-              activityNumber: 2,
-              title: 'Activity 2: Fill in the Blanks with Word Bank',
-              type: 'fill-in-blanks',
-              instructions: 'Complete each statement using the appropriate term from the Word Bank below.',
-              wordBank: ['Mechanism', 'Empirical', 'Framework', 'Application', 'Principles'],
-              items: [
-                { itemNumber: 1, prompt: `The central theoretical ____________ establishes how concepts interact within this domain.`, completionSpace: 'Your Answer: ____________________________________' },
-                { itemNumber: 2, prompt: `Every observable outcome is driven by an underlying ____________ that governs cause and effect.`, completionSpace: 'Your Answer: ____________________________________' },
-                { itemNumber: 3, prompt: `Practitioners validate hypotheses through rigorous ____________ evidence and testing.`, completionSpace: 'Your Answer: ____________________________________' },
-                { itemNumber: 4, prompt: `Successful real-world ____________ requires adapting core rules to authentic challenges.`, completionSpace: 'Your Answer: ____________________________________' }
-              ]
-            },
-            {
-              activityNumber: 3,
-              title: 'Activity 3: Structured Conceptual Questions',
-              type: 'short-answer',
-              instructions: 'Answer each question thoroughly using complete sentences. Explain your reasoning.',
-              items: [
-                { itemNumber: 1, prompt: `Explain why understanding ${topicInput || 'this topic'} is essential for solving complex challenges in this subject.`, completionSpace: 'Write your response below:\\n______________________________________________________________________\\n______________________________________________________________________' },
-                { itemNumber: 2, prompt: `Identify two common misconceptions regarding ${topicInput || 'this topic'} and contrast them with correct conceptual principles.`, completionSpace: 'Write your response below:\\n______________________________________________________________________\\n______________________________________________________________________' }
-              ]
-            },
-            {
-              activityNumber: 4,
-              title: 'Activity 4: Practical Scenario & Problem-Solving Application',
-              type: 'application',
-              instructions: 'Read the scenario below and complete the analytical tasks. Show all work and logical deductions.',
-              scenario: `A community or academic project needs to implement principles of ${topicInput || 'the subject matter'} to optimize performance and prevent critical errors. You have been asked to analyze the situation and formulate a solution.`,
-              items: [
-                { itemNumber: 1, prompt: 'Step 1: Identify the primary variables that must be controlled or monitored.', completionSpace: 'Your analysis:\\n______________________________________________________________________\\n______________________________________________________________________' },
-                { itemNumber: 2, prompt: 'Step 2: Propose a step-by-step action plan to address the scenario effectively.', completionSpace: 'Your action plan:\\n______________________________________________________________________\\n______________________________________________________________________' }
-              ]
-            },
-            {
-              activityNumber: 5,
-              title: 'Activity 5: Critical Thinking & Synthesis Reflection',
-              type: 'critical-thinking',
-              instructions: 'Synthesize what you have learned by completing the reflection inquiry below.',
-              items: [
-                { itemNumber: 1, prompt: `Evaluate how the core ideas of ${topicInput || 'this topic'} connect to broader themes or contemporary issues in modern society.`, completionSpace: 'Student Reflection:\\n______________________________________________________________________\\n______________________________________________________________________' }
-              ]
-            }
-          ],
-          teacherAnswerKey: [
-            { activityTitle: 'Activity 1: Vocabulary & Key Terms Match', answers: ['1. Foundational Principle -> A', '2. Operational Mechanism -> B', '3. Empirical Verification -> C', '4. Authentic Application -> D'] },
-            { activityTitle: 'Activity 2: Fill in the Blanks', answers: ['1. Framework', '2. Mechanism', '3. Empirical', '4. Application'] },
-            { activityTitle: 'Activity 3: Structured Conceptual Questions', answers: ['1. Model Answer: Understanding provides foundational principles that allow learners to predict outcomes and analyze cause-and-effect relationships.', '2. Model Answer: Misconception 1: Concepts operate in isolation. Misconception 2: Memorization equates to conceptual mastery.'] },
-            { activityTitle: 'Activity 4: Practical Scenario Application', answers: ['1. Primary variables include initial baseline conditions, operational constraints, and measurement accuracy.', '2. Action plan should feature diagnostic evaluation, targeted intervention, and verification feedback.'] },
-            { activityTitle: 'Activity 5: Critical Thinking & Synthesis', answers: ['1. Full marks awarded for linking foundational mechanisms to contemporary societal or technological developments with coherent reasoning.'] }
-          ]
-        };
-      } else {
-        fallbackData = {
-          title: `${activeTool.toUpperCase()}: ${topicInput || 'Curriculum Masterclass'}`,
-          subject: 'Educational Studies',
-          topic: topicInput || 'Core Subject',
-          description: `Comprehensive ${activeTool} generated for ${gradeLevel} students covering key concepts and applications.`,
-          sections: [
-            { heading: '1. Core Concepts & Definitions', content: `Fundamental principles regarding ${topicInput || 'the subject matter'} and their theoretical foundation.` },
-            { heading: '2. Analysis & Application', content: `Practical methodologies and step-by-step problem-solving frameworks.` }
-          ],
-          questions: Array.from({ length: Math.min(questionCount, 5) }).map((_, i) => ({
-            question: `Sample assessment question #${i + 1} regarding ${topicInput || 'the core topic'}?`,
-            options: ['Option A: Primary mechanism', 'Option B: Secondary factor', 'Option C: Alternative hypothesis', 'Option D: Control variable'],
-            correctAnswer: 'Option A: Primary mechanism',
-            explanation: 'Option A is correct because it directly addresses the governing principle.'
-          })),
-          answerKey: ['1. A', '2. B', '3. C', '4. D', '5. A']
-        };
-      }
-      setGeneratedResult(fallbackData);
-      const fallbackRes: SavedResource = {
-        id: 'res-' + Date.now(),
-        toolType: activeTool,
-        title: fallbackData.title,
-        subject: fallbackData.subject,
-        topic: topicInput || 'Generated Topic',
-        createdAt: new Date().toISOString(),
-        data: fallbackData,
-      };
-      saveResourceToStorage(fallbackRes);
+      console.warn('Backend generation failed, creating resilient curriculum resource:', err);
+      // Fallback generator ensuring zero disruption
+      const fallbackResource = createFallbackResource(activeToolId, payload);
+      setGeneratedResource(fallbackResource);
+      saveResourceToStorage(fallbackResource);
     } finally {
       setIsGenerating(false);
     }
   };
 
+  const handleSaveToStorage = () => {
+    if (!generatedResource) return;
+    saveResourceToStorage(generatedResource);
+    setSavedSuccess(true);
+    setTimeout(() => setSavedSuccess(false), 3000);
+  };
+
+  const handleCopyText = () => {
+    if (!generatedResource) return;
+    const text = JSON.stringify(generatedResource.data, null, 2);
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleExportDoc = () => {
+    if (!generatedResource) return;
+    exportBuildResource(generatedResource, 'doc');
+  };
+
+  const handleExportPdf = () => {
+    if (!generatedResource) return;
+    exportBuildResource(generatedResource, 'pdf');
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
   return (
-    <div className="space-y-8">
-      {/* 2. Tool Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-stone-200/80">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#FF7A00] via-[#D09500] to-[#A67A00] text-white flex items-center justify-center shadow-[0_4px_16px_rgba(230,57,86,0.35),inset_0_1px_1px_rgba(255,255,255,0.3)] border border-white/20">
-            <ToolIcon className="w-6 h-6" />
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-5 border-b border-stone-200">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-xs font-bold text-[#E63956] uppercase tracking-wider">
+              RESOURCE BUILDER • {currentToolConfig.badge}
+            </span>
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-xs font-bold text-[#FF7A00] uppercase tracking-wider">
-                TOOL {currentToolInfo.num} &bull; {currentToolInfo.badge}
-              </span>
-            </div>
-            <h1 className="font-display font-black text-2xl sm:text-3xl uppercase tracking-tight text-stone-900">
-              {currentToolInfo.title}
-            </h1>
-          </div>
+          <h1 className="font-display font-black text-2xl sm:text-3xl text-[#161616] uppercase tracking-tight">
+            {currentToolConfig.title}
+          </h1>
         </div>
 
-        <GlobalNavigationButtons
-          onBack={onBack}
-          onGoHome={onGoHome}
-          backLabel="Back"
-          homeLabel="Home"
-        />
+        <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end flex-wrap">
+          {generatedResource && (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleSaveToStorage}
+                className="px-3.5 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <Bookmark className="w-3.5 h-3.5 text-[#E63956]" />
+                <span>{savedSuccess ? 'Saved!' : 'Save'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleExportDoc}
+                className="px-3.5 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Word (.doc)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleExportPdf}
+                className="px-3.5 py-2 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>PDF</span>
+              </button>
+            </div>
+          )}
+
+          <GlobalNavigationButtons
+            onBack={onBack}
+            onGoHome={onGoHome}
+            backLabel="Back"
+            homeLabel="Home"
+          />
+        </div>
       </div>
 
-      {/* 3. Main Stacked Layout: Menu directly ABOVE generation area on mobile, tablet, and desktop */}
-      <div className="space-y-8">
-        {/* The Tool Menu / Form - Soft UI 3D Design */}
-        <div className="w-full">
-          <div className="p-6 sm:p-10 rounded-[2.5rem] bg-[#FAF4EC] border border-[#EFE5DA] shadow-[0_2px_10px_rgba(100,80,60,0.04),_0_12px_30px_rgba(100,80,60,0.08),_0_28px_56px_-6px_rgba(100,80,60,0.10),_0_45px_80px_-12px_rgba(100,80,60,0.08)] space-y-6">
-            {/* Topic Input */}
-            <div className="space-y-2 text-left">
-              <label className="block font-mono text-[11px] sm:text-xs font-bold uppercase tracking-wider text-stone-600">
-                {activeTool === 'presentation'
-                  ? 'PRESENTATION TOPIC / LESSON TITLE *'
-                  : activeTool === 'lessonplan'
-                  ? 'LESSON PLAN TOPIC / SUBJECT TITLE *'
-                  : 'TOPIC / SUBJECT TITLE *'}
-              </label>
-              <input
-                type="text"
-                value={topicInput}
-                onChange={(e) => setTopicInput(e.target.value)}
-                placeholder={
-                  activeTool === 'presentation'
-                    ? "e.g. Kingdom of Kush & Meroë Metallurgy"
-                    : activeTool === 'lessonplan'
-                    ? "e.g. Great Zimbabwe Architecture & Trade"
-                    : "e.g. Great Zimbabwe Architecture & Trade"
-                }
-                className="w-full bg-[#EFE8DE] border border-[#E4DCD0] rounded-2xl p-4 font-mono text-xs sm:text-sm text-stone-900 placeholder-stone-400/80 shadow-[inset_2px_2px_4px_rgba(0,0,0,0.07),_inset_-2px_-2px_4px_rgba(255,255,255,0.8)] focus:outline-hidden focus:border-[#E62E6B] transition-all"
-              />
-            </div>
-
-            {/* Grade Level & Item Count / Duration / Slide Count */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
-              <div className="space-y-2">
-                <label className="block font-mono text-[11px] sm:text-xs font-bold uppercase tracking-wider text-stone-600">
-                  GRADE LEVEL / TARGET AUDIENCE
-                </label>
-                <select
-                  value={gradeLevel}
-                  onChange={(e) => setGradeLevel(e.target.value)}
-                  className="w-full bg-[#EFE8DE] border border-[#E4DCD0] rounded-2xl p-4 font-mono text-xs sm:text-sm text-stone-900 shadow-[inset_2px_2px_4px_rgba(0,0,0,0.07),_inset_-2px_-2px_4px_rgba(255,255,255,0.8)] focus:outline-hidden focus:border-[#E62E6B] cursor-pointer transition-all"
-                >
-                  <option value="Grade 8-9">Grade 8-9 (Intermediate)</option>
-                  <option value="Grade 10-12">Grade 10-12 (FET / Senior)</option>
-                  <option value="Undergraduate">Undergraduate / College</option>
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="block font-mono text-[11px] sm:text-xs font-bold uppercase tracking-wider text-stone-600">
-                  {activeTool === 'presentation'
-                    ? 'SLIDE COUNT'
-                    : activeTool === 'lessonplan'
-                    ? 'LESSON DURATION / PACING'
-                    : 'QUESTION / ITEM COUNT'}
-                </label>
-                {activeTool === 'presentation' ? (
-                  <select
-                    value={presentationSlideCount}
-                    onChange={(e) => setPresentationSlideCount(Number(e.target.value))}
-                    className="w-full bg-[#EFE8DE] border border-[#E4DCD0] rounded-2xl p-4 font-mono text-xs sm:text-sm text-stone-900 shadow-[inset_2px_2px_4px_rgba(0,0,0,0.07),_inset_-2px_-2px_4px_rgba(255,255,255,0.8)] focus:outline-hidden focus:border-[#E62E6B] cursor-pointer transition-all"
-                  >
-                    <option value={5}>5 Slides (Brief Overview)</option>
-                    <option value={8}>8 Slides (Standard Lecture - Recommended)</option>
-                    <option value={10}>10 Slides (Comprehensive Masterclass)</option>
-                    <option value={12}>12 Slides (Deep-Dive Academic Deck)</option>
-                    <option value={15}>15 Slides (Full Unit Course Deck)</option>
-                  </select>
-                ) : activeTool === 'lessonplan' ? (
-                  <select
-                    value={questionCount}
-                    onChange={(e) => setQuestionCount(Number(e.target.value))}
-                    className="w-full bg-[#EFE8DE] border border-[#E4DCD0] rounded-2xl p-4 font-mono text-xs sm:text-sm text-stone-900 shadow-[inset_2px_2px_4px_rgba(0,0,0,0.07),_inset_-2px_-2px_4px_rgba(255,255,255,0.8)] focus:outline-hidden focus:border-[#E62E6B] cursor-pointer transition-all"
-                  >
-                    <option value={45}>45 Minutes (Single Period)</option>
-                    <option value={60}>60 Minutes (Standard Period)</option>
-                    <option value={90}>90 Minutes (Block Period)</option>
-                    <option value={120}>120 Minutes (Workshop / Double)</option>
-                  </select>
-                ) : (
-                  <select
-                    value={questionCount}
-                    onChange={(e) => setQuestionCount(Number(e.target.value))}
-                    className="w-full bg-[#EFE8DE] border border-[#E4DCD0] rounded-2xl p-4 font-mono text-xs sm:text-sm text-stone-900 shadow-[inset_2px_2px_4px_rgba(0,0,0,0.07),_inset_-2px_-2px_4px_rgba(255,255,255,0.8)] focus:outline-hidden focus:border-[#E62E6B] cursor-pointer transition-all"
-                  >
-                    <option value={5}>5 Questions / Items</option>
-                    <option value={10}>10 Questions / Items</option>
-                    <option value={15}>15 Questions / Items</option>
-                    <option value={20}>20 Questions / Items</option>
-                  </select>
-                )}
-              </div>
-            </div>
-
-            {/* Presentation Specific Options: Theme & Delivery Format */}
-            {activeTool === 'presentation' && (
-              <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
-                  <div className="space-y-2">
-                    <label className="block font-mono text-[11px] sm:text-xs font-bold uppercase tracking-wider text-stone-600">
-                      PRESENTATION THEME & PALETTE
-                    </label>
-                    <select
-                      value={presentationTheme}
-                      onChange={(e) => setPresentationTheme(e.target.value)}
-                      className="w-full bg-[#EFE8DE] border border-[#E4DCD0] rounded-2xl p-4 font-mono text-xs sm:text-sm text-stone-900 shadow-[inset_2px_2px_4px_rgba(0,0,0,0.07),_inset_-2px_-2px_4px_rgba(255,255,255,0.8)] focus:outline-hidden focus:border-[#E62E6B] cursor-pointer transition-all"
-                    >
-                      <option value="African Earth & Ochre">African Earth & Ochre (Charcoal & Warm Gold)</option>
-                      <option value="Modern Slate & Emerald">Modern Slate & Emerald (Slate & Vivid Green)</option>
-                      <option value="Academic Editorial & Indigo">Academic Editorial & Indigo (Midnight & Indigo)</option>
-                      <option value="Vibrant Sunset & Amber">Vibrant Sunset & Amber (Mahogany & Fiery Orange)</option>
-                      <option value="Minimalist Ivory & Graphite">Minimalist Ivory & Graphite (Clean Ivory & Slate)</option>
-                    </select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block font-mono text-[11px] sm:text-xs font-bold uppercase tracking-wider text-stone-600">
-                      PEDAGOGICAL DELIVERY FORMAT
-                    </label>
-                    <select
-                      value={presentationFormat}
-                      onChange={(e) => setPresentationFormat(e.target.value)}
-                      className="w-full bg-[#EFE8DE] border border-[#E4DCD0] rounded-2xl p-4 font-mono text-xs sm:text-sm text-stone-900 shadow-[inset_2px_2px_4px_rgba(0,0,0,0.07),_inset_-2px_-2px_4px_rgba(255,255,255,0.8)] focus:outline-hidden focus:border-[#E62E6B] cursor-pointer transition-all"
-                    >
-                      <option value="Educational Lecture & Discussion">Educational Lecture & Discussion</option>
-                      <option value="Interactive Workshop & Activities">Interactive Workshop & Activities</option>
-                      <option value="Case Study & Real-World Application">Case Study & Real-World Application</option>
-                      <option value="Visual Storytelling & Narrative">Visual Storytelling & Narrative</option>
-                      <option value="Executive Summary & Key Takeaways">Executive Summary & Key Takeaways</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="space-y-2 text-left">
-                  <label className="block font-mono text-[11px] sm:text-xs font-bold uppercase tracking-wider text-stone-600">
-                    CORE INQUIRIES & KEY POINTS (OPTIONAL)
-                  </label>
-                  <input
-                    type="text"
-                    value={presentationKeyPoints}
-                    onChange={(e) => setPresentationKeyPoints(e.target.value)}
-                    placeholder="e.g. Highlight iron blast furnace technology, Nile trade, and archaeological findings"
-                    className="w-full bg-[#EFE8DE] border border-[#E4DCD0] rounded-2xl p-4 font-mono text-xs sm:text-sm text-stone-900 placeholder-stone-400/80 shadow-[inset_2px_2px_4px_rgba(0,0,0,0.07),_inset_-2px_-2px_4px_rgba(255,255,255,0.8)] focus:outline-hidden focus:border-[#E62E6B] transition-all"
-                  />
-                </div>
-              </>
-            )}
-
-            {/* Optional Document / Camera Upload */}
-            <div>
-              <SourceMaterialUpload
-                onContentExtracted={(text, name) => {
-                  setSourceText(text);
-                  setSourceFileName(name);
-                }}
-                currentFileName={sourceFileName}
-                onClear={() => {
-                  setSourceText('');
-                  setSourceFileName('');
-                }}
-                accentColor="#E62E6B"
-              />
-            </div>
-
-            {generationError && (
-              <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-rose-700 font-mono text-xs">
-                {generationError}
-              </div>
-            )}
-
-            {/* Generate Button - Soft UI 3D Pink Button */}
+      {/* Tool Selection Tabs */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none border-b border-stone-200/80">
+        {BUILD_TOOLS_LIST.map((tool) => {
+          const Icon = tool.icon;
+          const isActive = activeToolId === tool.id;
+          return (
             <button
-              onClick={handleGenerate}
-              disabled={isGenerating}
-              className="w-full py-4 bg-[#E62E6B] hover:bg-[#d8245f] text-white font-display text-sm font-black uppercase tracking-wider rounded-full shadow-[0_10px_28px_rgba(230,46,107,0.4)] active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              key={tool.id}
+              type="button"
+              onClick={() => setActiveToolId(tool.id as BuildToolId)}
+              className={`px-4 py-2.5 rounded-xl font-mono text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
+                isActive
+                  ? 'bg-gradient-to-r from-[#D92B8A] via-[#E03A6A] to-[#E63956] text-white shadow-md'
+                  : 'bg-white border border-stone-200 text-stone-700 hover:bg-stone-50'
+              }`}
             >
-              {isGenerating ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>
-                    {activeTool === 'presentation'
-                      ? 'DESIGNING PRESENTATION SLIDES...'
-                      : activeTool === 'lessonplan'
-                      ? 'SYNTHESIZING LESSON PLAN...'
-                      : 'SYNTHESIZING CLASSROOM PACK...'}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-5 h-5" />
-                  <span>
-                    GENERATE {activeTool === 'presentation' ? 'PRESENTATION SLIDES' : activeTool === 'lessonplan' ? 'LESSON PLAN' : 'RESOURCE'}
-                  </span>
-                  <ArrowRight className="w-4 h-4" />
-                </>
-              )}
+              <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-[#E63956]'}`} />
+              <span>{tool.title}</span>
             </button>
+          );
+        })}
+      </div>
+
+      {/* Input Workbench Form */}
+      <div className="p-6 sm:p-10 rounded-[2.5rem] bg-[#FAF4EC] border border-[#EFE5DA] shadow-[0_2px_10px_rgba(100,80,60,0.04),_0_12px_30px_rgba(100,80,60,0.08),_0_28px_56px_-6px_rgba(100,80,60,0.10)] space-y-6">
+        <div>
+          <label className="block font-mono text-xs font-bold text-stone-700 uppercase mb-2 tracking-wider">
+            {activeToolId === 'lesson-plan'
+              ? 'Lesson Topic / Unit Objective *'
+              : activeToolId === 'presentation'
+              ? 'Presentation Title / Topic *'
+              : 'Topic / Syllabus Area *'}
+          </label>
+          <input
+            type="text"
+            value={topic}
+            onChange={(e) => setTopic(e.target.value)}
+            placeholder="e.g. The Kingdom of Mali & Trans-Saharan Trade, Photosynthesis, Organic Chemistry..."
+            className="w-full bg-[#EFE8DE] border border-[#E4DCD0] rounded-2xl p-4 font-mono text-sm text-stone-900 placeholder-stone-400 shadow-[inset_2px_2px_4px_rgba(0,0,0,0.07)] focus:outline-none focus:border-[#E63956]"
+          />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label className="block font-mono text-xs font-bold text-stone-700 uppercase mb-2 tracking-wider">
+              Subject Domain
+            </label>
+            <select
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              className="w-full bg-[#EFE8DE] border border-[#E4DCD0] rounded-2xl p-3.5 font-mono text-xs sm:text-sm text-stone-900 focus:outline-none focus:border-[#E63956] cursor-pointer"
+            >
+              <option value="African History & Heritage">African History & Heritage</option>
+              <option value="Physical Sciences (Physics & Chemistry)">Physical Sciences</option>
+              <option value="Life Sciences & Biology">Life Sciences & Biology</option>
+              <option value="Mathematics & Applied Calculus">Mathematics</option>
+              <option value="Geography & Environmental Science">Geography & Environment</option>
+              <option value="English & World Literature">English & Literature</option>
+              <option value="Economics & Business Studies">Economics & Business</option>
+              <option value="Computer Science & Technology">Computer Science</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block font-mono text-xs font-bold text-stone-700 uppercase mb-2 tracking-wider">
+              Target Grade / Level
+            </label>
+            <select
+              value={gradeLevel}
+              onChange={(e) => setGradeLevel(e.target.value)}
+              className="w-full bg-[#EFE8DE] border border-[#E4DCD0] rounded-2xl p-3.5 font-mono text-xs sm:text-sm text-stone-900 focus:outline-none focus:border-[#E63956] cursor-pointer"
+            >
+              <option value="Senior Secondary (Grades 10-12)">Senior Secondary (Grades 10-12)</option>
+              <option value="Junior Secondary (Grades 8-9)">Junior Secondary (Grades 8-9)</option>
+              <option value="Higher Education / University">Higher Education / University</option>
+              <option value="Primary / Elementary (Grades 5-7)">Primary (Grades 5-7)</option>
+              <option value="Adult & Professional Learning">Adult & Professional</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block font-mono text-xs font-bold text-stone-700 uppercase mb-2 tracking-wider">
+              Difficulty & Rigor
+            </label>
+            <select
+              value={difficulty}
+              onChange={(e) => setDifficulty(e.target.value)}
+              className="w-full bg-[#EFE8DE] border border-[#E4DCD0] rounded-2xl p-3.5 font-mono text-xs sm:text-sm text-stone-900 focus:outline-none focus:border-[#E63956] cursor-pointer"
+            >
+              <option value="Foundational">Foundational / Core Concepts</option>
+              <option value="Intermediate">Intermediate / Standard</option>
+              <option value="Advanced">Advanced / Exam Level</option>
+              <option value="Olympiad / Honors">Olympiad / Honors</option>
+            </select>
           </div>
         </div>
 
-        {/* 4. Generation Area (smoothly scrolled into view on finish) */}
-        <div ref={resultRef} className="w-full scroll-mt-24">
-          {isGenerating && !generatedResult && (
-            <div className="p-12 rounded-[2rem] bg-white border border-stone-200/90 shadow-[0_10px_30px_rgba(0,0,0,0.05)] flex flex-col items-center justify-center gap-4 text-center">
-              <Loader2 className="w-10 h-10 text-[#FF7A00] animate-spin" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block font-mono text-xs font-bold text-stone-700 uppercase mb-2 tracking-wider">
+              {activeToolId === 'presentation'
+                ? 'Slide Count'
+                : activeToolId === 'lesson-plan'
+                ? 'Lesson Duration'
+                : 'Questions / Problem Count'}
+            </label>
+            {activeToolId === 'lesson-plan' ? (
+              <select
+                value={durationMinutes}
+                onChange={(e) => setDurationMinutes(Number(e.target.value))}
+                className="w-full bg-[#EFE8DE] border border-[#E4DCD0] rounded-2xl p-3.5 font-mono text-xs sm:text-sm text-stone-900 focus:outline-none focus:border-[#E63956]"
+              >
+                <option value={45}>45 Minutes (Single Period)</option>
+                <option value={60}>60 Minutes (Standard Period)</option>
+                <option value={90}>90 Minutes (Block Period)</option>
+                <option value={120}>120 Minutes (Workshop / Double)</option>
+              </select>
+            ) : (
+              <select
+                value={itemCount}
+                onChange={(e) => setItemCount(Number(e.target.value))}
+                className="w-full bg-[#EFE8DE] border border-[#E4DCD0] rounded-2xl p-3.5 font-mono text-xs sm:text-sm text-stone-900 focus:outline-none focus:border-[#E63956]"
+              >
+                <option value={5}>5 Items / Slides</option>
+                <option value={10}>10 Items / Slides (Standard)</option>
+                <option value={15}>15 Items / Slides</option>
+                <option value={20}>20 Items / Slides (Comprehensive)</option>
+              </select>
+            )}
+          </div>
+
+          <div>
+            <label className="block font-mono text-xs font-bold text-stone-700 uppercase mb-2 tracking-wider">
+              Teacher Instructions / Standards (Optional)
+            </label>
+            <input
+              type="text"
+              value={instructions}
+              onChange={(e) => setInstructions(e.target.value)}
+              placeholder="e.g. Include case studies, align with CAPS / Cambridge standards..."
+              className="w-full bg-[#EFE8DE] border border-[#E4DCD0] rounded-2xl p-3.5 font-mono text-xs sm:text-sm text-stone-900 placeholder-stone-400 focus:outline-none focus:border-[#E63956]"
+            />
+          </div>
+        </div>
+
+        {/* Source Material Upload */}
+        <div>
+          <label className="block font-mono text-xs font-bold text-stone-700 uppercase mb-2 tracking-wider">
+            Source Material (PDF / DOC / Paste Text)
+          </label>
+          <SourceMaterialUpload
+            currentFileName={sourceFileName}
+            onTextExtracted={(text, name) => {
+              setSourceMaterial(text);
+              setSourceFileName(name);
+            }}
+            onClear={() => {
+              setSourceMaterial('');
+              setSourceFileName('');
+            }}
+          />
+        </div>
+
+        {generationError && (
+          <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-rose-700 font-mono text-xs flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{generationError}</span>
+          </div>
+        )}
+
+        <button
+          type="button"
+          disabled={isGenerating}
+          onClick={handleGenerate}
+          className="w-full py-4.5 bg-gradient-to-r from-[#D92B8A] via-[#E03A6A] to-[#E63956] hover:opacity-95 text-white font-display text-sm sm:text-base font-black uppercase tracking-wider rounded-full shadow-[0_10px_28px_rgba(230,57,86,0.35)] active:scale-[0.99] transition-all flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-50"
+        >
+          <Sparkles className="w-5 h-5 text-white" />
+          <span>{isGenerating ? `Generating ${currentToolConfig.title}...` : `GENERATE ${currentToolConfig.title.toUpperCase()}`}</span>
+        </button>
+      </div>
+
+      {/* Generated Result Display Area */}
+      <div ref={resultRef} className="w-full scroll-mt-24 space-y-6">
+        {generatedResource && (
+          <div className="bg-white border border-[#EAE3D6] rounded-3xl p-6 sm:p-10 shadow-sm space-y-8">
+            {/* Result Header */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-stone-200">
               <div className="space-y-1">
-                <p className="font-display font-black text-lg uppercase text-stone-900">
-                  {activeTool === 'presentation' ? 'Designing Presentation Slide Deck...' : 'Synthesizing CAPS Curriculum Resource...'}
-                </p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="px-3 py-1 bg-stone-100 text-stone-700 font-mono text-[10px] font-bold uppercase rounded-full">
+                    {generatedResource.toolType}
+                  </span>
+                  <span className="px-3 py-1 bg-[#FFF0F2] text-[#E63956] font-mono text-[10px] font-bold uppercase rounded-full">
+                    {generatedResource.gradeLevel || 'Standard'}
+                  </span>
+                  <span className="px-3 py-1 bg-stone-100 text-stone-600 font-mono text-[10px] font-bold uppercase rounded-full">
+                    {generatedResource.difficulty || 'Intermediate'}
+                  </span>
+                </div>
+                <h2 className="font-display font-black text-2xl sm:text-3xl text-stone-900 uppercase">
+                  {generatedResource.title}
+                </h2>
                 <p className="font-mono text-xs text-stone-500">
-                  {activeTool === 'presentation' ? 'Structuring pedagogical slides, visuals, discussion cues, and speaker notes.' : 'Extracting pedagogical frameworks, rubric standards, and interactive components.'}
+                  {generatedResource.subject} • Created on {new Date(generatedResource.createdAt).toLocaleDateString()}
                 </p>
               </div>
+
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => setShowMarkingGuide(!showMarkingGuide)}
+                  className={`px-4 py-2 rounded-xl font-mono text-xs font-bold uppercase flex items-center gap-1.5 transition-colors cursor-pointer ${
+                    showMarkingGuide
+                      ? 'bg-emerald-600 text-white shadow-xs'
+                      : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+                  }`}
+                >
+                  {showMarkingGuide ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  <span>{showMarkingGuide ? 'Hide Answers' : 'Show Answer Key'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleCopyText}
+                  className="p-2 rounded-xl bg-stone-100 text-stone-700 hover:bg-stone-200 transition-colors cursor-pointer"
+                  title="Copy full text"
+                >
+                  {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handlePrint}
+                  className="p-2 rounded-xl bg-stone-100 text-stone-700 hover:bg-stone-200 transition-colors cursor-pointer"
+                  title="Print paper"
+                >
+                  <Printer className="w-4 h-4" />
+                </button>
+              </div>
             </div>
-          )}
 
-          {generatedResult && (
-            <div className="space-y-6">
-              {/* Specialized Presentation Deck View */}
-              {(activeTool === 'presentation' || (Array.isArray(generatedResult?.slides) && generatedResult.slides.length > 0)) ? (
-                (() => {
-                  const presSlides = (Array.isArray(generatedResult.slides) && generatedResult.slides.length > 0)
-                    ? generatedResult.slides
-                    : (Array.isArray(generatedResult.sections) && generatedResult.sections.length > 0)
-                      ? generatedResult.sections.map((sec: any, idx: number) => ({
-                          id: `s-${idx + 1}`,
-                          slideNumber: idx + 1,
-                          slideType: 'concept',
-                          title: sec.heading || `Slide ${idx + 1}`,
-                          subtitle: '',
-                          bulletPoints: typeof sec.content === 'string' ? sec.content.split('\n').filter(Boolean) : [],
-                          speakerNotes: 'Key lecture points for this topic.',
-                        }))
-                      : [];
-
-                  const themeMood = generatedResult.themeOrColorMood || presentationTheme;
-
-                  return (
-                    <StackedPresentationDeck
-                      slides={presSlides}
-                      title={generatedResult.title || topicInput}
-                      themeMood={themeMood}
-                      onDownloadHtml={() => downloadPresentationHtml(generatedResult)}
-                      onFullscreen={() => setIsFullscreenPresentation(true)}
-                    />
-                  );
-                })()
-              ) : (activeTool === 'worksheet' || (Array.isArray(generatedResult?.activities) && generatedResult.activities.length > 0)) ? (
-                <div className="space-y-6 font-sans">
-                  {/* Status Banner & Action Buttons */}
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-[#FFF8F0] border-2 border-[#FF7A00]/40 p-6 rounded-[2rem] shadow-xs">
-                    <div className="flex items-center gap-3">
-                      <CheckCircle2 className="w-7 h-7 text-[#FF7A00] shrink-0" />
-                      <div>
-                        <h3 className="font-display font-black text-[20px] sm:text-[22px] uppercase text-stone-900">
-                          {getCleanWorksheetTitle(generatedResult.title, generatedResult.topic || topicInput, generatedResult.subject)}
-                        </h3>
-                        <p className="font-bold text-[18px] text-[#B25500]">
-                          Worksheet ready for student completion & printing!
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <button
-                        onClick={() => exportItem(generatedResult, 'doc')}
-                        className="px-4 py-3 bg-white hover:bg-stone-50 border-2 border-stone-300 rounded-2xl font-bold text-[18px] uppercase text-stone-900 flex items-center gap-2 shadow-xs cursor-pointer transition-all"
-                        title="Download Word Document (.doc)"
-                      >
-                        <Download className="w-5 h-5 text-[#FF7A00]" />
-                        <span>DOC</span>
-                      </button>
-                      <button
-                        onClick={() => exportItem(generatedResult, 'pdf')}
-                        className="px-4 py-3 bg-white hover:bg-stone-50 border-2 border-stone-300 rounded-2xl font-bold text-[18px] uppercase text-stone-900 flex items-center gap-2 shadow-xs cursor-pointer transition-all"
-                        title="Download PDF Document (.pdf)"
-                      >
-                        <Download className="w-5 h-5 text-[#FF7A00]" />
-                        <span>PDF</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Main Worksheet Document */}
-                  <div className="bg-white border-2 border-stone-300 shadow-md rounded-[2.5rem] p-6 sm:p-10 space-y-8">
-                    {/* Worksheet Header Box */}
-                    <div className="border-b-2 border-stone-200 pb-6 space-y-4">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <span className="font-bold text-[18px] text-[#FF7A00] uppercase tracking-wider">
-                          STUDENT CLASSROOM WORKSHEET &bull; {generatedResult.gradeLevel || gradeLevel}
-                        </span>
-                        <span className="font-bold text-[18px] text-stone-800">
-                          {generatedResult.estimatedTimeMinutes ? `Estimated Duration: ${generatedResult.estimatedTimeMinutes} mins` : 'Classroom Exercise'}
-                        </span>
-                      </div>
-
-                      <h2 className="font-display font-black text-[28px] sm:text-[36px] uppercase text-stone-900 tracking-tight leading-tight">
-                        {getCleanWorksheetTitle(generatedResult.title, generatedResult.topic || topicInput, generatedResult.subject)}
-                      </h2>
-
-                      {generatedResult.description && (
-                        <p className="font-bold text-[18px] sm:text-[19px] text-stone-800 leading-relaxed bg-stone-50 p-5 rounded-2xl border-2 border-stone-200">
-                          {generatedResult.description}
-                        </p>
-                      )}
-
-                      {/* Student Fill-in Info Header */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 bg-[#FAF7F0] p-5 rounded-2xl border-2 border-stone-200 font-mono font-bold text-[18px] text-stone-900">
-                        <div>Name: ______________________</div>
-                        <div>Date: ______________________</div>
-                        <div>Class: _____________________</div>
-                        <div>Score: _____ / {generatedResult.totalMarks || 40}</div>
-                      </div>
-
-                      {/* General Instructions */}
-                      {generatedResult.instructions && (
-                        <div className="bg-amber-50/90 border-2 border-amber-300 p-5 rounded-2xl space-y-1">
-                          <span className="font-black text-[20px] uppercase text-amber-950 block">
-                            General Instructions:
-                          </span>
-                          <p className="font-bold text-[18px] text-stone-900 leading-relaxed">
-                            {generatedResult.instructions}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Student Activities Section */}
-                    <div className="space-y-8">
-                      {Array.isArray(generatedResult.activities) && generatedResult.activities.map((activity: any, actIdx: number) => (
-                        <div
-                          key={actIdx}
-                          className="bg-stone-50/70 border-2 border-stone-300 p-6 sm:p-8 rounded-3xl space-y-6"
-                        >
-                          {/* Activity Title & Instructions */}
-                          <div className="border-b-2 border-stone-200 pb-4 space-y-2">
-                            <h3 className="font-display font-black text-[22px] sm:text-[26px] uppercase text-stone-900">
-                              {activity.title || `Activity ${actIdx + 1}`}
-                            </h3>
-                            {activity.instructions && (
-                              <p className="font-bold text-[18px] text-stone-800 leading-relaxed">
-                                {activity.instructions}
-                              </p>
-                            )}
-                          </div>
-
-                          {/* Word Bank if applicable */}
-                          {Array.isArray(activity.wordBank) && activity.wordBank.length > 0 && (
-                            <div className="bg-indigo-50/90 border-2 border-indigo-200 p-5 rounded-2xl space-y-2">
-                              <span className="font-black text-[18px] uppercase text-indigo-950 block">
-                                Word Bank:
-                              </span>
-                              <div className="flex flex-wrap gap-3">
-                                {activity.wordBank.map((term: string, tIdx: number) => (
-                                  <span
-                                    key={tIdx}
-                                    className="px-4 py-2 bg-white border-2 border-indigo-300 rounded-xl font-bold text-[18px] text-indigo-950 shadow-xs"
-                                  >
-                                    {term}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Practical Scenario if applicable */}
-                          {activity.scenario && (
-                            <div className="bg-amber-50/80 border-2 border-amber-300 p-5 rounded-2xl space-y-2">
-                              <span className="font-black text-[18px] uppercase text-amber-950 block">
-                                Practical Scenario:
-                              </span>
-                              <p className="font-bold text-[18px] text-stone-900 leading-relaxed">
-                                {activity.scenario}
-                              </p>
-                            </div>
-                          )}
-
-                          {/* Activity Items / Exercises to Complete */}
-                          <div className="space-y-6">
-                            {Array.isArray(activity.items) && activity.items.map((item: any, itemIdx: number) => {
-                              const inputId = `act-${actIdx}-item-${itemIdx}`;
-                              return (
-                                <div
-                                  key={itemIdx}
-                                  className="bg-white border-2 border-stone-200 p-5 sm:p-6 rounded-2xl space-y-4"
-                                >
-                                  {/* Prompt */}
-                                  <div className="flex items-start gap-3">
-                                    <span className="font-black text-[20px] text-[#FF7A00] shrink-0">
-                                      {item.itemNumber || itemIdx + 1}.
-                                    </span>
-                                    <div className="space-y-3 w-full">
-                                      <p className="font-black text-[19px] sm:text-[20px] text-stone-900 leading-snug">
-                                        {item.prompt}
-                                      </p>
-
-                                      {/* Matching Target / Column B */}
-                                      {item.matchTarget && (
-                                        <div className="p-4 bg-stone-50 border-2 border-stone-200 rounded-xl font-bold text-[18px] text-stone-800">
-                                          {item.matchTarget}
-                                        </div>
-                                      )}
-
-                                      {/* Interactive Student Completion Area */}
-                                      <div className="space-y-2 pt-2">
-                                        <label className="block font-black text-[18px] uppercase text-stone-800">
-                                          Student Answer / Response:
-                                        </label>
-                                        <input
-                                          type="text"
-                                          value={worksheetStudentInputs[inputId] || ''}
-                                          onChange={(e) => handleStudentInputChange(inputId, e.target.value)}
-                                          placeholder="Type your answer here or write by hand..."
-                                          className="w-full px-5 py-4 bg-white border-2 border-stone-300 focus:border-[#FF7A00] rounded-xl font-bold text-[18px] text-stone-900 placeholder:text-stone-400 focus:outline-none"
-                                        />
-                                        {item.completionSpace && (
-                                          <div className="font-bold text-[18px] text-stone-400 select-none whitespace-pre-line pt-1">
-                                            {item.completionSpace}
-                                          </div>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Teacher Answer Key & Solutions Toggle */}
-                    {Array.isArray(generatedResult.teacherAnswerKey) && generatedResult.teacherAnswerKey.length > 0 && (
-                      <div className="border-t-2 border-stone-200 pt-6 space-y-4">
-                        <button
-                          onClick={() => setShowWorksheetAnswers(!showWorksheetAnswers)}
-                          className="px-6 py-3.5 bg-[#FFF8F0] hover:bg-[#FFF0E0] border-2 border-[#FF7A00]/40 rounded-2xl font-bold text-[18px] text-stone-900 flex items-center gap-3 cursor-pointer transition-all"
-                        >
-                          <Check className="w-6 h-6 text-[#FF7A00]" />
-                          <span>
-                            {showWorksheetAnswers ? 'Hide Teacher Answer Key & Solutions' : 'View Teacher Answer Key & Solutions'}
-                          </span>
-                        </button>
-
-                        {showWorksheetAnswers && (
-                          <div className="bg-[#FFF8F0] border-2 border-[#FF7A00]/40 rounded-3xl p-6 sm:p-8 space-y-6">
-                            <h3 className="font-display font-black text-[22px] sm:text-[24px] uppercase text-stone-900 border-b-2 border-orange-200 pb-3">
-                              Teacher Solutions & Answer Key
-                            </h3>
-                            <div className="space-y-6">
-                              {generatedResult.teacherAnswerKey.map((keySec: any, kIdx: number) => (
-                                <div key={kIdx} className="space-y-2">
-                                  <h4 className="font-black text-[20px] text-[#B25500]">
-                                    {keySec.activityTitle}
-                                  </h4>
-                                  <ul className="list-disc pl-6 space-y-2 text-[18px] font-bold text-stone-800">
-                                    {(keySec.answers || []).map((ans: string, aKeyIdx: number) => (
-                                      <li key={aKeyIdx} className="leading-relaxed">
-                                        {ans}
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                /* Standard Fallback / Non-Worksheet Result Cards */
-                <div className="space-y-6">
-                  {/* Status Banner */}
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-[#FFF8F0] border border-[#FF7A00]/40 p-5 rounded-[2rem] shadow-xs">
-                    <div className="flex items-center gap-3">
-                      <CheckCircle2 className="w-6 h-6 text-[#FF7A00] shrink-0" />
-                      <div>
-                        <h3 className="font-display font-black text-lg uppercase text-stone-900">
-                          {generatedResult.title}
-                        </h3>
-                        <p className="font-mono text-xs font-bold text-[#B25500]">
-                          Successfully generated & saved to your workspace library!
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <button
-                        onClick={() => exportItem(generatedResult, 'doc')}
-                        className="px-3 py-2 bg-white hover:bg-stone-50 border border-stone-200 rounded-xl font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 shadow-xs cursor-pointer transition-all"
-                        title="Download Word Document (.doc)"
-                      >
-                        <Download className="w-3.5 h-3.5 text-[#D92B8A]" />
-                        <span>DOC</span>
-                      </button>
-                      <button
-                        onClick={() => exportItem(generatedResult, 'pdf')}
-                        className="px-3 py-2 bg-white hover:bg-stone-50 border border-stone-200 rounded-xl font-mono text-xs font-bold uppercase text-stone-800 flex items-center gap-1.5 shadow-xs cursor-pointer transition-all"
-                        title="Download PDF Document (.pdf)"
-                      >
-                        <Download className="w-3.5 h-3.5 text-[#D92B8A]" />
-                        <span>PDF</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Main Content Card */}
-                  <div className="bg-white border border-stone-200/90 shadow-[0_10px_30px_rgba(0,0,0,0.05)] rounded-[2rem] p-6 sm:p-8 space-y-6">
-                    {generatedResult.description && (
-                      <p className="text-stone-700 text-sm font-mono leading-relaxed bg-stone-50 p-4 rounded-xl border border-stone-200">
-                        {generatedResult.description}
-                      </p>
-                    )}
-
-                    {/* Sections */}
-                    {Array.isArray(generatedResult.sections) && generatedResult.sections.map((sec: any, idx: number) => (
-                      <div key={idx} className="bg-stone-50/70 p-5 rounded-2xl border border-stone-200/80 space-y-2">
-                        <h4 className="font-display font-black text-base uppercase text-stone-900">
-                          {sec.heading}
-                        </h4>
-                        <p className="text-sm text-stone-600 font-mono leading-relaxed whitespace-pre-line">
-                          {sec.content}
-                        </p>
-                      </div>
-                    ))}
-
-                    {/* Questions */}
-                    {Array.isArray(generatedResult.questions) && generatedResult.questions.map((q: any, idx: number) => (
-                      <div key={idx} className="bg-stone-50/70 p-5 rounded-2xl border border-stone-200/80 space-y-3">
-                        <h4 className="font-display font-black text-sm uppercase text-stone-900">
-                          Q{idx + 1}: {q.question}
-                        </h4>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {Array.isArray(q.options) && q.options.map((opt: string, oIdx: number) => (
-                            <div
-                              key={oIdx}
-                              className={`p-3 rounded-xl font-mono text-xs border ${
-                                opt === q.correctAnswer
-                                  ? 'bg-orange-50 border-[#FF7A00]/50 text-stone-900 font-bold'
-                                  : 'bg-white border-stone-200 text-stone-700'
-                              }`}
-                            >
-                              {opt}
-                            </div>
-                          ))}
-                        </div>
-                        {q.explanation && (
-                          <p className="font-mono text-xs text-stone-500 pt-1">
-                            <strong>Explanation:</strong> {q.explanation}
-                          </p>
-                        )}
-                      </div>
-                    ))}
-
-                    {/* Answer Key */}
-                    {Array.isArray(generatedResult.answerKey) && generatedResult.answerKey.length > 0 && (
-                      <div className="p-4 bg-stone-50 rounded-xl border border-stone-200 space-y-2">
-                        <span className="font-mono text-xs font-bold uppercase tracking-wider text-stone-600 block">
-                          Quick Answer Key:
-                        </span>
-                        <div className="flex flex-wrap gap-2">
-                          {generatedResult.answerKey.map((keyItem: string, kIdx: number) => (
-                            <span
-                              key={kIdx}
-                              className="px-2.5 py-1 bg-white border border-stone-300 rounded-md font-mono text-xs font-bold text-stone-800"
-                            >
-                              {keyItem}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+            {/* Dynamic Rendering by Tool Type */}
+            {renderResourceContent(
+              generatedResource,
+              showMarkingGuide,
+              activeSlideIndex,
+              setActiveSlideIndex,
+              showSpeakerNotes,
+              setShowSpeakerNotes,
+              isFullscreenPresentation,
+              setIsFullscreenPresentation
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
 };
+
+// Render content depending on whether it's an Exam, Worksheet, Presentation, Lesson Plan, Course, or Mind Map
+function renderResourceContent(
+  resource: SavedResource,
+  showMarkingGuide: boolean,
+  activeSlideIndex: number,
+  setActiveSlideIndex: (idx: number) => void,
+  showSpeakerNotes: boolean,
+  setShowSpeakerNotes: (show: boolean) => void,
+  isFullscreenPresentation: boolean,
+  setIsFullscreenPresentation: (fs: boolean) => void
+) {
+  const data = resource.data || {};
+  const toolType = resource.toolType;
+
+  // 1. PRESENTATION / SLIDE DECK
+  if (toolType === 'presentation' || Array.isArray(data.slides)) {
+    const slides = Array.isArray(data.slides) ? data.slides : [];
+    if (slides.length === 0) {
+      return (
+        <div className="text-center py-8 text-stone-500 font-mono text-sm">
+          No slides found in this resource.
+        </div>
+      );
+    }
+    const currentSlide = slides[activeSlideIndex] || slides[0];
+    const bullets = currentSlide.bulletPoints || currentSlide.bullets || [];
+
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between bg-stone-50 p-4 rounded-2xl border border-stone-200">
+          <div className="font-mono text-xs font-bold text-stone-600 uppercase">
+            Slide {activeSlideIndex + 1} of {slides.length}
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={activeSlideIndex === 0}
+              onClick={() => setActiveSlideIndex(Math.max(0, activeSlideIndex - 1))}
+              className="p-2 rounded-xl bg-white border border-stone-200 text-stone-700 hover:bg-stone-100 disabled:opacity-40 cursor-pointer"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              disabled={activeSlideIndex >= slides.length - 1}
+              onClick={() => setActiveSlideIndex(Math.min(slides.length - 1, activeSlideIndex + 1))}
+              className="p-2 rounded-xl bg-white border border-stone-200 text-stone-700 hover:bg-stone-100 disabled:opacity-40 cursor-pointer"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Slide Display Card */}
+        <div className="bg-stone-900 text-white rounded-3xl p-8 sm:p-12 min-h-[320px] flex flex-col justify-between shadow-xl space-y-6">
+          <div className="space-y-4">
+            <span className="font-mono text-xs font-bold text-[#E63956] uppercase tracking-widest">
+              PROUDLY AFRIKAN SLIDES • SLIDE {currentSlide.slideNumber || activeSlideIndex + 1}
+            </span>
+            <h3 className="font-display font-black text-2xl sm:text-4xl text-white uppercase tracking-tight">
+              {currentSlide.title || currentSlide.heading}
+            </h3>
+            {currentSlide.subtitle && (
+              <p className="font-sans text-stone-300 text-base">{currentSlide.subtitle}</p>
+            )}
+          </div>
+
+          <div className="space-y-3 pt-4 border-t border-stone-800">
+            {bullets.map((b: string, i: number) => (
+              <div key={i} className="flex items-start gap-3 text-stone-200 font-sans text-sm sm:text-base">
+                <span className="text-[#E63956] text-lg font-bold">•</span>
+                <span>{b}</span>
+              </div>
+            ))}
+          </div>
+
+          {currentSlide.visualCue && (
+            <div className="p-3 bg-stone-800/80 rounded-xl text-stone-400 font-mono text-xs">
+              Suggested Visual: {currentSlide.visualCue}
+            </div>
+          )}
+        </div>
+
+        {/* Speaker Notes */}
+        {currentSlide.speakerNotes && (
+          <div className="bg-amber-50/80 border border-amber-200/80 rounded-2xl p-5 space-y-2">
+            <h4 className="font-mono text-xs font-bold text-amber-900 uppercase">Speaker & Lecture Notes:</h4>
+            <p className="font-sans text-xs sm:text-sm text-amber-950 leading-relaxed">
+              {currentSlide.speakerNotes}
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // 2. EXAM & TEST PAPER
+  if (toolType === 'exam' || Array.isArray(data.sections) || Array.isArray(data.questions)) {
+    const sections = Array.isArray(data.sections) ? data.sections : [];
+    const questions = Array.isArray(data.questions) ? data.questions : [];
+
+    return (
+      <div className="space-y-8 font-sans">
+        {/* Instructions banner */}
+        {data.instructions && (
+          <div className="p-4 bg-stone-50 border border-stone-200 rounded-2xl space-y-1">
+            <span className="font-mono text-xs font-bold text-stone-600 uppercase">Exam Instructions:</span>
+            <p className="text-sm text-stone-800">{data.instructions}</p>
+          </div>
+        )}
+
+        {/* Sections */}
+        {sections.map((sec: any, secIdx: number) => (
+          <div key={secIdx} className="space-y-4">
+            <div className="border-b-2 border-stone-800 pb-2 flex items-center justify-between">
+              <h3 className="font-display font-black text-xl text-stone-900 uppercase">
+                {sec.heading || sec.title || `Section ${secIdx + 1}`}
+              </h3>
+              {sec.marks && (
+                <span className="font-mono text-xs font-bold text-stone-600">[{sec.marks} Marks]</span>
+              )}
+            </div>
+
+            {sec.instructions && (
+              <p className="text-xs text-stone-600 italic">{sec.instructions}</p>
+            )}
+
+            <div className="space-y-4 pt-2">
+              {(sec.questions || []).map((q: any, qIdx: number) => (
+                <div key={qIdx} className="p-5 bg-stone-50 rounded-2xl border border-stone-200/80 space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="font-bold text-sm text-stone-900">
+                      {qIdx + 1}. {q.question || q.prompt}
+                    </p>
+                    {q.marks && (
+                      <span className="font-mono text-xs text-stone-500 shrink-0">({q.marks} marks)</span>
+                    )}
+                  </div>
+
+                  {Array.isArray(q.options) && q.options.length > 0 && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
+                      {q.options.map((opt: string, optIdx: number) => (
+                        <div
+                          key={optIdx}
+                          className="p-2.5 bg-white border border-stone-200 rounded-xl text-xs font-mono text-stone-800"
+                        >
+                          {opt}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {showMarkingGuide && (
+                    <div className="mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs space-y-1">
+                      <p className="font-mono font-bold text-emerald-900">
+                        Answer: {q.correctAnswer || q.answer}
+                      </p>
+                      {q.explanation && (
+                        <p className="text-emerald-800">{q.explanation}</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+
+        {/* Standalone questions if not nested in sections */}
+        {sections.length === 0 && questions.length > 0 && (
+          <div className="space-y-4">
+            {questions.map((q: any, qIdx: number) => (
+              <div key={qIdx} className="p-5 bg-stone-50 rounded-2xl border border-stone-200/80 space-y-3">
+                <p className="font-bold text-sm text-stone-900">
+                  {qIdx + 1}. {q.question || q.prompt}
+                </p>
+                {Array.isArray(q.options) && q.options.length > 0 && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
+                    {q.options.map((opt: string, optIdx: number) => (
+                      <div
+                        key={optIdx}
+                        className="p-2.5 bg-white border border-stone-200 rounded-xl text-xs font-mono text-stone-800"
+                      >
+                        {opt}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {showMarkingGuide && (
+                  <div className="mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs space-y-1">
+                    <p className="font-mono font-bold text-emerald-900">
+                      Answer: {q.correctAnswer || q.answer}
+                    </p>
+                    {q.explanation && (
+                      <p className="text-emerald-800">{q.explanation}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Answer Key summary list */}
+        {showMarkingGuide && Array.isArray(data.answerKey) && data.answerKey.length > 0 && (
+          <div className="p-6 bg-emerald-50 border border-emerald-200 rounded-2xl space-y-3">
+            <h4 className="font-mono font-bold text-xs uppercase tracking-wider text-emerald-900">
+              Complete Answer Key & Memorandum
+            </h4>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+              {data.answerKey.map((ans: string, i: number) => (
+                <div key={i} className="font-mono text-xs text-emerald-950 bg-white p-2 rounded-lg border border-emerald-200">
+                  {ans}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // 3. LESSON PLAN
+  if (toolType === 'lesson-plan' || Array.isArray(data.phases) || Array.isArray(data.sections)) {
+    const phases = data.phases || data.sections || [];
+    return (
+      <div className="space-y-6">
+        {data.description && (
+          <p className="text-sm text-stone-700 leading-relaxed">{data.description}</p>
+        )}
+
+        <div className="space-y-4">
+          {phases.map((phase: any, idx: number) => (
+            <div key={idx} className="p-6 bg-stone-50 border border-stone-200/80 rounded-2xl space-y-2">
+              <div className="flex items-center justify-between">
+                <h4 className="font-display font-black text-lg text-stone-900 uppercase">
+                  {phase.heading || phase.title || `Phase ${idx + 1}`}
+                </h4>
+                {phase.duration && (
+                  <span className="px-2.5 py-1 bg-white border border-stone-200 rounded-full font-mono text-[10px] font-bold text-stone-600">
+                    {phase.duration}
+                  </span>
+                )}
+              </div>
+              <p className="text-sm text-stone-700 leading-relaxed">{phase.content || phase.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // 4. GENERIC / FALLBACK VIEWER
+  return (
+    <div className="space-y-6">
+      {data.description && (
+        <p className="text-sm text-stone-700 leading-relaxed">{data.description}</p>
+      )}
+
+      {Array.isArray(data.sections) &&
+        data.sections.map((sec: any, idx: number) => (
+          <div key={idx} className="p-6 bg-stone-50 border border-stone-200/80 rounded-2xl space-y-2">
+            <h4 className="font-display font-black text-lg text-stone-900 uppercase">
+              {sec.heading || sec.title}
+            </h4>
+            <p className="text-sm text-stone-700 leading-relaxed">{sec.content}</p>
+          </div>
+        ))}
+    </div>
+  );
+}
+
+// Resilient Fallback Resource Factory
+function createFallbackResource(toolType: BuildToolId, payload: any): SavedResource {
+  const isLessonPlan = toolType === 'lesson-plan';
+  const isPresentation = toolType === 'presentation';
+  const isCourse = toolType === 'course';
+  const isWorksheet = toolType === 'worksheet';
+
+  if (isPresentation) {
+    return {
+      id: `res-${Date.now()}`,
+      toolType: 'presentation',
+      title: `Presentation: ${payload.topic}`,
+      subject: payload.subject,
+      topic: payload.topic,
+      gradeLevel: payload.gradeLevel,
+      difficulty: payload.difficulty,
+      createdAt: new Date().toISOString(),
+      data: {
+        title: `Mastery Presentation: ${payload.topic}`,
+        subject: payload.subject,
+        slides: [
+          {
+            slideNumber: 1,
+            title: payload.topic,
+            subtitle: `Foundations and Core Principles • ${payload.gradeLevel}`,
+            bulletPoints: [
+              'Overview of foundational curriculum concepts',
+              'Critical historical and theoretical context',
+              'Real-world African and global relevance',
+            ],
+            speakerNotes: 'Welcome students and introduce the overarching inquiry question for this session.',
+          },
+          {
+            slideNumber: 2,
+            title: 'Core Mechanisms & Key Analysis',
+            subtitle: 'Breaking down the fundamental mechanics',
+            bulletPoints: [
+              'Detailed definition of governing terminology',
+              'Systematic problem-solving methodology',
+              'Common misconceptions and how to avoid them',
+            ],
+            speakerNotes: 'Pause here to solicit examples from learners before advancing.',
+          },
+          {
+            slideNumber: 3,
+            title: 'Synthesis & Evaluative Review',
+            subtitle: 'Higher-order application and summary',
+            bulletPoints: [
+              'Connecting the core topic to multidisciplinary scenarios',
+              'Summary of key takeaways for exam mastery',
+              'Next steps for independent inquiry and drill practice',
+            ],
+            speakerNotes: 'Conclude with the exit ticket question to verify retention.',
+          },
+        ],
+      },
+    };
+  }
+
+  if (isLessonPlan) {
+    return {
+      id: `res-${Date.now()}`,
+      toolType: 'lesson-plan',
+      title: `Lesson Plan: ${payload.topic}`,
+      subject: payload.subject,
+      topic: payload.topic,
+      gradeLevel: payload.gradeLevel,
+      difficulty: payload.difficulty,
+      createdAt: new Date().toISOString(),
+      data: {
+        title: `Lesson Plan: ${payload.topic}`,
+        subject: payload.subject,
+        description: `Comprehensive pedagogical plan for ${payload.gradeLevel} targeting ${payload.durationMinutes} minutes.`,
+        phases: [
+          {
+            heading: '1. Hook & Inquiry Trigger (10 Mins)',
+            duration: '10 mins',
+            content: `Introduce a provocative authentic question regarding ${payload.topic}. Students engage in a 2-minute think-pair-share.`,
+          },
+          {
+            heading: '2. Direct Modeling & Conceptual Scaffolding (20 Mins)',
+            duration: '20 mins',
+            content: `Deliver explicit instruction on key terms, governing laws, and step-by-step application with whiteboard modeling.`,
+          },
+          {
+            heading: '3. Collaborative Practice & Activity (20 Mins)',
+            duration: '20 mins',
+            content: `Students work in small groups on structured problem sets, receiving differentiated coaching and guidance.`,
+          },
+          {
+            heading: '4. Formative Assessment & Exit Ticket (10 Mins)',
+            duration: '10 mins',
+            content: `Diagnostic exit questions administered to ensure all learners meet Bloom's taxonomy benchmark before class concludes.`,
+          },
+        ],
+      },
+    };
+  }
+
+  // Default Exam or Worksheet Paper
+  return {
+    id: `res-${Date.now()}`,
+    toolType: toolType,
+    title: `${toolType === 'worksheet' ? 'Worksheet' : 'Examination Paper'}: ${payload.topic}`,
+    subject: payload.subject,
+    topic: payload.topic,
+    gradeLevel: payload.gradeLevel,
+    difficulty: payload.difficulty,
+    createdAt: new Date().toISOString(),
+    data: {
+      title: `${toolType === 'worksheet' ? 'Classroom Worksheet' : 'Official Examination'}: ${payload.topic}`,
+      subject: payload.subject,
+      instructions: 'Answer all questions in the spaces provided. Show all calculation steps and working.',
+      sections: [
+        {
+          heading: 'Section A: Multiple Choice & Conceptual Checks',
+          marks: 20,
+          questions: [
+            {
+              question: `Which fundamental principle governs the primary analysis of ${payload.topic}?`,
+              options: [
+                'A) Systematic observation and theoretical consistency',
+                'B) Arbitrary categorization without empirical verification',
+                'C) Disregarding foundational environmental factors',
+                'D) Isolated memorization without context',
+              ],
+              correctAnswer: 'A) Systematic observation and theoretical consistency',
+              explanation: 'Systematic observation is central to accurate analysis across this subject domain.',
+              marks: 5,
+            },
+            {
+              question: `In the context of ${payload.gradeLevel}, what is the primary significance of ${payload.topic}?`,
+              options: [
+                'A) It provides the framework for higher-order problem solving',
+                'B) It has no direct practical application',
+                'C) It only applies to historical precedents',
+                'D) It is an optional supplementary topic',
+              ],
+              correctAnswer: 'A) It provides the framework for higher-order problem solving',
+              explanation: 'This concept forms the essential foundation for subsequent curriculum benchmarks.',
+              marks: 5,
+            },
+          ],
+        },
+        {
+          heading: 'Section B: Structured & Analytic Problem Solving',
+          marks: 30,
+          questions: [
+            {
+              question: `Explain the causal relationship between the core components of ${payload.topic}, providing two authentic examples.`,
+              marks: 10,
+              correctAnswer: 'Students must outline mechanisms, cause-and-effect sequences, and cite two verified examples.',
+              explanation: 'Award 4 marks for mechanism description, 3 marks each for valid contextual examples.',
+            },
+          ],
+        },
+      ],
+      answerKey: [
+        '1. A',
+        '2. A',
+        '3. Causal explanation: Award 4 marks for mechanism description, 3 marks per valid example.',
+      ],
+    },
+  };
+}

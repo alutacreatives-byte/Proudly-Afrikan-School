@@ -1,103 +1,148 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { BuildHero } from './components/BuildHero';
+import { BuildThreeWaysSection } from './components/BuildThreeWaysSection';
 import { BuildToolsMenu } from './components/BuildToolsMenu';
+import { AllGeneratorsSection } from './components/AllGeneratorsSection';
+import { BuildFaqSection } from './components/BuildFaqSection';
+import { GeneratorModal } from './components/GeneratorModal';
 import { BuildGeneratorView } from './components/BuildGeneratorView';
-import { SavedResource } from './types';
-import { GlobalNavigationButtons } from '../components/GlobalNavigationButtons';
-import { Sparkles, Layers, ArrowLeft } from 'lucide-react';
+import { SavedResource, BuildToolId } from './types';
 
 interface BuildAppProps {
   initialResource?: SavedResource | null;
-  onNavigateToTab?: (tab: 'STUDY' | 'QUIZ' | 'BUILD' | 'MY SETS' | 'PLANNER') => void;
   onGoHome?: () => void;
   onBack?: () => void;
 }
 
-export default function BuildApp({
-  initialResource,
-  onNavigateToTab,
+export const BuildApp: React.FC<BuildAppProps> = ({
+  initialResource = null,
   onGoHome,
   onBack,
-}: BuildAppProps = {}) {
-  const [activeTool, setActiveTool] = useState<string | null>(initialResource ? initialResource.toolType : null);
-  const [selectedResource, setSelectedResource] = useState<SavedResource | null>(initialResource || null);
+}) => {
+  const [currentView, setCurrentView] = useState<'hub' | 'generator'>(
+    initialResource ? 'generator' : 'hub'
+  );
+  const [selectedTool, setSelectedTool] = useState<BuildToolId>(
+    initialResource?.toolType || 'exam'
+  );
+  const [selectedTopic, setSelectedTopic] = useState<string>(
+    initialResource?.topic || initialResource?.title || ''
+  );
+  const [threeWaysMethod, setThreeWaysMethod] = useState<'topic' | 'text' | 'pdf' | 'capture'>('topic');
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [modalTool, setModalTool] = useState<string>('exam');
+  const [modalTopic, setModalTopic] = useState<string>('');
+
+  useEffect(() => {
+    if (initialResource) {
+      setCurrentView('generator');
+      setSelectedTool(initialResource.toolType || 'exam');
+      setSelectedTopic(initialResource.topic || initialResource.title || '');
+    }
+  }, [initialResource]);
 
   const handleSelectTool = (toolId: string) => {
-    setActiveTool(toolId);
-    setSelectedResource(null);
+    setSelectedTool(toolId as BuildToolId);
+    setCurrentView('generator');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleBack = () => {
-    if (activeTool) {
-      setActiveTool(null);
-      setSelectedResource(null);
-    } else if (onBack) {
-      onBack();
-    } else if (onNavigateToTab) {
-      onNavigateToTab('STUDY');
-    }
+  const handleSelectInspiration = (topic: string) => {
+    setSelectedTopic(topic);
+    setSelectedTool('exam');
+    setCurrentView('generator');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleGoHome = () => {
-    if (onGoHome) {
-      onGoHome();
-    } else if (onNavigateToTab) {
-      onNavigateToTab('STUDY');
-    }
+  const handleOpenGeneratorModal = (generatorType = 'exam') => {
+    setModalTool(generatorType);
+    setModalTopic(selectedTopic);
+    setIsModalOpen(true);
   };
+
+  const handleUploadClick = () => {
+    setSelectedTool('exam');
+    setCurrentView('generator');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  if (currentView === 'generator') {
+    return (
+      <BuildGeneratorView
+        initialToolId={selectedTool}
+        initialTopic={selectedTopic}
+        initialResource={initialResource}
+        onBack={() => {
+          if (initialResource && onBack) {
+            onBack();
+          } else {
+            setCurrentView('hub');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+        }}
+        onGoHome={onGoHome}
+      />
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-[#F5EFEB] text-stone-900 pb-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-        <div className="flex items-center justify-between mb-8">
-          <GlobalNavigationButtons
-            onBack={activeTool ? handleBack : undefined}
-            onGoHome={handleGoHome}
-            backLabel="Back"
-            homeLabel="Home"
-          />
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-12 sm:space-y-16">
+      {/* Hero Section */}
+      <BuildHero
+        onStartClick={() => handleSelectTool('exam')}
+        onSelectInspiration={handleSelectInspiration}
+        onOpenGenerator={handleOpenGeneratorModal}
+        onUploadClick={handleUploadClick}
+      />
+
+      {/* Horizontal Tool Selector Menu */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="font-mono text-xs font-bold uppercase text-stone-500 tracking-wider">
+            Quick Tool Selection
+          </span>
+          <span className="font-mono text-xs font-bold text-[#E63956] uppercase tracking-wider">
+            6 Specialized Generators
+          </span>
         </div>
-
-        {activeTool ? (
-          <BuildGeneratorView
-            activeTool={activeTool}
-            initialResource={selectedResource}
-            onSelectTool={(toolId) => setActiveTool(toolId)}
-            onBack={() => {
-              setActiveTool(null);
-              setSelectedResource(null);
-            }}
-            onGoHome={handleGoHome}
-          />
-        ) : (
-          <div className="space-y-8 animate-fadeIn">
-            <div className="bg-gradient-to-r from-stone-900 to-stone-800 text-white rounded-3xl p-8 sm:p-12 shadow-xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-96 h-96 bg-pink-500/10 rounded-full blur-3xl pointer-events-none" />
-              <div className="relative z-10 max-w-2xl">
-                <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-pink-500/20 border border-pink-500/30 text-pink-300 font-mono text-xs mb-4">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>AI Educator Studio & Generator Hub</span>
-                </div>
-                <h1 className="font-serif font-bold text-3xl sm:text-4xl lg:text-5xl mb-4 tracking-tight">
-                  Build Professional Educational Content
-                </h1>
-                <p className="font-mono text-sm sm:text-base text-stone-300 leading-relaxed">
-                  Instantly craft rigorous exams, comprehensive study guides, interactive presentations, student worksheets, and lesson plans powered by advanced AI and pedagogical standards.
-                </p>
-              </div>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h2 className="font-serif font-bold text-2xl text-stone-900">Creation Tools</h2>
-                  <p className="font-mono text-xs text-stone-600">Select a tool to start generating custom materials</p>
-                </div>
-              </div>
-              <BuildToolsMenu onSelectTool={handleSelectTool} />
-            </div>
-          </div>
-        )}
+        <BuildToolsMenu
+          activeTool={null}
+          onSelectTool={handleSelectTool}
+        />
       </div>
+
+      {/* Four Ways Section */}
+      <BuildThreeWaysSection
+        activeMethod={threeWaysMethod}
+        onSelectMethod={(method) => {
+          setThreeWaysMethod(method);
+          handleSelectTool('exam');
+        }}
+      />
+
+      {/* Complete Suite Grid */}
+      <AllGeneratorsSection
+        onSelectGenerator={handleSelectTool}
+        onSelectTool={handleSelectTool}
+      />
+
+      {/* FAQ & Capabilities */}
+      <BuildFaqSection />
+
+      {/* Legacy or Quick Modal Support */}
+      <GeneratorModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        initialGeneratorType={modalTool}
+        initialTopic={modalTopic}
+        onResourceSaved={(res) => {
+          setIsModalOpen(false);
+          setSelectedTool(res.toolType || 'exam');
+          setCurrentView('generator');
+        }}
+      />
     </div>
   );
-}
+};
+
+export default BuildApp;
