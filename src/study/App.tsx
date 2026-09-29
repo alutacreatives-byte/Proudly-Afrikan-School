@@ -81,6 +81,7 @@ export default function StudyApp({
   });
   const [activeResource, setActiveResource] = useState<any>(null);
   const [savedCount, setSavedCount] = useState<number>(() => getSavedResources().length);
+  const [flashcardNavKey, setFlashcardNavKey] = useState<number>(0);
 
   // Legacy set state for cross-tab compatibility
   const [activeLegacySet, setActiveLegacySet] = useState<StudySet | null>(initialSet || null);
@@ -147,6 +148,10 @@ export default function StudyApp({
         createdAt: new Date().toISOString(),
         toolType: toolId,
       };
+    }
+
+    if (toolId === 'flashcards') {
+      setFlashcardNavKey((prev) => prev + 1);
     }
 
     setActiveResource(nextResource);
@@ -311,7 +316,7 @@ export default function StudyApp({
     if (activeTool === 'flashcards') {
       return renderWithMenu(
         <FlashcardGenerator
-          key="gen-flashcards"
+          key={`gen-flashcards-${activeResource?.id || flashcardNavKey}`}
           onBack={handleBack}
           onGoHome={handleGoHome}
           onSaved={refreshSavedCount}

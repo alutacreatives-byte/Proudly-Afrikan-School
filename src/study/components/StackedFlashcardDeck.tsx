@@ -141,6 +141,8 @@ export const StackedFlashcardDeck: React.FC<StackedFlashcardDeckProps> = ({
   const [dragX, setDragX] = useState<number>(0);
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const dragStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
+  const currentDragYRef = useRef<number>(0);
+  const currentDragXRef = useRef<number>(0);
   const hasMovedSignificantly = useRef<boolean>(false);
 
   // Wheel scroll throttling ref
@@ -151,16 +153,21 @@ export const StackedFlashcardDeck: React.FC<StackedFlashcardDeckProps> = ({
   const totalCards = cards.length;
   const currentCard = cards[currentIndex] || cards[0];
 
-  const updateFlip = useCallback((flipped: boolean) => {
-    setInternalFlipped(flipped);
-    onFlipChange?.(flipped);
+  const onFlipChangeRef = useRef(onFlipChange);
+  useEffect(() => {
+    onFlipChangeRef.current = onFlipChange;
   }, [onFlipChange]);
 
-  // Always reset flip and hint when card index changes
+  const updateFlip = useCallback((flipped: boolean) => {
+    setInternalFlipped(flipped);
+    onFlipChangeRef.current?.(flipped);
+  }, []);
+
+  // Always reset internal flip and hint when card index changes
   useEffect(() => {
-    updateFlip(false);
+    setInternalFlipped(false);
     setShowHint(false);
-  }, [currentIndex, updateFlip]);
+  }, [currentIndex]);
 
   const handleFlip = useCallback(() => {
     if (isDragging || hasMovedSignificantly.current) return;
@@ -322,29 +329,38 @@ export const StackedFlashcardDeck: React.FC<StackedFlashcardDeckProps> = ({
     }
 
     if (Math.abs(deltaY) >= Math.abs(deltaX)) {
+      currentDragYRef.current = deltaY * 0.7;
+      currentDragXRef.current = 0;
       setDragY(deltaY * 0.7);
+      setDragX(0);
     } else {
+      currentDragXRef.current = deltaX * 0.7;
+      currentDragYRef.current = 0;
       setDragX(deltaX * 0.7);
+      setDragY(0);
     }
   };
 
   const handleTouchEnd = () => {
     if (!dragStartRef.current) return;
     const threshold = 48;
+    const finalY = currentDragYRef.current;
+    const finalX = currentDragXRef.current;
 
-    if (dragY < -threshold || dragX < -threshold) {
-      // Swiped Up or Left -> Next Card
-      handleNext();
-    } else if (dragY > threshold || dragX > threshold) {
-      // Swiped Down or Right -> Prev Card
-      handlePrev();
-    } else {
-      setDragY(0);
-      setDragX(0);
-    }
-
+    currentDragYRef.current = 0;
+    currentDragXRef.current = 0;
+    setDragY(0);
+    setDragX(0);
     setIsDragging(false);
     dragStartRef.current = null;
+
+    if (finalY < -threshold || finalX < -threshold) {
+      // Swiped Up or Left -> Next Card
+      handleNext();
+    } else if (finalY > threshold || finalX > threshold) {
+      // Swiped Down or Right -> Prev Card
+      handlePrev();
+    }
   };
 
   // Mouse Drag Handlers
@@ -352,6 +368,8 @@ export const StackedFlashcardDeck: React.FC<StackedFlashcardDeckProps> = ({
     if (isAnimating || e.button !== 0) return;
     dragStartRef.current = { x: e.clientX, y: e.clientY, time: Date.now() };
     hasMovedSignificantly.current = false;
+    currentDragYRef.current = 0;
+    currentDragXRef.current = 0;
     setIsDragging(true);
 
     const onMouseMove = (moveEvent: MouseEvent) => {
@@ -364,9 +382,15 @@ export const StackedFlashcardDeck: React.FC<StackedFlashcardDeckProps> = ({
       }
 
       if (Math.abs(deltaY) >= Math.abs(deltaX)) {
+        currentDragYRef.current = deltaY * 0.65;
+        currentDragXRef.current = 0;
         setDragY(deltaY * 0.65);
+        setDragX(0);
       } else {
+        currentDragXRef.current = deltaX * 0.65;
+        currentDragYRef.current = 0;
         setDragX(deltaX * 0.65);
+        setDragY(0);
       }
     };
 
@@ -375,26 +399,21 @@ export const StackedFlashcardDeck: React.FC<StackedFlashcardDeckProps> = ({
       window.removeEventListener('mouseup', onMouseUp);
 
       const threshold = 55;
-      setDragY((curY) => {
-        if (curY < -threshold) {
-          handleNext();
-        } else if (curY > threshold) {
-          handlePrev();
-        }
-        return 0;
-      });
+      const finalY = currentDragYRef.current;
+      const finalX = currentDragXRef.current;
 
-      setDragX((curX) => {
-        if (curX < -threshold) {
-          handleNext();
-        } else if (curX > threshold) {
-          handlePrev();
-        }
-        return 0;
-      });
-
+      currentDragYRef.current = 0;
+      currentDragXRef.current = 0;
+      setDragY(0);
+      setDragX(0);
       setIsDragging(false);
       dragStartRef.current = null;
+
+      if (finalY < -threshold || finalX < -threshold) {
+        handleNext();
+      } else if (finalY > threshold || finalX > threshold) {
+        handlePrev();
+      }
     };
 
     window.addEventListener('mousemove', onMouseMove);
@@ -403,7 +422,7 @@ export const StackedFlashcardDeck: React.FC<StackedFlashcardDeckProps> = ({
 
   if (!cards || cards.length === 0) {
     return (
-      <div className="w-full max-w-[720px] mx-auto min-h-[440px] rounded-3xl bg-amber-50/50 border border-amber-200 p-8 flex flex-col items-center justify-center text-center">
+      <div className="w-full mx-auto min-h-[440px] rounded-3xl bg-amber-50/50 border border-amber-200 p-8 flex flex-col items-center justify-center text-center">
         <Layers className="w-12 h-12 text-amber-500 mb-3" />
         <h3 className="font-display font-black text-xl text-stone-900 uppercase">No Flashcards In Deck</h3>
         <p className="text-sm text-stone-600 mt-1">Generate or add cards to start your active recall stack session.</p>
@@ -415,9 +434,6 @@ export const StackedFlashcardDeck: React.FC<StackedFlashcardDeckProps> = ({
   const activeTheme = PASTEL_THEMES[currentIndex % PASTEL_THEMES.length];
 
   // Up to 3 background cards visibly stacked behind the front card
-  // Layer 1 (immediately behind): translateY -22px, scale 0.95, opacity 0.95
-  // Layer 2: translateY -44px, scale 0.90, opacity 0.88
-  // Layer 3: translateY -64px, scale 0.85, opacity 0.72
   const maxStackVisible = Math.min(totalCards - 1, 3);
   const backgroundStack = Array.from({ length: maxStackVisible }, (_, i) => {
     const pos = i + 1;
@@ -429,49 +445,6 @@ export const StackedFlashcardDeck: React.FC<StackedFlashcardDeckProps> = ({
 
   return (
     <div className="w-full flex flex-col items-center select-none py-2 sm:py-4">
-      {/* Top Deck Header Bar */}
-      <div className="w-full max-w-[720px] flex items-center justify-between px-2 sm:px-1 mb-4">
-        <div className="flex items-center gap-2 sm:gap-3">
-          <span className="font-mono text-xs sm:text-sm font-bold tracking-wider px-3.5 py-1.5 rounded-full bg-stone-900 text-stone-100 shadow-sm flex items-center gap-1.5">
-            <Layers className="w-3.5 h-3.5 text-amber-400" />
-            <span>Card {currentIndex + 1} / {totalCards}</span>
-          </span>
-
-          {(deckCategory || currentCard?.category) && (
-            <span className="hidden sm:inline-flex px-3 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider bg-stone-100 text-stone-700 border border-stone-200">
-              {currentCard?.category || deckCategory}
-            </span>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            id="shuffle-flashcard-top-btn"
-            onClick={handleShuffleClick}
-            disabled={isAnimating || totalCards <= 1}
-            className="px-3 py-1.5 rounded-full bg-white border border-stone-200 text-stone-800 hover:bg-stone-50 text-xs font-mono font-bold uppercase flex items-center gap-1.5 transition-colors shadow-xs cursor-pointer disabled:opacity-40"
-            title="Shuffle to another complete flashcard"
-          >
-            <Shuffle className="w-3.5 h-3.5 text-amber-600" />
-            <span className="hidden sm:inline">Shuffle</span>
-            <span className="text-[10px] text-stone-400 hidden md:inline">[S]</span>
-          </button>
-
-          <button
-            type="button"
-            id="flip-flashcard-top-btn"
-            onClick={handleFlip}
-            className="px-3.5 py-1.5 rounded-full bg-white border border-stone-200 text-stone-800 hover:bg-stone-50 text-xs font-mono font-bold uppercase flex items-center gap-1.5 transition-colors shadow-xs cursor-pointer"
-            title="Flip Card (Spacebar)"
-          >
-            <RotateCw className="w-3.5 h-3.5 text-[#D92B8A]" />
-            <span>Flip</span>
-            <span className="text-[10px] text-stone-400 hidden md:inline">[Space]</span>
-          </button>
-        </div>
-      </div>
-
       {/* =================================================================== */}
       {/* STACKED FLASHCARD ARENA (CodePen Reference: Overlapping Physical Stack) */}
       {/* Scroll Up/Down & Keyboard ↑/↓ Nav, Smooth Fly-Away Animation, Continuous Loop */}
@@ -479,7 +452,7 @@ export const StackedFlashcardDeck: React.FC<StackedFlashcardDeckProps> = ({
       <div 
         ref={arenaRef}
         id="stacked-flashcard-arena"
-        className="relative w-full max-w-[720px] h-[500px] sm:h-[530px] md:h-[550px] flex items-start justify-center pt-16 sm:pt-18 px-2 sm:px-0"
+        className="relative w-full h-[520px] sm:h-[580px] md:h-[640px] flex items-start justify-center pt-4 sm:pt-6 px-2 sm:px-0"
         style={{ perspective: '1400px' }}
       >
         {/* 1. RENDER VISIBLE STACKED CARDS BEHIND (From back to front: Pos 3 -> 2 -> 1) */}
@@ -496,12 +469,10 @@ export const StackedFlashcardDeck: React.FC<StackedFlashcardDeckProps> = ({
 
           if (isAnimating) {
             if (animDirection === 'next') {
-              // Stacked cards step forward smoothly one layer when front card flies away
               scale = baseScales[pos - 1] ?? 1;
               offsetY = baseOffsets[pos - 1] ?? 0;
               opacity = baseOpacities[pos - 1] ?? 1;
             } else if (animDirection === 'prev') {
-              // Stacked cards step back one layer when previous card drops in
               scale = baseScales[Math.min(pos + 1, 3)];
               offsetY = baseOffsets[Math.min(pos + 1, 3)];
               opacity = baseOpacities[Math.min(pos + 1, 3)];
@@ -514,7 +485,7 @@ export const StackedFlashcardDeck: React.FC<StackedFlashcardDeckProps> = ({
           return (
             <div
               key={`bg-card-${pos}-${cardIdx}`}
-              className={`absolute inset-x-2 sm:inset-x-0 top-16 sm:top-18 h-[400px] sm:h-[430px] md:h-[450px] rounded-[2rem] sm:rounded-[2.5rem] bg-gradient-to-br ${theme.gradient} border-2 ${theme.border} p-5 sm:p-6 flex flex-col justify-between overflow-hidden pointer-events-none select-none`}
+              className={`absolute inset-x-2 sm:inset-x-0 top-4 sm:top-6 h-[420px] sm:h-[480px] md:h-[550px] rounded-[2rem] sm:rounded-[2.5rem] bg-gradient-to-br ${theme.gradient} border-2 ${theme.border} p-5 sm:p-6 flex flex-col justify-between overflow-hidden pointer-events-none select-none`}
               style={{
                 zIndex: zIndices[pos],
                 transform: `translate3d(0, ${offsetY}px, 0) scale(${scale}) rotate(${rotateZ}deg)`,
@@ -529,7 +500,7 @@ export const StackedFlashcardDeck: React.FC<StackedFlashcardDeckProps> = ({
               {/* Exposed Top Strip of Stacked Card: Shows Card Number & Concept Preview */}
               <div className="flex items-center justify-between opacity-95 px-1 pt-0.5">
                 <div className="flex items-center gap-2">
-                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider ${theme.badgeBg} ${theme.badgeText} border ${theme.border}`}>
+                  <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold uppercase tracking-wider ${theme.badgeBg} ${theme.badgeText} border ${theme.border}`}>
                     #{cardIdx + 1}
                   </span>
                   <span className="text-[11px] font-mono font-bold text-stone-700 truncate max-w-[200px] sm:max-w-[340px]">
@@ -547,7 +518,7 @@ export const StackedFlashcardDeck: React.FC<StackedFlashcardDeckProps> = ({
         {/* 2. INCOMING CARD FOR SMOOTH PREVIOUS SLIDE-IN (Drops down from above) */}
         {incomingPrevCard && isAnimating && animDirection === 'prev' && (
           <div
-            className={`absolute inset-x-2 sm:inset-x-0 top-16 sm:top-18 h-[400px] sm:h-[430px] md:h-[450px] rounded-[2rem] sm:rounded-[2.5rem] bg-gradient-to-br ${incomingPrevCard.theme.gradient} border-2 ${incomingPrevCard.theme.border} p-6 sm:p-10 flex flex-col justify-between select-none pointer-events-none`}
+            className={`absolute inset-x-2 sm:inset-x-0 top-4 sm:top-6 h-[420px] sm:h-[480px] md:h-[550px] rounded-[2rem] sm:rounded-[2.5rem] bg-gradient-to-br ${incomingPrevCard.theme.gradient} border-2 ${incomingPrevCard.theme.border} p-6 sm:p-10 flex flex-col justify-between select-none pointer-events-none text-center`}
             style={{
               zIndex: 50,
               boxShadow: `0 26px 52px -12px rgba(28, 25, 23, 0.18), 0 12px 28px -6px ${incomingPrevCard.theme.shadowColor}`,
@@ -555,15 +526,15 @@ export const StackedFlashcardDeck: React.FC<StackedFlashcardDeckProps> = ({
             }}
           >
             <div className="flex items-center justify-between">
-              <span className={`px-3 py-1 rounded-full text-[11px] font-mono font-bold uppercase tracking-wider ${incomingPrevCard.theme.badgeBg} ${incomingPrevCard.theme.badgeText} border ${incomingPrevCard.theme.border}`}>
+              <span className={`px-3 py-1 rounded-full text-[12px] font-mono font-bold uppercase tracking-wider ${incomingPrevCard.theme.badgeBg} ${incomingPrevCard.theme.badgeText} border ${incomingPrevCard.theme.border}`}>
                 {incomingPrevCard.card.category || deckCategory || 'CONCEPT'}
               </span>
-              <span className="text-[11px] font-mono font-bold text-stone-500">
+              <span className="text-[12px] font-mono font-bold text-stone-500">
                 Card {incomingPrevCard.index + 1} of {totalCards}
               </span>
             </div>
             <div className="flex-1 flex flex-col items-center justify-center text-center px-2 sm:px-6 my-auto">
-              <h2 className="font-display font-black text-2xl sm:text-3xl md:text-4xl text-[#1C1917] leading-snug tracking-tight max-w-xl">
+              <h2 className="font-display font-black text-2xl sm:text-3xl md:text-4xl text-[#1C1917] leading-snug tracking-tight max-w-xl text-center">
                 {incomingPrevCard.card.front}
               </h2>
             </div>
@@ -577,15 +548,12 @@ export const StackedFlashcardDeck: React.FC<StackedFlashcardDeckProps> = ({
 
           if (isAnimating) {
             if (animDirection === 'next') {
-              // Front card smoothly moves away upwards with subtle tilt to reveal next card
               transform = 'translate3d(0, -118%, 0) scale(0.96) rotate(-2deg)';
               opacity = 0;
             } else if (animDirection === 'prev') {
-              // Active card smoothly drops into stack Layer 1 position
               transform = 'translate3d(0, -22px, 0) scale(0.95)';
               opacity = 0.95;
             } else if (animDirection === 'shuffle') {
-              // Playful deck riffle animation
               transform = 'translate3d(-18px, 0, 0) rotate(-4deg) scale(0.98)';
               opacity = 0.95;
             }
@@ -597,7 +565,7 @@ export const StackedFlashcardDeck: React.FC<StackedFlashcardDeckProps> = ({
           return (
             <div
               id="active-flashcard-deck-card"
-              className="absolute inset-x-2 sm:inset-x-0 top-16 sm:top-18 h-[400px] sm:h-[430px] md:h-[450px] cursor-pointer"
+              className="absolute inset-x-2 sm:inset-x-0 top-4 sm:top-6 h-[420px] sm:h-[480px] md:h-[550px] cursor-pointer"
               style={{
                 zIndex: 40,
                 transform,
@@ -633,7 +601,7 @@ export const StackedFlashcardDeck: React.FC<StackedFlashcardDeckProps> = ({
                   {/* FRONT FACE: HEADLINE / QUESTION / CONCEPT               */}
                   {/* ======================================================= */}
                   <div
-                    className={`absolute inset-0 rounded-[2rem] sm:rounded-[2.5rem] bg-gradient-to-br ${activeTheme.gradient} border-2 ${activeTheme.border} p-6 sm:p-10 flex flex-col justify-between overflow-hidden select-none`}
+                    className={`absolute inset-0 rounded-[2rem] sm:rounded-[2.5rem] bg-gradient-to-br ${activeTheme.gradient} border-2 ${activeTheme.border} p-6 sm:p-10 flex flex-col justify-between overflow-hidden select-none text-center`}
                     style={{
                       backfaceVisibility: 'hidden',
                       WebkitBackfaceVisibility: 'hidden',
@@ -644,38 +612,38 @@ export const StackedFlashcardDeck: React.FC<StackedFlashcardDeckProps> = ({
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
                         <span
-                          className={`px-3 py-1 rounded-full text-[11px] font-mono font-bold uppercase tracking-wider ${activeTheme.badgeBg} ${activeTheme.badgeText} border ${activeTheme.border}`}
+                          className={`px-3 py-1 rounded-full text-[12px] font-mono font-bold uppercase tracking-wider ${activeTheme.badgeBg} ${activeTheme.badgeText} border ${activeTheme.border}`}
                         >
                           {currentCard.category || deckCategory || 'CONCEPT'}
                         </span>
                         {currentCard.difficulty && (
-                          <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-stone-900/5 text-stone-700">
+                          <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold uppercase tracking-wider bg-stone-900/5 text-stone-700">
                             {currentCard.difficulty}
                           </span>
                         )}
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-mono font-bold text-stone-500">
+                        <span className="text-[12px] font-mono font-bold text-stone-500">
                           #{currentIndex + 1} / {totalCards}
                         </span>
                         <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/80 hover:bg-white text-stone-700 text-xs font-mono font-bold border border-stone-200 shadow-xs transition-colors">
                           <RotateCw className="w-3.5 h-3.5 text-[#D92B8A]" />
-                          <span className="text-[11px] uppercase tracking-wider hidden sm:inline">Flip</span>
+                          <span className="text-[12px] uppercase tracking-wider hidden sm:inline">Flip</span>
                         </div>
                       </div>
                     </div>
 
                     {/* Center: Main Headline / Question / Term */}
                     <div className="flex-1 flex flex-col items-center justify-center text-center px-2 sm:px-6 my-auto">
-                      <span className="text-[11px] font-mono font-bold uppercase tracking-widest text-stone-500 mb-2.5 block">
+                      <span className="text-[12px] font-mono font-bold uppercase tracking-widest text-stone-500 mb-2.5 block text-center">
                         HEADLINE / QUESTION
                       </span>
-                      <h2 className="font-display font-black text-2xl sm:text-3xl md:text-4xl text-[#1C1917] leading-snug tracking-tight max-w-xl">
+                      <h2 className="font-display font-black text-2xl sm:text-3xl md:text-4xl text-[#1C1917] leading-snug tracking-tight max-w-xl text-center">
                         {currentCard.front}
                       </h2>
                       {currentCard.subtitle && (
-                        <p className="mt-2 text-sm text-stone-600 font-medium max-w-md">
+                        <p className="mt-2 text-sm text-stone-600 font-medium max-w-md text-center">
                           {currentCard.subtitle}
                         </p>
                       )}
@@ -684,7 +652,7 @@ export const StackedFlashcardDeck: React.FC<StackedFlashcardDeckProps> = ({
                     {/* Bottom Row: Hint & Click to Flip indicator */}
                     <div className="flex items-center justify-between pt-2 border-t border-stone-800/10">
                       {currentCard.hint ? (
-                        <div className="flex-1">
+                        <div className="flex-1 text-left">
                           {!showHint ? (
                             <button
                               type="button"
@@ -709,14 +677,14 @@ export const StackedFlashcardDeck: React.FC<StackedFlashcardDeckProps> = ({
                           )}
                         </div>
                       ) : (
-                        <span className="text-[11px] font-mono text-stone-500">
+                        <span className="text-[12px] font-mono text-stone-500">
                           Active Recall Flashcard
                         </span>
                       )}
 
                       <div className="flex items-center gap-1.5 text-stone-500 text-xs font-mono">
                         <RotateCw className="w-3 h-3 text-stone-400" />
-                        <span className="text-[11px]">Click or tap to flip</span>
+                        <span className="text-[12px]">Click or tap to flip</span>
                       </div>
                     </div>
                   </div>
@@ -726,7 +694,7 @@ export const StackedFlashcardDeck: React.FC<StackedFlashcardDeckProps> = ({
                   {/* Headline & Description Always Kept Together on Same Card */}
                   {/* ======================================================= */}
                   <div
-                    className={`absolute inset-0 rounded-[2rem] sm:rounded-[2.5rem] bg-gradient-to-br ${activeTheme.gradient} border-2 ${activeTheme.border} p-6 sm:p-10 flex flex-col justify-between overflow-hidden select-none`}
+                    className={`absolute inset-0 rounded-[2rem] sm:rounded-[2.5rem] bg-gradient-to-br ${activeTheme.gradient} border-2 ${activeTheme.border} p-6 sm:p-10 flex flex-col justify-between overflow-hidden select-none text-center`}
                     style={{
                       transform: 'rotateY(180deg)',
                       backfaceVisibility: 'hidden',
@@ -736,42 +704,34 @@ export const StackedFlashcardDeck: React.FC<StackedFlashcardDeckProps> = ({
                   >
                     {/* Top Row: Answer Badge & Flip Back cue */}
                     <div className="flex items-center justify-between gap-2">
-                      <span className="px-3 py-1 rounded-full text-[11px] font-mono font-bold uppercase tracking-wider bg-stone-900 text-stone-100">
+                      <span className="px-3 py-1 rounded-full text-[12px] font-mono font-bold uppercase tracking-wider bg-stone-900 text-stone-100">
                         ANSWER / DESCRIPTION
                       </span>
 
                       <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/80 hover:bg-white text-stone-700 text-xs font-mono font-bold border border-stone-200 shadow-xs transition-colors">
                         <RotateCw className="w-3.5 h-3.5 text-[#D92B8A]" />
-                        <span className="text-[11px] uppercase tracking-wider hidden sm:inline">Flip Back</span>
+                        <span className="text-[12px] uppercase tracking-wider hidden sm:inline">Flip Back</span>
                       </div>
                     </div>
 
-                    {/* Headline Context Bar: Keeps Headline & Description Together! */}
-                    <div className="mt-2 px-3.5 py-1.5 rounded-xl bg-stone-900/5 border border-stone-900/10 text-stone-700 text-xs font-medium flex items-center gap-2 max-w-full">
-                      <span className="font-mono font-bold text-[10px] uppercase text-stone-500 tracking-wider whitespace-nowrap">
-                        Concept:
-                      </span>
-                      <span className="truncate font-semibold text-stone-900">
-                        {currentCard.front}
-                      </span>
-                    </div>
+
 
                     {/* Center: Full Description / Answer with Large Readable Typography */}
-                    <div className="flex-1 flex flex-col items-center justify-center text-center px-2 sm:px-6 my-auto overflow-y-auto max-h-[220px] sm:max-h-[250px] custom-scrollbar">
-                      <p className="text-[#1C1917] text-base sm:text-lg md:text-xl font-medium leading-relaxed max-w-xl">
+                    <div className="flex-1 flex flex-col items-center justify-center text-center px-2 sm:px-6 my-auto overflow-y-auto max-h-[260px] sm:max-h-[320px] custom-scrollbar">
+                      <p className="text-[#1C1917] text-[19px] sm:text-[21px] md:text-[23px] font-medium leading-relaxed max-w-xl text-center [text-wrap:balance]">
                         {currentCard.back}
                       </p>
                     </div>
 
                     {/* Bottom Row */}
                     <div className="flex items-center justify-between pt-2 border-t border-stone-800/10">
-                      <span className="text-[11px] font-mono text-stone-500">
+                      <span className="text-[12px] font-mono text-stone-500">
                         Card {currentIndex + 1} of {totalCards}
                       </span>
 
                       <div className="flex items-center gap-1.5 text-stone-500 text-xs font-mono">
                         <RotateCw className="w-3 h-3 text-stone-400" />
-                        <span className="text-[11px]">Click or tap to flip back</span>
+                        <span className="text-[12px]">Click or tap to flip back</span>
                       </div>
                     </div>
                   </div>
@@ -785,39 +745,43 @@ export const StackedFlashcardDeck: React.FC<StackedFlashcardDeckProps> = ({
       {/* =================================================================== */}
       {/* INTERACTIVE NAVIGATION CONTROLS (SCROLL / KEYBOARD / BUTTONS)      */}
       {/* =================================================================== */}
-      <div className="w-full max-w-[720px] flex items-center justify-between gap-2 sm:gap-4 mt-4 px-2">
+      <div className="w-full max-w-full flex flex-nowrap items-center justify-between gap-1.5 sm:gap-4 mt-4 px-0.5 sm:px-2">
         <button
           type="button"
           id="prev-flashcard-stack-btn"
           onClick={handlePrev}
           disabled={isAnimating || totalCards <= 1}
-          className="px-4 sm:px-5 py-3 rounded-2xl bg-white border border-stone-200 hover:bg-stone-50 active:scale-95 font-display font-black text-xs uppercase text-stone-800 flex items-center gap-1.5 sm:gap-2 transition-all cursor-pointer shadow-xs disabled:opacity-40"
+          className="px-2.5 sm:px-5 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl bg-white border border-stone-200 hover:bg-stone-50 active:scale-95 font-display font-black text-[10px] sm:text-xs uppercase text-stone-800 flex items-center gap-1 sm:gap-2 transition-all cursor-pointer shadow-xs disabled:opacity-40 shrink-0"
           title="Previous Card (Scroll Up / ↑ Key)"
         >
-          <ArrowUp className="w-4 h-4 text-stone-700" />
-          <span className="hidden sm:inline">Previous</span>
-          <span className="text-[10px] font-mono text-stone-400">[↑]</span>
+          <ArrowUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-stone-700" />
+          <span>Previous</span>
+          <span className="text-[9px] sm:text-[10px] font-mono text-stone-400 hidden md:inline">[↑]</span>
         </button>
 
-        <button
-          type="button"
-          id="shuffle-flashcard-deck-btn"
-          onClick={handleShuffleClick}
-          disabled={isAnimating || totalCards <= 1}
-          className="px-3.5 sm:px-5 py-3 rounded-2xl bg-amber-50 hover:bg-amber-100/90 active:scale-95 border border-amber-200 text-amber-900 font-display font-black text-xs uppercase flex items-center gap-1.5 sm:gap-2 transition-all cursor-pointer shadow-xs disabled:opacity-40"
-          title="Shuffle to another complete flashcard"
-        >
-          <Shuffle className="w-4 h-4 text-amber-700" />
-          <span>Shuffle</span>
-        </button>
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+          <button
+            type="button"
+            id="shuffle-flashcard-deck-btn"
+            onClick={handleShuffleClick}
+            disabled={isAnimating || totalCards <= 1}
+            className="px-2.5 sm:px-5 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl bg-amber-50 hover:bg-amber-100/90 active:scale-95 border border-amber-200 text-amber-900 font-display font-black text-[10px] sm:text-xs uppercase flex items-center gap-1 sm:gap-2 transition-all cursor-pointer shadow-xs disabled:opacity-40 shrink-0"
+            title="Shuffle to another complete flashcard"
+          >
+            <Shuffle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-700" />
+            <span>Shuffle</span>
+          </button>
 
-        {/* Tactile Progress Indicator: e.g. "Card 3 / 8 (Continuous Loop)" */}
-        <div className="flex items-center gap-1.5">
-          <div className="px-3.5 sm:px-4 py-2.5 rounded-xl bg-stone-100 border border-stone-200 font-mono text-xs sm:text-sm font-bold text-stone-800 shadow-inner">
-            <span className="text-[#1C1917]">{currentIndex + 1}</span>
-            <span className="text-stone-400 mx-1">/</span>
-            <span className="text-stone-500">{totalCards}</span>
-          </div>
+          <button
+            type="button"
+            id="flip-flashcard-deck-bottom-btn"
+            onClick={handleFlip}
+            className="px-2.5 sm:px-5 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl bg-white hover:bg-stone-50 active:scale-95 border border-stone-200 text-stone-800 font-display font-black text-[10px] sm:text-xs uppercase flex items-center gap-1 sm:gap-2 transition-all cursor-pointer shadow-xs shrink-0"
+            title="Flip Card to reveal answer"
+          >
+            <RotateCw className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#D92B8A]" />
+            <span>Flip</span>
+          </button>
         </div>
 
         <button
@@ -825,17 +789,26 @@ export const StackedFlashcardDeck: React.FC<StackedFlashcardDeckProps> = ({
           id="next-flashcard-stack-btn"
           onClick={handleNext}
           disabled={isAnimating || totalCards <= 1}
-          className="px-4 sm:px-5 py-3 rounded-2xl bg-[#18181B] hover:bg-[#27272A] active:scale-95 text-white font-display font-black text-xs uppercase flex items-center gap-1.5 sm:gap-2 transition-all cursor-pointer shadow-sm disabled:opacity-40"
+          className="px-2.5 sm:px-5 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl bg-[#18181B] hover:bg-[#27272A] active:scale-95 text-white font-display font-black text-[10px] sm:text-xs uppercase flex items-center gap-1 sm:gap-2 transition-all cursor-pointer shadow-sm disabled:opacity-40 shrink-0"
           title="Next Card (Scroll Down / ↓ Key)"
         >
-          <span className="text-[10px] font-mono text-stone-400">[↓]</span>
-          <span className="hidden sm:inline">Next</span>
-          <ArrowDown className="w-4 h-4 text-white" />
+          <span className="text-[9px] sm:text-[10px] font-mono text-stone-400 hidden md:inline">[↓]</span>
+          <span>Next</span>
+          <ArrowDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
         </button>
       </div>
 
+      {/* Tactile Progress Indicator: Directly Below Buttons Row */}
+      <div className="w-full flex items-center justify-center mt-3">
+        <div className="px-4 py-2 rounded-xl bg-stone-100 border border-stone-200 font-mono text-sm font-bold text-stone-800 shadow-inner">
+          <span className="text-[#1C1917]">{currentIndex + 1}</span>
+          <span className="text-stone-400 mx-1">/</span>
+          <span className="text-stone-500">{totalCards}</span>
+        </div>
+      </div>
+
       {/* Subtle Interaction Guide Banner */}
-      <div className="w-full max-w-[720px] flex items-center justify-center gap-2 text-stone-400 text-[11px] font-mono mt-3 px-2">
+      <div className="w-full flex items-center justify-center gap-2 text-stone-400 text-[11px] font-mono mt-3 px-2">
         <MousePointer className="w-3 h-3 text-stone-400" />
         <span>Scroll up/down or use ↑ / ↓ keys · Cards loop continuously</span>
       </div>
@@ -866,7 +839,7 @@ export const StackedFlashcardDeck: React.FC<StackedFlashcardDeckProps> = ({
 
       {/* Optional Rating Component Slot (Active Recall in FlashcardsView) */}
       {ratingComponent && (
-        <div className="w-full max-w-[720px] mt-6 px-2">
+        <div className="w-full mt-6 px-2">
           {ratingComponent}
         </div>
       )}
