@@ -30,7 +30,7 @@ export const BuildHero: React.FC<BuildHeroProps> = ({
         <div className="lg:col-span-7 space-y-6 flex flex-col justify-start">
           {/* Edition Pill Badge */}
           <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/90 border border-stone-300/80 rounded-full shadow-sm text-[10px] sm:text-xs font-mono font-bold tracking-wider uppercase text-stone-800 self-start h-8 whitespace-nowrap">
-            <span className="w-2 h-2 rounded-full bg-[#E63956] inline-block animate-pulse shrink-0"></span>
+            <span className="w-2 h-2 rounded-full bg-[#E05A2B] inline-block animate-pulse shrink-0"></span>
             <span className="truncate">PROUDLY AFRIKAN EDUCATION • RESOURCE BUILDER</span>
           </div>
 
@@ -38,7 +38,7 @@ export const BuildHero: React.FC<BuildHeroProps> = ({
           <h1 className="font-display font-black text-5xl sm:text-7xl md:text-8xl lg:text-[5.5rem] xl:text-[6.25rem] uppercase tracking-tighter text-[#161616] leading-[0.88] sm:leading-[0.9] lg:leading-[0.92] break-words">
             BUILD<br />
             ANYTHING.<br />
-            <span className="bg-gradient-to-r from-[#E63956] via-[#F4511E] to-[#FF7A00] bg-clip-text text-transparent">ABOUT<br />ANYTHING.</span>
+            <span className="bg-gradient-to-r from-[#E05A2B] via-[#EA8B1C] to-[#D99B00] bg-clip-text text-transparent">ABOUT<br />ANYTHING.</span>
           </h1>
 
           {/* Clear, comfortable, easy-to-read subtext */}
@@ -50,7 +50,7 @@ export const BuildHero: React.FC<BuildHeroProps> = ({
           <div className="flex flex-col sm:flex-row flex-wrap gap-3 pt-2">
             <button
               onClick={onStartClick || (() => onOpenGenerator('exam'))}
-              className="w-full sm:w-auto px-7 sm:px-8 py-4 bg-gradient-to-r from-[#D92B8A] via-[#E03A6A] to-[#E63956] hover:opacity-95 text-white font-display text-xs sm:text-sm font-black uppercase tracking-wider rounded-full shadow-[0_6px_20px_rgba(230,57,86,0.35)] transition-all flex items-center justify-center gap-2.5 cursor-pointer active:scale-95 whitespace-nowrap"
+              className="w-full sm:w-auto px-7 sm:px-8 py-4 bg-gradient-to-r from-[#E05A2B] via-[#EA8B1C] to-[#D99B00] hover:opacity-95 text-white font-display text-xs sm:text-sm font-black uppercase tracking-wider rounded-full shadow-[0_6px_20px_rgba(224,90,43,0.35)] transition-all flex items-center justify-center gap-2.5 cursor-pointer active:scale-95 whitespace-nowrap"
             >
               <Sparkles className="w-4 h-4" />
               <span>EXPLORE BUILD TOOLS</span>
@@ -60,7 +60,7 @@ export const BuildHero: React.FC<BuildHeroProps> = ({
               onClick={onUploadClick}
               className="w-full sm:w-auto px-7 sm:px-8 py-4 bg-[#161616] hover:bg-stone-800 text-white font-display text-xs sm:text-sm font-black uppercase tracking-wider rounded-full shadow-md transition-all flex items-center justify-center gap-2.5 cursor-pointer active:scale-95 whitespace-nowrap"
             >
-              <FileUp className="w-4 h-4 text-[#E63956]" />
+              <FileUp className="w-4 h-4 text-[#E05A2B]" />
               <span>UPLOAD PDF / DOC</span>
             </button>
           </div>
@@ -72,14 +72,14 @@ export const BuildHero: React.FC<BuildHeroProps> = ({
           <div className="clay-card-3d p-6 sm:p-7 space-y-4">
             <div className="flex items-center justify-between border-b border-stone-200/80 pb-3 h-9">
               <div className="flex items-center gap-2 font-display text-xs sm:text-sm font-black uppercase tracking-wider text-stone-900">
-                <span className="text-[#FF7A00] text-sm">❖</span>
+                <span className="text-[#E05A2B] text-sm">❖</span>
                 <span>INSTANT STUDY INSPIRATION</span>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={refreshTopics}
-                  className="p-1 text-stone-400 hover:text-[#FF7A00] transition-colors rounded-full hover:bg-stone-200/50 cursor-pointer"
+                  className="p-1 text-stone-400 hover:text-[#E05A2B] transition-colors rounded-full hover:bg-stone-200/50 cursor-pointer"
                   title="Shuffle topics"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
@@ -96,7 +96,7 @@ export const BuildHero: React.FC<BuildHeroProps> = ({
                 <button
                   key={idx}
                   onClick={() => onSelectInspiration(item.topic || item.title)}
-                  className="h-11 px-3.5 clay-pill-3d hover:border-[#FF7A00]/40 hover:text-[#FF7A00] text-stone-800 font-medium text-xs sm:text-sm flex items-center gap-2 text-left truncate cursor-pointer transition-all"
+                  className="h-11 px-3.5 clay-pill-3d hover:border-[#E05A2B]/40 hover:text-[#E05A2B] text-stone-800 font-medium text-xs sm:text-sm flex items-center gap-2 text-left truncate cursor-pointer transition-all"
                 >
                   <span className="text-base shrink-0">{item.emoji}</span>
                   <span className="truncate">{item.title}</span>
@@ -118,7 +118,7 @@ export const BuildHero: React.FC<BuildHeroProps> = ({
               className="text-center border-r border-stone-200/80 pr-2 cursor-pointer hover:opacity-80 transition-opacity"
               title="View all 6 Build Tools"
             >
-              <div className="font-mono text-lg sm:text-xl font-black text-[#FF7A00]">6</div>
+              <div className="font-mono text-lg sm:text-xl font-black text-[#E05A2B]">6</div>
               <div className="font-mono text-xs font-bold text-stone-600 uppercase tracking-wider">
                 BUILD TOOLS
               </div>
@@ -132,7 +132,7 @@ export const BuildHero: React.FC<BuildHeroProps> = ({
             </div>
 
             <div className="text-center pl-2">
-              <div className="font-mono text-lg sm:text-xl font-black text-[#FF7A00]">ACTIVE</div>
+              <div className="font-mono text-lg sm:text-xl font-black text-[#E05A2B]">ACTIVE</div>
               <div className="font-mono text-xs font-bold text-stone-600 uppercase tracking-wider">
                 PEDAGOGY
               </div>

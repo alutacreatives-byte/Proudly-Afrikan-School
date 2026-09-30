@@ -96,9 +96,9 @@ export const BuildToolsMenu: React.FC<BuildToolsMenuProps> = ({ onSelectTool }) 
           <div
             key={tool.id}
             onClick={() => onSelectTool(tool.id)}
-            className="group relative bg-[#F7F2EB] border border-[#E4DCD0] hover:border-pink-500 rounded-3xl p-6 shadow-sm hover:shadow-xl transition-all cursor-pointer flex flex-col justify-between overflow-hidden"
+            className="group relative bg-[#F7F2EB] border border-[#E4DCD0] hover:border-[#E05A2B] rounded-3xl p-6 shadow-sm hover:shadow-xl transition-all cursor-pointer flex flex-col justify-between overflow-hidden"
           >
-            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-pink-500/5 to-transparent rounded-bl-full pointer-events-none transition-transform group-hover:scale-110" />
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#E05A2B]/10 to-transparent rounded-bl-full pointer-events-none transition-transform group-hover:scale-110" />
             <div>
               <div className="flex items-center justify-between mb-4">
                 <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${tool.color} flex items-center justify-center text-white shadow-md transition-transform group-hover:scale-105`}>
@@ -108,14 +108,14 @@ export const BuildToolsMenu: React.FC<BuildToolsMenuProps> = ({ onSelectTool }) 
                   {tool.badge}
                 </span>
               </div>
-              <h3 className="font-serif font-bold text-lg text-stone-900 mb-2 group-hover:text-pink-600 transition-colors">
+              <h3 className="font-serif font-bold text-lg text-stone-900 mb-2 group-hover:text-[#E05A2B] transition-colors">
                 {tool.title}
               </h3>
               <p className="font-mono text-xs text-stone-600 line-clamp-2 leading-relaxed">
                 {tool.description}
               </p>
             </div>
-            <div className="mt-6 pt-4 border-t border-[#E4DCD0]/60 flex items-center justify-between text-xs font-mono font-bold text-stone-700 group-hover:text-pink-600">
+            <div className="mt-6 pt-4 border-t border-[#E4DCD0]/60 flex items-center justify-between text-xs font-mono font-bold text-stone-700 group-hover:text-[#E05A2B]">
               <span>Launch Creator</span>
               <span className="transition-transform group-hover:translate-x-1">→</span>
             </div>
