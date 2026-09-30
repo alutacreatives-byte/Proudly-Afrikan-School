@@ -91,14 +91,16 @@ export const FlashcardsView: React.FC<FlashcardsViewProps> = ({
     const updatedRatings = { ...sessionRatings, [currentConcept.id]: rating };
     setSessionRatings(updatedRatings);
 
-    // Auto advance if not last card
-    if (currentIndex < totalCards - 1) {
-      setTimeout(() => {
-        setIsFlipped(false);
-        setShowHint(false);
-        setCurrentIndex(prev => prev + 1);
-      }, 180);
-    } else {
+    // Auto advance to next card, looping continuously
+    setTimeout(() => {
+      setIsFlipped(false);
+      setShowHint(false);
+      setCurrentIndex(prev => (prev + 1) % totalCards);
+    }, 180);
+
+    // Check if entire deck has been reviewed and rated
+    const ratedCount = Object.keys(updatedRatings).length;
+    if (ratedCount >= totalCards) {
       const confident = Object.values(updatedRatings).filter(
         r => r === 'knew_it' || r === 'easy'
       ).length;
@@ -119,21 +121,17 @@ export const FlashcardsView: React.FC<FlashcardsViewProps> = ({
   };
 
   const handleNext = () => {
-    if (currentIndex < totalCards - 1) {
-      setIsFlipped(false);
-      setShowHint(false);
-      setCurrentIndex(prev => prev + 1);
-      scrollToTop();
-    }
+    setIsFlipped(false);
+    setShowHint(false);
+    setCurrentIndex(prev => (prev + 1) % totalCards);
+    scrollToTop();
   };
 
   const handlePrev = () => {
-    if (currentIndex > 0) {
-      setIsFlipped(false);
-      setShowHint(false);
-      setCurrentIndex(prev => prev - 1);
-      scrollToTop();
-    }
+    setIsFlipped(false);
+    setShowHint(false);
+    setCurrentIndex(prev => (prev - 1 + totalCards) % totalCards);
+    scrollToTop();
   };
 
   if (!currentConcept) {
@@ -229,7 +227,7 @@ export const FlashcardsView: React.FC<FlashcardsViewProps> = ({
           </div>
 
           <span className="text-xs font-mono text-stone-500 hidden sm:inline">
-            Shortcuts: Space (Flip), 1–4 (Rate), ← → (Navigate)
+            Shortcuts: Scroll / ↑ ↓ (Navigate), Space (Flip), 1–4 (Rate)
           </span>
         </div>
 

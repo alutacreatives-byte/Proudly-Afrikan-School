@@ -22,6 +22,7 @@ export interface BuildToolMeta {
   badge: string;
   num?: string | number;
   actionLabel?: string;
+  endpoint?: string;
 }
 
 export const BUILD_TOOLS_LIST: BuildToolMeta[] = [
@@ -82,7 +83,8 @@ export const BUILD_TOOLS_LIST: BuildToolMeta[] = [
 ];
 
 interface BuildToolsMenuProps {
-  onSelectTool: (toolId: BuildToolType) => void;
+  activeTool?: BuildToolType | string | null;
+  onSelectTool: (toolId: string) => void;
 }
 
 export const BuildToolsMenu: React.FC<BuildToolsMenuProps> = ({ onSelectTool }) => {

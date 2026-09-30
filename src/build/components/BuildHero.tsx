@@ -38,7 +38,7 @@ export const BuildHero: React.FC<BuildHeroProps> = ({
           <h1 className="font-display font-black text-5xl sm:text-7xl md:text-8xl lg:text-[5.5rem] xl:text-[6.25rem] uppercase tracking-tighter text-[#161616] leading-[0.88] sm:leading-[0.9] lg:leading-[0.92] break-words">
             BUILD<br />
             ANYTHING.<br />
-            <span className="text-[#E63956]">ABOUT<br />ANYTHING.</span>
+            <span className="bg-gradient-to-r from-[#E63956] via-[#F4511E] to-[#FF7A00] bg-clip-text text-transparent">ABOUT<br />ANYTHING.</span>
           </h1>
 
           {/* Clear, comfortable, easy-to-read subtext */}

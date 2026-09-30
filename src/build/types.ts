@@ -11,6 +11,8 @@ export type BuildToolId =
   | 'search-result'
   | string;
 
+export type BuildToolType = BuildToolId;
+
 export interface SavedResource {
   id: string;
   toolType: BuildToolId;
