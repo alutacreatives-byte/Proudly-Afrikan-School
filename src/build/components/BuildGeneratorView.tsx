@@ -38,6 +38,7 @@ import { AiActionType } from '../../types/authCredit';
 import { exportBuildResource, exportUnifiedItem } from '../../utils/exportUtils';
 import { GlobalNavigationButtons } from '../../components/GlobalNavigationButtons';
 import { useScrollToResult } from '../../utils/useScrollToResult';
+import { BuildInteractivePresentation } from './BuildInteractivePresentation';
 
 interface BuildGeneratorViewProps {
   initialToolId?: BuildToolId;
@@ -556,85 +557,60 @@ function renderResourceContent(
   const data = resource.data || {};
   const toolType = resource.toolType;
 
-  // 1. PRESENTATION / SLIDE DECK
-  if (toolType === 'presentation' || Array.isArray(data.slides)) {
-    const slides = Array.isArray(data.slides) ? data.slides : [];
+  // 1. PRESENTATION / SLIDE DECK (Dynamic WebGL movement & Modern 3D Layout)
+  if (toolType === 'presentation' || Array.isArray(data.slides) || data.topic || resource.title) {
+    let slides = Array.isArray(data.slides) ? data.slides : [];
     if (slides.length === 0) {
-      return (
-        <div className="text-center py-8 text-stone-500 font-mono text-sm">
-          No slides found in this resource.
-        </div>
-      );
+      slides = [
+        {
+          id: 's-1',
+          slideNumber: 1,
+          slideType: 'title',
+          title: resource.title || data.topic || 'Presentation Deck',
+          subtitle: data.subtitle || 'Comprehensive Educational Presentation',
+          bulletPoints: ['Core curriculum orientation', 'Key analytical perspectives', 'Discussion roadmap'],
+          speakerNotes: 'Welcome the learners and introduce the key inquiries.',
+          suggestedVisualOrDiagram: 'Visual title card layout',
+          discussionOrEngagementPrompt: 'Introductory inquiry question'
+        },
+        {
+          id: 's-2',
+          slideNumber: 2,
+          slideType: 'concept',
+          title: 'Core Principles & Mechanisms',
+          subtitle: 'Foundational framework',
+          bulletPoints: ['Foundational structural framework', 'Key governing principles', 'Applied examples'],
+          speakerNotes: 'Explain the core principles clearly.',
+          suggestedVisualOrDiagram: 'Structural diagram',
+          discussionOrEngagementPrompt: 'How does this mechanism operate in practice?'
+        },
+        {
+          id: 's-3',
+          slideNumber: 3,
+          slideType: 'summary',
+          title: 'Summary & Key Takeaways',
+          subtitle: 'Synthesis and reflection',
+          bulletPoints: ['Mastery of core concepts', 'Practical applications', 'Final discussion prompt'],
+          speakerNotes: 'Summarize key takeaways.',
+          suggestedVisualOrDiagram: 'Summary table',
+          discussionOrEngagementPrompt: 'What is your primary takeaway from today?'
+        }
+      ];
+      data.slides = slides;
     }
-    const currentSlide = slides[activeSlideIndex] || slides[0];
-    const bullets = currentSlide.bulletPoints || currentSlide.bullets || [];
 
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between bg-stone-50 p-4 rounded-2xl border border-stone-200">
-          <div className="font-mono text-xs font-bold text-stone-600 uppercase">
-            Slide {activeSlideIndex + 1} of {slides.length}
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              disabled={activeSlideIndex === 0}
-              onClick={() => setActiveSlideIndex(Math.max(0, activeSlideIndex - 1))}
-              className="p-2 rounded-xl bg-white border border-stone-200 text-stone-700 hover:bg-stone-100 disabled:opacity-40 cursor-pointer"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <button
-              type="button"
-              disabled={activeSlideIndex >= slides.length - 1}
-              onClick={() => setActiveSlideIndex(Math.min(slides.length - 1, activeSlideIndex + 1))}
-              className="p-2 rounded-xl bg-white border border-stone-200 text-stone-700 hover:bg-stone-100 disabled:opacity-40 cursor-pointer"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-
-        {/* Slide Display Card */}
-        <div className="bg-stone-900 text-white rounded-3xl p-8 sm:p-12 min-h-[320px] flex flex-col justify-between shadow-xl space-y-6">
-          <div className="space-y-4">
-            <span className="font-mono text-xs font-bold text-[#E05A2B] uppercase tracking-widest">
-              PROUDLY AFRIKAN SLIDES • SLIDE {currentSlide.slideNumber || activeSlideIndex + 1}
-            </span>
-            <h3 className="font-display font-black text-2xl sm:text-4xl text-white uppercase tracking-tight">
-              {currentSlide.title || currentSlide.heading}
-            </h3>
-            {currentSlide.subtitle && (
-              <p className="font-sans text-stone-300 text-base">{currentSlide.subtitle}</p>
-            )}
-          </div>
-
-          <div className="space-y-3 pt-4 border-t border-stone-800">
-            {bullets.map((b: string, i: number) => (
-              <div key={i} className="flex items-start gap-3 text-stone-200 font-sans text-sm sm:text-base">
-                <span className="text-[#E05A2B] text-lg font-bold">•</span>
-                <span>{b}</span>
-              </div>
-            ))}
-          </div>
-
-          {currentSlide.visualCue && (
-            <div className="p-3 bg-stone-800/80 rounded-xl text-stone-400 font-mono text-xs">
-              Suggested Visual: {currentSlide.visualCue}
-            </div>
-          )}
-        </div>
-
-        {/* Speaker Notes */}
-        {currentSlide.speakerNotes && (
-          <div className="bg-amber-50/80 border border-amber-200/80 rounded-2xl p-5 space-y-2">
-            <h4 className="font-mono text-xs font-bold text-amber-900 uppercase">Speaker & Lecture Notes:</h4>
-            <p className="font-sans text-xs sm:text-sm text-amber-950 leading-relaxed">
-              {currentSlide.speakerNotes}
-            </p>
-          </div>
-        )}
-      </div>
+      <BuildInteractivePresentation
+        resource={resource}
+        activeSlideIndex={activeSlideIndex}
+        setActiveSlideIndex={setActiveSlideIndex}
+        showSpeakerNotes={showSpeakerNotes}
+        setShowSpeakerNotes={setShowSpeakerNotes}
+        isFullscreen={isFullscreenPresentation}
+        setIsFullscreen={setIsFullscreenPresentation}
+        onExportDoc={() => exportBuildResource(resource, 'doc')}
+        onExportPdf={() => exportBuildResource(resource, 'pdf')}
+      />
     );
   }
 

@@ -55,7 +55,11 @@ async function generateJsonWithGemini(prompt: string, temperature = 0.4) {
         return JSON.parse(cleaned);
       }
     } catch (err: any) {
-      console.warn(`Gemini generation with ${model} encountered an issue:`, err?.message || err);
+      const msg = err?.message || String(err);
+      if (msg.includes('suspended') || msg.includes('PERMISSION_DENIED') || msg.includes('403')) {
+        return null;
+      }
+      console.warn(`Gemini generation with ${model} encountered an issue:`, msg);
       lastError = err;
     }
   }
@@ -140,7 +144,6 @@ Return a valid JSON object matching this schema:
     }
     throw new Error('Gemini returned empty response');
   } catch (error: any) {
-    console.error('Error generating exam (using fallback):', error?.message || error);
     const fallback = generateFallbackExam(subject, topic, gradeLevel, difficulty, durationMinutes, totalMarks, institutionHeader);
     const normalized = normalizeExam(fallback, subject, topic, gradeLevel, difficulty, durationMinutes, totalMarks, institutionHeader);
     return res.json({
@@ -214,7 +217,6 @@ Return a valid JSON object matching this schema:
     }
     throw new Error('Gemini returned empty response');
   } catch (error: any) {
-    console.error('Error generating worksheet (using fallback):', error?.message || error);
     const fallback = generateFallbackWorksheet(subject, topic, gradeLevel, difficulty);
     const normalized = normalizeWorksheet(fallback, subject, topic, gradeLevel, difficulty);
     return res.json({
@@ -284,7 +286,6 @@ Return a valid JSON object matching this schema:
     }
     throw new Error('Gemini returned empty response');
   } catch (error: any) {
-    console.error('Error generating lesson plan (using fallback):', error?.message || error);
     const fallback = generateFallbackLessonPlan(subject, topic, gradeLevel, Number(durationMinutes) || 60);
     const normalized = normalizeLessonPlan(fallback, subject, topic, gradeLevel, Number(durationMinutes) || 60);
     return res.json({
@@ -355,7 +356,6 @@ Return a valid JSON object matching this schema:
     }
     throw new Error('Gemini returned empty response');
   } catch (error: any) {
-    console.error('Error generating PDF Quiz (using fallback):', error?.message || error);
     const fallback = generateFallbackPdfQuiz(sourceDocName, extractedText || 'Document content', totalQuestions, difficulty, gradeLevel);
     const normalized = normalizePdfQuiz(fallback, sourceDocName, gradeLevel, difficulty);
     return res.json({
@@ -418,7 +418,6 @@ Return a valid JSON object matching this schema:
     }
     throw new Error('Gemini returned empty response');
   } catch (error: any) {
-    console.error('Error generating PDF Study Pack (using fallback):', error?.message || error);
     const fallback = generateFallbackStudyPack(sourceDocName, extractedText || 'Sample text', gradeLevel);
     const normalized = normalizePdfStudyPack(fallback, sourceDocName, gradeLevel);
     return res.json({
@@ -515,7 +514,6 @@ Return ONLY valid JSON matching this schema:
     }
     throw new Error('Gemini returned empty response');
   } catch (error: any) {
-    console.error('Error generating presentation (using fallback):', error?.message || error);
     const fallback = generateFallbackPresentation(safeSubject, safeTopic, audienceLevel, targetSlidesCount, presentationStyle);
     const normalized = normalizePresentation(fallback, safeSubject, safeTopic, audienceLevel);
     return res.json({
@@ -611,7 +609,6 @@ Return a valid JSON object matching this schema:
     }
     throw new Error('Gemini returned empty response');
   } catch (error: any) {
-    console.error('Error generating course (using fallback):', error?.message || error);
     const fallback = generateFallbackCourse(actualTopic, subject, actualAudience, description);
     const normalized = normalizeCourse(fallback, subject, actualTopic, actualAudience);
     return res.json({
@@ -666,7 +663,6 @@ Return a valid JSON object matching this schema:
     }
     throw new Error('Gemini returned empty response');
   } catch (error: any) {
-    console.error('Error generating learning path (using fallback):', error?.message || error);
     const fallback = generateFallbackLearningPath(title, subject, targetGoal);
     const normalized = normalizeLearningPath(fallback, subject, title, targetGoal);
     return res.json({
@@ -797,7 +793,6 @@ Return a valid JSON object matching this schema:
       }
       throw new Error('Gemini returned empty response');
     } catch (error: any) {
-      console.error('Error generating mind map (using fallback):', error?.message || error);
       const fallback = generateFallbackMindMap(trimmedTopic, subject, gradeLevel, sourceMaterial, sourceFileName);
       const normalized = normalizeMindMap(fallback, trimmedTopic, subject, gradeLevel, sourceFileName);
       return res.json({
