@@ -434,16 +434,17 @@ app.post('/api/generate/presentation', async (req, res) => {
     subject,
     topic,
     audienceLevel = 'Senior Secondary / High School (Grades 9-12)',
-    slidesCount = 6,
+    questionCount = 5,
     presentationStyle = 'Educational Lecture & Discussion',
     keyPoints = '',
     learningObjectives = [],
     sourceMaterial = '',
   } = req.body;
 
+  const slidesCount = questionCount;
   const safeTopic = (topic || '').trim() || (subject || '').trim() || 'Curriculum Subject';
   const safeSubject = (subject || '').trim() || safeTopic;
-  const targetSlidesCount = Math.max(3, Math.min(20, Number(slidesCount) || 6));
+  const targetSlidesCount = Math.max(5, Math.min(15, Number(slidesCount) || 5));
 
   try {
     const prompt = `You are an elite educational presentation designer crafting a master classroom slide deck for Proudly Afrikan Build.
@@ -457,27 +458,25 @@ ${Array.isArray(learningObjectives) && learningObjectives.length > 0 ? `Learning
 ${sourceMaterial ? `Source Material Excerpt: "${sourceMaterial.slice(0, 3000)}"` : ''}
 
 CRITICAL REQUIREMENTS:
-- Generate EXACTLY ${targetSlidesCount} detailed, pedagogical slides in the "slides" array.
-- Structure the presentation deck progressively:
-  Slide 1: Title slide ("slideType": "title") introducing the topic, pedagogical scope, and target audience.
-  Slide 2: Roadmap & Key Learning Objectives ("slideType": "concept") with 3-4 clear, measurable targets.
-  Slide 3: Foundational Principles & Core Terminology ("slideType": "concept") defining governing laws or terms.
-  Slide 4: Deep-Dive Mechanisms & Frameworks ("slideType": "concept") explaining how systems or concepts function.
-  Slide 5: Real-World African / Global Case Study ("slideType": "case-study") providing authentic practical application.
-  Slide 6: Guided Problem Solving & Methodological Steps ("slideType": "concept").
-  Slide 7: Interactive Classroom Activity / Group Challenge ("slideType": "activity") with prompt.
-  Slide 8+: Comparative Nuance, Common Misconceptions, and Contemporary Relevance.
-  Final Slide: Synthesis, Actionable Key Takeaways & Reflection ("slideType": "summary").
+- MANDATORY STRUCTURAL ENFORCEMENT: You MUST follow the slide structure defined below based on the slide count. DO NOT deviate.
+  - 5 Slides: Synopsis, Background, Key Developments, Key Takeaway, Conclusion.
+  - 10 Slides: Synopsis, Background, 3x Key Developments/Case Studies, 2x Analytical Depth, Key Takeaway, 2x Practical Applications, Conclusion.
+  - 15 Slides: Synopsis, Background, 4x Key Developments/Case Studies, 3x Analytical Depth, 2x Practical Applications, 2x Synthesis/Discussion, Key Takeaway, Conclusion.
+- FOR EVERY SLIDE CONTENT:
+  - Do NOT use bullet points or numbered lists.
+  - Use concise, professional paragraphs to convey information.
+  - MAXIMUM LENGTH: Strictly limit total paragraph text per slide to approximately 280 characters.
+  - CONTENT QUALITY: Replace ALL placeholder/generic text with specific, high-quality, topic-relevant educational content derived from: Topic: "${safeTopic}" and Subject: "${safeSubject}". Start directly with core content.
 - For EVERY slide, provide:
   - "id": "s-1", "s-2", etc.
   - "slideNumber": 1, 2, ...
   - "slideType": "title" | "concept" | "case-study" | "activity" | "summary"
   - "title": Clear, engaging uppercase heading
   - "subtitle": Brief explanatory subhead
-  - "bulletPoints": 3 to 5 substantive, informative bullet points (avoid generic one-word bullets)
-  - "speakerNotes": Thorough, conversational notes for the instructor explaining the concept and giving teaching tips
-  - "suggestedVisualOrDiagram": Concrete description of what graphic, whiteboard diagram, map, or chart to show
-  - "discussionOrEngagementPrompt": A thought-provoking question to ask the audience
+  - "slideContent": The core text as concise, focused paragraphs (Max ~280 chars total).
+  - "speakerNotes": Thorough, conversational notes for the instructor.
+  - "suggestedVisualOrDiagram": Concrete description of what graphic or chart to show.
+  - "discussionOrEngagementPrompt": A thought-provoking question to ask the audience.
 
 Return ONLY valid JSON matching this schema:
 {
@@ -496,16 +495,16 @@ Return ONLY valid JSON matching this schema:
       "slideNumber": 1,
       "slideType": "title",
       "title": "${safeTopic}",
-      "subtitle": "Foundations, Frameworks & Practical Applications",
-      "bulletPoints": ["Core curriculum orientation", "Key analytical perspectives", "Discussion and case study roadmap"],
-      "speakerNotes": "Welcome the learners and introduce the key inquiries...",
-      "suggestedVisualOrDiagram": "Visual title card layout",
-      "discussionOrEngagementPrompt": "Introductory inquiry question"
+      "subtitle": "Foundations & Analysis",
+      "slideContent": "Paragraph 1... Paragraph 2...",
+      "speakerNotes": "...",
+      "suggestedVisualOrDiagram": "...",
+      "discussionOrEngagementPrompt": "..."
     }
   ],
   "conclusionTakeaway": "Mastery in ${safeTopic} empowers critical reasoning and practical innovation.",
   "createdAt": "${new Date().toISOString()}"
-}`;
+}`
 
     const parsed = await generateJsonWithGemini(prompt, 0.4);
     if (parsed) {
@@ -1210,38 +1209,32 @@ function normalizePresentation(data: any, subject: string, topic: string, audien
     {
       slideNumber: 1,
       title: `Introduction to ${topic || subject}`,
-      bulletPoints: [`Overview and significance of ${topic || subject}`, 'Core learning objectives', 'Key historical and practical contexts'],
+      slideContent: `An overview and significance of ${topic || subject}. We will explore the core learning objectives and key historical and practical contexts.`,
       speakerNotes: `Welcome everyone. Today we will explore ${topic || subject}, analyzing its core mechanisms and real-world relevance.`
     },
     {
       slideNumber: 2,
       title: 'Core Principles & Mechanisms',
-      bulletPoints: ['Foundational frameworks and structural rules', 'Critical dynamics and equations/relationships', 'Common misconceptions and clarifications'],
+      slideContent: 'Focus on explaining the underlying mechanisms that make these principles work. We will examine foundational frameworks, critical dynamics, and clarifications of common misconceptions.',
       speakerNotes: 'Focus on explaining the underlying mechanisms that make these principles work.'
     },
     {
       slideNumber: 3,
       title: 'Applied Scenarios & Summary',
-      bulletPoints: ['Real-world case studies and demonstrations', 'Synthesizing takeaways for mastery', 'Next steps and recommended inquiries'],
+      slideContent: 'Explore real-world case studies and demonstrations. We will synthesize takeaways for mastery and discuss next steps and recommended inquiries.',
       speakerNotes: 'Invite questions and encourage participants to apply the concept to their own projects.'
     }
   ];
 
   const slides = rawSlides.map((s: any, idx: number) => {
-    const rawBullets = Array.isArray(s.bullets) && s.bullets.length > 0
-      ? s.bullets
-      : Array.isArray(s.bulletPoints) && s.bulletPoints.length > 0
-      ? s.bulletPoints
-      : [`Core analytical foundation of ${topic || subject}`, `Key mechanisms and practical examples`, `Summary takeaway and discussion question`];
-
     return {
       id: s.id || `s-${idx + 1}`,
       slideNumber: Number(s.slideNumber) || idx + 1,
       slideType: s.slideType || (idx === 0 ? 'title' : 'content'),
       title: s.title || `Slide ${idx + 1}: ${topic || subject}`,
       subtitle: s.subtitle || '',
-      bullets: rawBullets,
-      bulletPoints: rawBullets,
+      slideContent: s.slideContent || s.content || '',
+      bulletPoints: Array.isArray(s.bulletPoints) ? s.bulletPoints : [],
       suggestedVisualOrDiagram: s.suggestedVisualOrDiagram || s.visualCue || 'Conceptual breakdown diagram',
       visualCue: s.visualCue || s.suggestedVisualOrDiagram || 'Conceptual breakdown diagram',
       discussionOrEngagementPrompt: s.discussionOrEngagementPrompt || 'What are the main implications of this concept?',

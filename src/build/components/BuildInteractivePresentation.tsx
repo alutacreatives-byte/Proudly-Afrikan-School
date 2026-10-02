@@ -30,6 +30,7 @@ export interface SlideItem {
   title: string;
   subtitle?: string;
   bulletPoints?: string[];
+  slideContent?: string;
   bullets?: string[];
   keyPoints?: string[];
   speakerNotes?: string;
@@ -358,11 +359,12 @@ export const BuildInteractivePresentation: React.FC<BuildInteractivePresentation
     slideNumber: s.slideNumber || idx + 1,
     title: s.title || s.heading || `Slide ${idx + 1}`,
     subtitle: s.subtitle || s.subheading || '',
+    slideContent: s.slideContent || s.content || '',
     bulletPoints: s.bulletPoints || s.bullets || s.keyPoints || [],
     speakerNotes: s.speakerNotes || s.notes || '',
     visualCue: s.visualCue || s.diagramDescription || '',
     layout: s.layout || (idx === 0 ? 'title' : idx === rawSlides.length - 1 ? 'summary' : 'content'),
-    conceptBadge: s.conceptBadge || (idx === 0 ? 'OVERVIEW' : `KEY CONCEPT 0${idx}`),
+    conceptBadge: s.conceptBadge || (idx === 0 ? 'OVERVIEW' : `KEY CONCEPT 0${idx + 1}`),
   }));
 
   const totalSlides = slides.length;
@@ -996,68 +998,6 @@ export const BuildInteractivePresentation: React.FC<BuildInteractivePresentation
         {/* Ambient Topographical Overlay Grid & Subtle Glow */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-900/10 via-transparent to-black/60 pointer-events-none z-1" />
 
-        {/* Left Side 3D Peeking Card (Previous Slide) */}
-        {prevSlideItem && (
-          <div
-            onClick={prevSlide}
-            style={{
-              transform: `translateX(-68%) translateZ(-160px) rotateY(26deg) scale(0.85)`,
-              transformStyle: 'preserve-3d',
-            }}
-            className="absolute left-0 w-[70%] max-w-[620px] h-[78%] rounded-3xl bg-stone-900/70 backdrop-blur-md border border-stone-700/50 p-8 text-stone-400 hidden md:flex flex-col justify-between cursor-pointer opacity-35 hover:opacity-70 transition-all duration-300 z-10 shadow-2xl"
-          >
-            <div className="flex items-center justify-between text-xs font-mono text-stone-500 uppercase">
-              <span>PREVIOUS</span>
-              <span>SLIDE {prevSlideItem.slideNumber}</span>
-            </div>
-            <div>
-              <h3 className="font-display font-black text-2xl uppercase tracking-tight text-stone-300 line-clamp-2">
-                {prevSlideItem.title}
-              </h3>
-              {prevSlideItem.subtitle && (
-                <p className="font-sans text-xs text-stone-400 mt-2 line-clamp-2">
-                  {prevSlideItem.subtitle}
-                </p>
-              )}
-            </div>
-            <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#E05A2B]">
-              <ChevronLeft className="w-4 h-4" />
-              <span>TAP TO RETURN</span>
-            </div>
-          </div>
-        )}
-
-        {/* Right Side 3D Peeking Card (Next Slide) */}
-        {nextSlideItem && (
-          <div
-            onClick={nextSlide}
-            style={{
-              transform: `translateX(68%) translateZ(-160px) rotateY(-26deg) scale(0.85)`,
-              transformStyle: 'preserve-3d',
-            }}
-            className="absolute right-0 w-[70%] max-w-[620px] h-[78%] rounded-3xl bg-stone-900/70 backdrop-blur-md border border-stone-700/50 p-8 text-stone-400 hidden md:flex flex-col justify-between cursor-pointer opacity-35 hover:opacity-70 transition-all duration-300 z-10 shadow-2xl"
-          >
-            <div className="flex items-center justify-between text-xs font-mono text-stone-500 uppercase">
-              <span>UP NEXT</span>
-              <span>SLIDE {nextSlideItem.slideNumber}</span>
-            </div>
-            <div>
-              <h3 className="font-display font-black text-2xl uppercase tracking-tight text-stone-300 line-clamp-2">
-                {nextSlideItem.title}
-              </h3>
-              {nextSlideItem.subtitle && (
-                <p className="font-sans text-xs text-stone-400 mt-2 line-clamp-2">
-                  {nextSlideItem.subtitle}
-                </p>
-              )}
-            </div>
-            <div className="flex items-center justify-end gap-2 text-xs font-mono font-bold text-[#D99B00]">
-              <span>ADVANCE</span>
-              <ChevronRight className="w-4 h-4" />
-            </div>
-          </div>
-        )}
-
         {/* Active Center Slide (Layered 3D Tilt Card with Parallax Depth) */}
         <div
           style={{
@@ -1108,21 +1048,22 @@ export const BuildInteractivePresentation: React.FC<BuildInteractivePresentation
               )}
             </div>
 
-            {/* Bullet Points with High-Legibility Glass Pillars */}
-            {bullets.length > 0 && (
-              <div className="grid grid-cols-1 gap-3 pt-2">
-                {bullets.map((point: string, idx: number) => (
-                  <div
-                    key={idx}
-                    className="p-4 sm:p-5 rounded-2xl bg-white/[0.06] backdrop-blur-md border border-white/10 hover:border-[#E05A2B]/40 hover:bg-white/[0.1] transition-all flex items-start gap-3.5 group shadow-sm"
-                  >
-                    <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-[#E05A2B] to-[#D99B00] text-white flex items-center justify-center font-mono text-xs font-bold shrink-0 mt-0.5 shadow-xs">
-                      {idx + 1}
-                    </div>
-                    <span className="font-sans text-sm sm:text-base text-stone-100 font-medium leading-relaxed group-hover:text-white transition-colors">
-                      {point}
-                    </span>
-                  </div>
+            {/* Slide Content (Paragraphs) */}
+            {currentSlide.slideContent && (
+              <div className="pt-4 space-y-4">
+                <p className="font-sans text-lg text-stone-100 font-normal leading-relaxed">
+                  {currentSlide.slideContent}
+                </p>
+              </div>
+            )}
+            
+            {/* Fallback rendering for older content without slideContent */}
+            {!currentSlide.slideContent && currentSlide.bulletPoints && currentSlide.bulletPoints.length > 0 && (
+              <div className="pt-4 space-y-4">
+                {currentSlide.bulletPoints.map((point: string, idx: number) => (
+                  <p key={idx} className="font-sans text-lg text-stone-100 font-normal leading-relaxed">
+                    {point}
+                  </p>
                 ))}
               </div>
             )}
@@ -1181,7 +1122,7 @@ export const BuildInteractivePresentation: React.FC<BuildInteractivePresentation
           disabled={activeSlideIndex === 0}
           onClick={prevSlide}
           aria-label="Previous Slide"
-          className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-stone-900/80 backdrop-blur-md border border-white/15 text-white flex items-center justify-center hover:scale-110 hover:border-[#E05A2B] active:scale-95 disabled:opacity-20 disabled:hover:scale-100 transition-all z-30 cursor-pointer shadow-xl"
+          className="hidden absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-stone-900/80 backdrop-blur-md border border-white/15 text-white flex items-center justify-center hover:scale-110 hover:border-[#E05A2B] active:scale-95 disabled:opacity-20 disabled:hover:scale-100 transition-all z-30 cursor-pointer shadow-xl"
         >
           <ChevronLeft className="w-6 h-6 text-white" />
         </button>
@@ -1191,7 +1132,7 @@ export const BuildInteractivePresentation: React.FC<BuildInteractivePresentation
           disabled={activeSlideIndex >= totalSlides - 1}
           onClick={nextSlide}
           aria-label="Next Slide"
-          className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-stone-900/80 backdrop-blur-md border border-white/15 text-white flex items-center justify-center hover:scale-110 hover:border-[#D99B00] active:scale-95 disabled:opacity-20 disabled:hover:scale-100 transition-all z-30 cursor-pointer shadow-xl"
+          className="hidden absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-stone-900/80 backdrop-blur-md border border-white/15 text-white flex items-center justify-center hover:scale-110 hover:border-[#D99B00] active:scale-95 disabled:opacity-20 disabled:hover:scale-100 transition-all z-30 cursor-pointer shadow-xl"
         >
           <ChevronRight className="w-6 h-6 text-white" />
         </button>

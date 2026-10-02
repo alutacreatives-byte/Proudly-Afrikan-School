@@ -406,10 +406,9 @@ export const BuildGeneratorView: React.FC<BuildGeneratorViewProps> = ({
                 onChange={(e) => setItemCount(Number(e.target.value))}
                 className="w-full bg-[#EFE8DE] border border-[#E4DCD0] rounded-2xl p-3.5 font-mono text-xs sm:text-sm text-stone-900 focus:outline-none focus:border-[#E05A2B]"
               >
-                <option value={5}>5 Items / Slides</option>
-                <option value={10}>10 Items / Slides (Standard)</option>
-                <option value={15}>15 Items / Slides</option>
-                <option value={20}>20 Items / Slides (Comprehensive)</option>
+                <option value={5}>5 Slides</option>
+                <option value={10}>10 Slides</option>
+                <option value={15}>15 Slides</option>
               </select>
             )}
           </div>
@@ -560,15 +559,17 @@ function renderResourceContent(
   // 1. PRESENTATION / SLIDE DECK (Dynamic WebGL movement & Modern 3D Layout)
   if (toolType === 'presentation' || Array.isArray(data.slides) || data.topic || resource.title) {
     let slides = Array.isArray(data.slides) ? data.slides : [];
+    let finalResource = resource;
+
     if (slides.length === 0) {
       slides = [
         {
           id: 's-1',
           slideNumber: 1,
           slideType: 'title',
-          title: resource.title || data.topic || 'Presentation Deck',
-          subtitle: data.subtitle || 'Comprehensive Educational Presentation',
-          bulletPoints: ['Core curriculum orientation', 'Key analytical perspectives', 'Discussion roadmap'],
+          title: `SYNOPSIS: ${resource.title || data.topic || 'Presentation'}`,
+          subtitle: 'Overview and core scope',
+          slideContent: 'An introduction to this comprehensive presentation, outlining the essential synopsis, the roadmap for analysis, and the core pedagogical objectives designed to foster critical reasoning and applied understanding.',
           speakerNotes: 'Welcome the learners and introduce the key inquiries.',
           suggestedVisualOrDiagram: 'Visual title card layout',
           discussionOrEngagementPrompt: 'Introductory inquiry question'
@@ -577,44 +578,64 @@ function renderResourceContent(
           id: 's-2',
           slideNumber: 2,
           slideType: 'concept',
-          title: 'Core Principles & Mechanisms',
-          subtitle: 'Foundational framework',
-          bulletPoints: ['Foundational structural framework', 'Key governing principles', 'Applied examples'],
-          speakerNotes: 'Explain the core principles clearly.',
-          suggestedVisualOrDiagram: 'Structural diagram',
-          discussionOrEngagementPrompt: 'How does this mechanism operate in practice?'
+          title: 'BACKGROUND: FOUNDATIONAL PRINCIPLES',
+          subtitle: 'Context and baseline',
+          slideContent: 'This section establishes the background context and foundational principles of the topic. We examine the essential historical and conceptual baseline necessary for a robust understanding of the subject matter.',
+          speakerNotes: 'Establish the context clearly for all learners.',
+          suggestedVisualOrDiagram: 'Contextual timeline or baseline diagram',
+          discussionOrEngagementPrompt: 'What historical factors shaped this concept?'
         },
         {
           id: 's-3',
           slideNumber: 3,
+          slideType: 'concept',
+          title: 'KEY DEVELOPMENTS & APPLICATIONS',
+          subtitle: 'Analytical insights',
+          slideContent: 'We explore the key developments, dynamics, and real-world applications of the topic. By analyzing these critical points, we gain deeper insight into the practical mechanisms and implications.',
+          speakerNotes: 'Explain the core developments and provide concrete examples.',
+          suggestedVisualOrDiagram: 'Structural application diagram',
+          discussionOrEngagementPrompt: 'How are these developments applied in practice?'
+        },
+        {
+          id: 's-4',
+          slideNumber: 4,
+          slideType: 'concept',
+          title: 'KEY TAKEAWAY: CRITICAL SYNTHESIS',
+          subtitle: 'Refining the insights',
+          slideContent: 'This takeaway emphasizes the critical synthesis of our key insights. We focus on the most essential concepts to ensure a high level of mastery and practical application of the knowledge gained.',
+          speakerNotes: 'Reiterate the primary takeaway for the students.',
+          suggestedVisualOrDiagram: 'Synthesis chart',
+          discussionOrEngagementPrompt: 'What is the most critical insight you have gained?'
+        },
+        {
+          id: 's-5',
+          slideNumber: 5,
           slideType: 'summary',
-          title: 'Summary & Key Takeaways',
+          title: 'CONCLUSION: FUTURE HORIZONS',
           subtitle: 'Synthesis and reflection',
-          bulletPoints: ['Mastery of core concepts', 'Practical applications', 'Final discussion prompt'],
-          speakerNotes: 'Summarize key takeaways.',
-          suggestedVisualOrDiagram: 'Summary table',
-          discussionOrEngagementPrompt: 'What is your primary takeaway from today?'
+          slideContent: 'We conclude by summarizing our findings and looking toward future research and applications. This final overview reinforces the primary insights and encourages forward-looking critical reflection.',
+          speakerNotes: 'Conclude the presentation and encourage further study.',
+          suggestedVisualOrDiagram: 'Future outlook graphic',
+          discussionOrEngagementPrompt: 'How will you apply this knowledge in the future?'
         }
       ];
-      data.slides = slides;
+      finalResource = { ...resource, data: { ...data, slides: slides } };
     }
 
     return (
       <BuildInteractivePresentation
-        resource={resource}
+        resource={finalResource}
         activeSlideIndex={activeSlideIndex}
         setActiveSlideIndex={setActiveSlideIndex}
         showSpeakerNotes={showSpeakerNotes}
         setShowSpeakerNotes={setShowSpeakerNotes}
         isFullscreen={isFullscreenPresentation}
         setIsFullscreen={setIsFullscreenPresentation}
-        onExportDoc={() => exportBuildResource(resource, 'doc')}
-        onExportPdf={() => exportBuildResource(resource, 'pdf')}
+        onExportDoc={() => exportBuildResource(finalResource, 'doc')}
+        onExportPdf={() => exportBuildResource(finalResource, 'pdf')}
       />
     );
   }
-
-  // 2. EXAM & TEST PAPER
   if (toolType === 'exam' || Array.isArray(data.sections) || Array.isArray(data.questions)) {
     const sections = Array.isArray(data.sections) ? data.sections : [];
     const questions = Array.isArray(data.questions) ? data.questions : [];
