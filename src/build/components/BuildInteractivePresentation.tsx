@@ -76,6 +76,13 @@ const FRAGMENT_SHADER_SRC = `
   uniform vec2 uMouse;
   uniform float uDistortionStrength;
   uniform float uSlideSeed;
+  uniform vec3 uColorA;
+  uniform vec3 uColorB;
+  uniform vec3 uColorC;
+  uniform vec3 uPrevColorA;
+  uniform vec3 uPrevColorB;
+  uniform vec3 uPrevColorC;
+  uniform float uColorBlend;
 
   // Simplex 2D noise helper
   vec3 permute(vec3 x) { return mod(((x*34.0)+1.0)*x, 289.0); }
@@ -134,15 +141,14 @@ const FRAGMENT_SHADER_SRC = `
     vec2 uvG = uv + vec2(totalDisplacement * 1.0, totalDisplacement * 1.0);
     vec2 uvB = uv + vec2(totalDisplacement * 0.85, totalDisplacement * 1.15);
 
-    // Base background colors:
-    // Charcoal deep base: #0F0F12
-    vec3 cBg = vec3(0.06, 0.06, 0.075);
-    // Signature QUIZ Orange: #E05A2B
-    vec3 cOrange = vec3(0.878, 0.353, 0.169);
-    // Warm Mustard Yellow: #D99B00
-    vec3 cMustard = vec3(0.851, 0.608, 0.0);
-    // Amber mid-tone: #EA8B1C
-    vec3 cAmber = vec3(0.918, 0.545, 0.11);
+    // Base background dark charcoal base: #09090D
+    vec3 cBg = vec3(0.035, 0.035, 0.045);
+
+    // Smoothly blend between previous slide palette and active slide palette from dark colour treatments
+    float cb = smoothstep(0.0, 1.0, uColorBlend);
+    vec3 palA = mix(uPrevColorA, uColorA, cb);
+    vec3 palB = mix(uPrevColorB, uColorB, cb);
+    vec3 palC = mix(uPrevColorC, uColorC, cb);
 
     // Fluid ribbon gradient field
     float ribbon1 = sin(uvG.x * 3.8 + uvG.y * 4.2 + uTime * 0.35 + noise1 * 2.2);
@@ -154,27 +160,107 @@ const FRAGMENT_SHADER_SRC = `
     float gChannel = flow;
     float bChannel = smoothstep(-0.8, 0.6, cos(uvB.x * 5.2 - uvB.y * 3.1 - uTime * 0.45 + noise2 * 2.5));
 
-    // Dynamic gradient blend from Orange to Mustard Yellow
-    vec3 brandGradient = mix(cOrange, cMustard, clamp(uvG.x * 0.8 + uvG.y * 0.4 + sin(uTime * 0.2) * 0.2, 0.0, 1.0));
-    brandGradient = mix(brandGradient, cAmber, clamp(noise1 * 0.5 + 0.5, 0.0, 1.0));
+    // Dynamic dark gradient blend alternating between slides
+    vec3 brandGradient = mix(palA, palB, clamp(uvG.x * 0.75 + uvG.y * 0.45 + sin(uTime * 0.22) * 0.22, 0.0, 1.0));
+    brandGradient = mix(brandGradient, palC, clamp(noise1 * 0.5 + 0.5, 0.0, 1.0));
 
-    // Composite fluid color with subtle vignette and dark stage
-    vec3 finalColor = mix(cBg, brandGradient * 0.85, vec3(rChannel * 0.42, gChannel * 0.38, bChannel * 0.25));
+    // Rich dark fluid wave intensity across ribbons (always dark, never bright or pale)
+    float fluidIntensity = clamp((rChannel * 0.70 + gChannel * 0.80 + bChannel * 0.60) * 0.68, 0.0, 1.0);
+    vec3 finalColor = mix(cBg, brandGradient, fluidIntensity);
 
-    // Concentric glowing halo around center / mouse
-    float halo = exp(-length(p) * 1.8) * 0.25;
-    finalColor += brandGradient * halo;
+    // Subtle dark glowing center halo tinted by active primary color
+    float halo = exp(-length(p) * 1.5) * 0.30;
+    finalColor += palA * halo;
 
-    // Fluid shimmer on transition
-    finalColor += vec3(1.0, 0.85, 0.5) * transitionPulse * 0.15;
+    // Fluid crest highlight tinted by secondary color
+    float crest = pow(clamp(flow * 0.9 + noise1 * 0.25, 0.0, 1.0), 2.5) * 0.20;
+    finalColor += palB * crest;
 
-    // Corner vignette
-    float vignette = 1.0 - smoothstep(0.4, 1.3, length(uv - 0.5) * 1.4);
-    finalColor *= clamp(vignette, 0.35, 1.0);
+    // Fluid shimmer on transition matching accent color
+    finalColor += palC * transitionPulse * 0.25;
+
+    // Corner vignette keeping text readable while retaining rich fluid edges
+    float vignette = 1.0 - smoothstep(0.45, 1.35, length(uv - 0.5) * 1.3);
+    finalColor *= clamp(vignette, 0.4, 1.0);
 
     gl_FragColor = vec4(finalColor, 1.0);
   }
 `;
+
+interface BuildColorPalette {
+  name: string;
+  primary: [number, number, number];
+  secondary: [number, number, number];
+  accent: [number, number, number];
+}
+
+// Alternating DARK fluid background colour treatments ensuring strong text contrast:
+// 1. Dark orange
+// 2. Dark blue
+// 3. Deep purple
+// 4. Deep burgundy
+// 5. Dark teal
+// 6. Midnight blue
+// 7. Deep indigo
+// 8. Dark charcoal
+const BUILD_PALETTES: BuildColorPalette[] = [
+  // 1. Dark Orange: Deep burnt sienna & smoldering terracotta
+  {
+    name: 'Dark Orange',
+    primary: [0.42, 0.16, 0.05], // Deep Burnt Sienna #6B290D
+    secondary: [0.28, 0.10, 0.03], // Dark Terracotta #471A08
+    accent: [0.52, 0.22, 0.07], // Smoldering Amber #853812
+  },
+  // 2. Dark Blue: Deep ocean sapphire & dark royal navy
+  {
+    name: 'Dark Blue',
+    primary: [0.07, 0.15, 0.36], // Deep Navy Blue #12265C
+    secondary: [0.04, 0.09, 0.24], // Midnight Ocean #0A173D
+    accent: [0.12, 0.22, 0.48], // Dark Royal Blue #1F387A
+  },
+  // 3. Deep Purple: Royal dark plum & midnight amethyst
+  {
+    name: 'Deep Purple',
+    primary: [0.24, 0.07, 0.34], // Royal Dark Plum #3D1257
+    secondary: [0.14, 0.04, 0.22], // Midnight Violet #240A38
+    accent: [0.32, 0.10, 0.44], // Dark Amethyst #521A70
+  },
+  // 4. Deep Burgundy: Dark wine, maroon & oxblood
+  {
+    name: 'Deep Burgundy',
+    primary: [0.32, 0.05, 0.12], // Dark Maroon Wine #520D1F
+    secondary: [0.20, 0.03, 0.08], // Deep Oxblood #330814
+    accent: [0.42, 0.08, 0.16], // Black Cherry #6B1429
+  },
+  // 5. Dark Teal: Abyssal ocean teal & dark petrol
+  {
+    name: 'Dark Teal',
+    primary: [0.04, 0.22, 0.24], // Deep Abyssal Teal #0A383D
+    secondary: [0.02, 0.13, 0.15], // Dark Petrol #052126
+    accent: [0.08, 0.28, 0.30], // Deep Cyan Trench #14474D
+  },
+  // 6. Midnight Blue: Starlight midnight cosmos
+  {
+    name: 'Midnight Blue',
+    primary: [0.05, 0.09, 0.24], // Starlight Midnight #0D173D
+    secondary: [0.02, 0.05, 0.15], // Deep Cosmos #050D26
+    accent: [0.09, 0.15, 0.34], // Night Sky #172657
+  },
+  // 7. Deep Indigo: Dark twilight indigo
+  {
+    name: 'Deep Indigo',
+    primary: [0.14, 0.07, 0.32], // Dark Mystic Indigo #241252
+    secondary: [0.08, 0.03, 0.20], // Twilight Shadow #140833
+    accent: [0.20, 0.11, 0.42], // Deep Violet Indigo #331C6B
+  },
+  // 8. Dark Charcoal: Slate graphite & smoky obsidian
+  {
+    name: 'Dark Charcoal',
+    primary: [0.12, 0.12, 0.15], // Deep Slate Graphite #1F1F26
+    secondary: [0.07, 0.07, 0.09], // Obsidian Stone #121217
+    accent: [0.17, 0.17, 0.21], // Smoky Quartz #2B2B36
+  },
+];
 
 function useWebGLShaderCanvas(
   slideIndex: number,
@@ -190,12 +276,32 @@ function useWebGLShaderCanvas(
   const startTimeRef = useRef<number>(performance.now());
   const mousePosRef = useRef<{ x: number; y: number }>({ x: 0.5, y: 0.5 });
   const targetMouseRef = useRef<{ x: number; y: number }>({ x: 0.5, y: 0.5 });
-  const progressRef = useRef<number>(0);
+
+  const currentSlideIndexRef = useRef<number>(slideIndex);
+  const prevSlideIndexRef = useRef<number>(slideIndex);
+  const colorBlendRef = useRef<number>(1.0);
+  const progressRef = useRef<number>(1.0);
   const dirRef = useRef<number>(direction);
+  const isTransitioningRef = useRef<boolean>(isTransitioning);
+  const distortionLevelRef = useRef<number>(distortionLevel);
 
   useEffect(() => {
-    dirRef.current = direction;
-    progressRef.current = 0;
+    isTransitioningRef.current = isTransitioning;
+  }, [isTransitioning]);
+
+  useEffect(() => {
+    distortionLevelRef.current = distortionLevel;
+  }, [distortionLevel]);
+
+  // When slideIndex changes, trigger smooth color blend from previous slide palette to new palette
+  useEffect(() => {
+    if (currentSlideIndexRef.current !== slideIndex) {
+      prevSlideIndexRef.current = currentSlideIndexRef.current;
+      currentSlideIndexRef.current = slideIndex;
+      colorBlendRef.current = 0.0;
+      progressRef.current = 0.0;
+      dirRef.current = direction;
+    }
   }, [slideIndex, direction]);
 
   useEffect(() => {
@@ -277,6 +383,13 @@ function useWebGLShaderCanvas(
     const uMouseLoc = gl.getUniformLocation(prog, 'uMouse');
     const uDistStrengthLoc = gl.getUniformLocation(prog, 'uDistortionStrength');
     const uSlideSeedLoc = gl.getUniformLocation(prog, 'uSlideSeed');
+    const uColorALoc = gl.getUniformLocation(prog, 'uColorA');
+    const uColorBLoc = gl.getUniformLocation(prog, 'uColorB');
+    const uColorCLoc = gl.getUniformLocation(prog, 'uColorC');
+    const uPrevColorALoc = gl.getUniformLocation(prog, 'uPrevColorA');
+    const uPrevColorBLoc = gl.getUniformLocation(prog, 'uPrevColorB');
+    const uPrevColorCLoc = gl.getUniformLocation(prog, 'uPrevColorC');
+    const uColorBlendLoc = gl.getUniformLocation(prog, 'uColorBlend');
 
     let running = true;
 
@@ -294,6 +407,11 @@ function useWebGLShaderCanvas(
         progressRef.current = Math.min(1.0, progressRef.current + 0.045);
       }
 
+      // Smoothly animate fluid color shift between slide palettes
+      if (colorBlendRef.current < 1.0) {
+        colorBlendRef.current = Math.min(1.0, colorBlendRef.current + 0.035);
+      }
+
       // Check canvas dimensions
       if (canvas.width !== canvas.clientWidth || canvas.height !== canvas.clientHeight) {
         canvas.width = Math.max(1, canvas.clientWidth);
@@ -307,8 +425,20 @@ function useWebGLShaderCanvas(
       if (uDirectionLoc) gl.uniform1f(uDirectionLoc, dirRef.current);
       if (uResolutionLoc) gl.uniform2f(uResolutionLoc, canvas.width, canvas.height);
       if (uMouseLoc) gl.uniform2f(uMouseLoc, mousePosRef.current.x, mousePosRef.current.y);
-      if (uDistStrengthLoc) gl.uniform1f(uDistStrengthLoc, (isTransitioning ? 1.6 : 0.8) * distortionLevel);
-      if (uSlideSeedLoc) gl.uniform1f(uSlideSeedLoc, slideIndex * 1.37);
+      if (uDistStrengthLoc) gl.uniform1f(uDistStrengthLoc, (isTransitioningRef.current ? 1.6 : 0.8) * distortionLevelRef.current);
+      if (uSlideSeedLoc) gl.uniform1f(uSlideSeedLoc, currentSlideIndexRef.current * 1.37);
+
+      // Alternating BUILD orange-to-mustard-yellow color treatments
+      const prevPalette = BUILD_PALETTES[prevSlideIndexRef.current % BUILD_PALETTES.length];
+      const curPalette = BUILD_PALETTES[currentSlideIndexRef.current % BUILD_PALETTES.length];
+
+      if (uColorALoc) gl.uniform3fv(uColorALoc, curPalette.primary);
+      if (uColorBLoc) gl.uniform3fv(uColorBLoc, curPalette.secondary);
+      if (uColorCLoc) gl.uniform3fv(uColorCLoc, curPalette.accent);
+      if (uPrevColorALoc) gl.uniform3fv(uPrevColorALoc, prevPalette.primary);
+      if (uPrevColorBLoc) gl.uniform3fv(uPrevColorBLoc, prevPalette.secondary);
+      if (uPrevColorCLoc) gl.uniform3fv(uPrevColorCLoc, prevPalette.accent);
+      if (uColorBlendLoc) gl.uniform1f(uColorBlendLoc, colorBlendRef.current);
 
       gl.drawArrays(gl.TRIANGLES, 0, 6);
 
@@ -336,7 +466,7 @@ function useWebGLShaderCanvas(
         if (progRef.current) gl.deleteProgram(progRef.current);
       }
     };
-  }, [slideIndex, isTransitioning, enableWebGL, distortionLevel]);
+  }, [enableWebGL]);
 
   return canvasRef;
 }
@@ -1000,11 +1130,11 @@ export const BuildInteractivePresentation: React.FC<BuildInteractivePresentation
         {/* Dynamic WebGL Shader Canvas in Background (Grisum gOEQVMO fluid displacement) */}
         <canvas
           ref={shaderCanvasRef}
-          className="absolute inset-0 w-full h-full pointer-events-none opacity-85 z-0"
+          className="absolute inset-0 w-full h-full pointer-events-none opacity-95 z-0"
         />
 
-        {/* Ambient Topographical Overlay Grid & Subtle Glow */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-900/10 via-transparent to-black/60 pointer-events-none z-1" />
+        {/* Ambient Topographical Overlay Grid & Subtle Contrast Mask */}
+        <div className="absolute inset-0 bg-radial from-transparent via-black/20 to-black/55 pointer-events-none z-1" />
 
         {/* Active Center Slide (Layered 3D Tilt Card with Parallax Depth) */}
         <div

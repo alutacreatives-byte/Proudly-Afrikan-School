@@ -76,8 +76,8 @@ export async function researchSubjectOnline(topic: string, subject = ''): Promis
     const bestTitle = topResult?.title || safeTopic;
     const sourceUrl = `https://en.wikipedia.org/wiki/${encodeURIComponent(bestTitle.replace(/\s+/g, '_'))}`;
 
-    // 2. Fetch full plain-text extract of the article
-    const contentUrl = `https://en.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&exintro=0&titles=${encodeURIComponent(bestTitle)}&format=json&origin=*`;
+    // 2. Fetch full plain-text extract of the article across all sections
+    const contentUrl = `https://en.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&titles=${encodeURIComponent(bestTitle)}&format=json&origin=*`;
     const contentRes = await fetch(contentUrl, {
       headers: { 'User-Agent': 'ProudlyAfrikanBuild/1.0 (educational research tool)' }
     });
