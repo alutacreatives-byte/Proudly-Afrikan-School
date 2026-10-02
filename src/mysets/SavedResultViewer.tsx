@@ -30,6 +30,7 @@ import { UnifiedItem } from './MySetsWorkspace';
 import { exportUnifiedItem, getCleanWorksheetTitle, downloadPresentationHtml } from '../utils/exportUtils';
 import { GlobalNavigationButtons } from '../components/GlobalNavigationButtons';
 import { BuildInteractivePresentation } from '../build/components/BuildInteractivePresentation';
+import { buildDynamicTopicSlides } from '../build/utils/presentationBuilder';
 
 interface SavedResultViewerProps {
   item: UnifiedItem;
@@ -740,70 +741,36 @@ export const SavedResultViewer: React.FC<SavedResultViewerProps> = ({
           {/* 7. SLIDE DECK VIEWER */}
           {toolType === 'presentation' && (() => {
             const itemAny = item as any;
-            const fallbackSlides = [
-              {
-                id: 's-1',
-                slideNumber: 1,
-                slideType: 'title',
-                title: item.title || anyData.topic || 'Educational Presentation',
-                subtitle: anyData.subtitle || 'Comprehensive Slide Deck & Analysis',
-                bulletPoints: ['Core curriculum orientation', 'Key analytical perspectives', 'Discussion roadmap'],
-                speakerNotes: 'Welcome the learners and introduce the key inquiries.',
-                suggestedVisualOrDiagram: 'Visual title card layout',
-                discussionOrEngagementPrompt: 'Introductory inquiry question'
-              },
-              {
-                id: 's-2',
-                slideNumber: 2,
-                slideType: 'concept',
-                title: 'Core Principles & Mechanisms',
-                subtitle: 'Foundational framework',
-                bulletPoints: ['Foundational structural framework', 'Key governing principles', 'Applied examples'],
-                speakerNotes: 'Explain the core principles clearly.',
-                suggestedVisualOrDiagram: 'Structural diagram',
-                discussionOrEngagementPrompt: 'How does this mechanism operate in practice?'
-              },
-              {
-                id: 's-3',
-                slideNumber: 3,
-                slideType: 'summary',
-                title: 'Summary & Key Takeaways',
-                subtitle: 'Synthesis and reflection',
-                bulletPoints: ['Mastery of core concepts', 'Practical applications', 'Final discussion prompt'],
-                speakerNotes: 'Summarize key takeaways.',
-                suggestedVisualOrDiagram: 'Summary table',
-                discussionOrEngagementPrompt: 'What is your primary takeaway from today?'
-              }
-            ];
+            const unwrappedData = (anyData.data && typeof anyData.data === 'object' && !Array.isArray(anyData.data))
+              ? anyData.data
+              : anyData;
 
-            const rawSlides = Array.isArray(anyData.slides) && anyData.slides.length > 0
-              ? anyData.slides
-              : (Array.isArray(itemAny.slides) && itemAny.slides.length > 0)
-                ? itemAny.slides
-                : (Array.isArray(anyData.sections) && anyData.sections.length > 0)
-                  ? anyData.sections.map((sec: any, idx: number) => ({
-                      id: `s-${idx + 1}`,
-                      slideNumber: idx + 1,
-                      slideType: 'concept',
-                      title: sec.heading || `Slide ${idx + 1}`,
-                      subtitle: '',
-                      bulletPoints: typeof sec.content === 'string' ? sec.content.split('\n').filter(Boolean) : ['Key structural principle', 'Governing mechanism', 'Practical case study'],
-                      speakerNotes: 'Key lecture points for this topic.',
-                    }))
-                  : fallbackSlides;
+            const topicName = item.title || unwrappedData.topic || anyData.topic || 'Educational Presentation';
+            const subjectName = unwrappedData.subject || anyData.subject || item.categoryOrSubject || 'Core Curriculum';
+            const grade = unwrappedData.gradeLevel || anyData.gradeLevel || 'Secondary Education';
+            const targetCount = unwrappedData.slidesCount || anyData.slidesCount || 5;
+
+            const rawSlides = Array.isArray(unwrappedData.slides) && unwrappedData.slides.length > 0
+              ? unwrappedData.slides
+              : Array.isArray(anyData.slides) && anyData.slides.length > 0
+                ? anyData.slides
+                : (Array.isArray(itemAny.slides) && itemAny.slides.length > 0)
+                  ? itemAny.slides
+                  : buildDynamicTopicSlides(topicName, subjectName, grade, targetCount);
 
             const resourceObj = {
               id: item.id || `res-${Date.now()}`,
               toolType: 'presentation',
-              title: anyData.title || item.title || 'Presentation Deck',
-              subject: anyData.subject || item.categoryOrSubject,
-              topic: anyData.topic || item.title,
-              gradeLevel: anyData.gradeLevel || 'Standard',
-              difficulty: anyData.difficulty || 'Intermediate',
+              title: unwrappedData.title || item.title || `Presentation: ${topicName}`,
+              subject: subjectName,
+              topic: topicName,
+              gradeLevel: grade,
+              difficulty: unwrappedData.difficulty || anyData.difficulty || 'Intermediate',
               createdAt: item.createdAt || new Date().toISOString(),
               data: {
-                ...anyData,
+                ...unwrappedData,
                 slides: rawSlides,
+                slidesCount: rawSlides.length,
               },
             };
 

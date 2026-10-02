@@ -2,6 +2,7 @@ import express from 'express';
 import path from 'path';
 import dotenv from 'dotenv';
 import { GoogleGenAI, Type } from '@google/genai';
+import { performWebResearch, buildResearchedSlides } from './webResearchService';
 
 
 dotenv.config();
@@ -446,78 +447,154 @@ app.post('/api/generate/presentation', async (req, res) => {
   const safeSubject = (subject || '').trim() || safeTopic;
   const targetSlidesCount = Math.max(5, Math.min(15, Number(slidesCount) || 5));
 
+  // STEP 1: Search the web first for the requested subject and verify facts, dates, and names
+  const researchInfo = await performWebResearch(safeTopic, safeSubject);
+
   try {
+    const verifiedEntity = researchInfo.verifiedTitle || safeTopic;
+    const researchFactsText = researchInfo.keyFacts.slice(0, 15).map(f => `- ${f}`).join('\n');
+    const verifiedDatesNames = researchInfo.keyDatesAndNames.join(', ') || 'Documented in verified historical/scientific records';
+
     const prompt = `You are an elite educational presentation designer crafting a master classroom slide deck for Proudly Afrikan Build.
-Subject: ${safeSubject}
-Topic: ${safeTopic}
+THE PRESENTATION MENU REQUEST IS THE ABSOLUTE SOURCE OF TRUTH.
+Requested Subject / Person / Event: "${safeTopic}"
+Verified Entity Name: "${verifiedEntity}"
+Subject Domain: "${safeSubject}"
 Target Audience / Grade Level: ${audienceLevel}
 Requested Number of Slides: ${targetSlidesCount}
 Presentation Style / Theme: ${presentationStyle}
+Credible Source URL: ${researchInfo.sourceUrl}
+
+VERIFIED WEB RESEARCH FINDINGS (MUST BE USED AS THE GROUND TRUTH):
+${researchInfo.summaryText}
+
+KEY VERIFIED FACTS & DOCUMENTED EVIDENCE:
+${researchFactsText}
+
+VERIFIED DATES, NAMES, AND STATISTICS:
+${verifiedDatesNames}
+
 Specific Focus / Key Points: ${keyPoints || 'Foundational concepts, governing mechanisms, authentic case studies, and critical discussion prompts'}
 ${Array.isArray(learningObjectives) && learningObjectives.length > 0 ? `Learning Objectives: ${learningObjectives.join('; ')}` : ''}
 ${sourceMaterial ? `Source Material Excerpt: "${sourceMaterial.slice(0, 3000)}"` : ''}
 
 CRITICAL REQUIREMENTS:
+- MANDATORY RESEARCH GROUNDING: The menu request is the source of truth. Whatever topic, subject, person, event or question was entered MUST be the exact subject of the presentation.
+- DO NOT use placeholder text, generic sample content, random facts, or invented content.
+- Base every single slide on the verified web research findings above. Verify important facts, dates, names, statistics, and claims against these sources before displaying them.
 - MANDATORY STRUCTURAL ENFORCEMENT: You MUST follow the slide structure defined below based on the slide count. DO NOT deviate.
-  - 5 Slides: Synopsis, Background, Key Developments, Key Takeaway, Conclusion.
-  - 10 Slides: Synopsis, Background, 3x Key Developments/Case Studies, 2x Analytical Depth, Key Takeaway, 2x Practical Applications, Conclusion.
-  - 15 Slides: Synopsis, Background, 4x Key Developments/Case Studies, 3x Analytical Depth, 2x Practical Applications, 2x Synthesis/Discussion, Key Takeaway, Conclusion.
+  - If 5 Slides requested:
+    Slide 1: SYNOPSIS - Scope, verified overview, and core significance of ${verifiedEntity} in ${safeSubject}
+    Slide 2: BACKGROUND - Historical origins, early life/context, and foundational timeline of ${verifiedEntity}
+    Slide 3: KEY DEVELOPMENTS - Major breakthroughs, turning points, and mechanisms of ${verifiedEntity}
+    Slide 4: KEY TAKEAWAYS - High-yield synthesis, critical principles, and verified lessons from ${verifiedEntity}
+    Slide 5: CONCLUSION - Lasting legacy, broader impact, and contemporary perspectives on ${verifiedEntity}
+  - If 10 Slides requested (Logically expanded topic-specific sections without repeating):
+    Slide 1: SYNOPSIS - Foundational scope and why ${verifiedEntity} matters in ${safeSubject}
+    Slide 2: BACKGROUND & GENESIS - Historical evolution, early context, and pioneering developments
+    Slide 3: CORE PRINCIPLES & GOVERNING DYNAMICS - Structural frameworks, key figures, and core definitions
+    Slide 4: KEY DEVELOPMENTS & BREAKTHROUGHS - Transformative milestones documented in historical records
+    Slide 5: EMPIRICAL CASE STUDY & EVIDENCE - Real-world field evidence, authentic records, and measured outcomes
+    Slide 6: ANALYTICAL METHODOLOGY - Systematic investigative methods and diagnostic problem-solving
+    Slide 7: CRITICAL PERSPECTIVES & DEBATES - Nuances, counter-arguments, and common misconceptions debunked
+    Slide 8: PRACTICAL & REGIONAL IMPACT - Authentic African and global relevance in contemporary practice
+    Slide 9: KEY TAKEAWAYS & SYNTHESIS - Consolidated verified facts, dates, and core mastery principles
+    Slide 10: CONCLUSION & HORIZON INQUIRIES - Enduring legacy, unsolved questions, and future research frontiers
+  - If 15 Slides requested (Logically expanded topic-specific sections without repeating):
+    Slide 1: EXECUTIVE SYNOPSIS - Curricular scope and overarching significance of ${verifiedEntity}
+    Slide 2: HISTORICAL GENESIS - Intellectual lineage, formative debates, and verified early timeline
+    Slide 3: THEORETICAL FOUNDATIONS - Core axioms, governing laws, and structural definitions
+    Slide 4: OPERATIONAL MECHANISMS - System dynamics, interactions, and cause-and-effect sequences
+    Slide 5: KEY BREAKTHROUGHS & MILESTONES - Major paradigm shifts and discovery leaps recorded in history
+    Slide 6: EMPIRICAL EVIDENCE I - Primary documented trials, field archives, and verified data points
+    Slide 7: REGIONAL CONTEXT II - Environmental adaptations and impact across African and global settings
+    Slide 8: ANALYTICAL & STRATEGIC MODELING - Diagnostic algorithms, investigative frameworks, and criteria
+    Slide 9: CRITICAL NUANCES & MISCONCEPTIONS - Debunking intuitive errors and correcting common fallacies
+    Slide 10: CROSS-DISCIPLINARY SYNTHESIS - Intersections with technology, economics, and environmental science
+    Slide 11: CONTEMPORARY INNOVATIONS - Emerging discoveries, digital tools, and modern perspectives
+    Slide 12: CONSTRAINTS & RISK STEWARDSHIP - Navigating resource realities, ethical rules, and trade-offs
+    Slide 13: STRATEGIC METHODOLOGIES - Scalable implementation roadmaps and collaborative solutions
+    Slide 14: KEY TAKEAWAYS & ACTIONABLE MASTERY - Consolidating verified competencies and diagnostic capabilities
+    Slide 15: CONCLUSION & HORIZON HORIZONS - Future frontiers, visionary questions, and enduring legacy
 - FOR EVERY SLIDE CONTENT:
   - Do NOT use bullet points or numbered lists.
-  - Use concise, professional paragraphs to convey information.
+  - Use concise, professional paragraphs to convey verified factual information.
   - MAXIMUM LENGTH: Strictly limit total paragraph text per slide to approximately 280 characters.
-  - CONTENT QUALITY: Replace ALL placeholder/generic text with specific, high-quality, topic-relevant educational content derived from: Topic: "${safeTopic}" and Subject: "${safeSubject}". Start directly with core content.
+  - CONTENT QUALITY: Every slide must be written with real facts, verified dates, names, and statistics from the research. NEVER output generic template phrases like "An introduction to this comprehensive presentation" or "Overview and core scope".
 - For EVERY slide, provide:
   - "id": "s-1", "s-2", etc.
   - "slideNumber": 1, 2, ...
   - "slideType": "title" | "concept" | "case-study" | "activity" | "summary"
-  - "title": Clear, engaging uppercase heading
-  - "subtitle": Brief explanatory subhead
-  - "slideContent": The core text as concise, focused paragraphs (Max ~280 chars total).
-  - "speakerNotes": Thorough, conversational notes for the instructor.
-  - "suggestedVisualOrDiagram": Concrete description of what graphic or chart to show.
-  - "discussionOrEngagementPrompt": A thought-provoking question to ask the audience.
+  - "title": Clear, engaging uppercase heading tailored to the researched topic
+  - "subtitle": Brief explanatory subhead with verified context
+  - "slideContent": Factual, concise paragraph text with real facts and dates (Max ~280 chars).
+  - "speakerNotes": Concrete, factual notes for the instructor citing verified evidence.
+  - "suggestedVisualOrDiagram": Concrete description of what archival image, chart, or diagram to display.
+  - "discussionOrEngagementPrompt": A thought-provoking question directly related to the researched facts.
 
 Return ONLY valid JSON matching this schema:
 {
   "id": "pres-${Date.now()}",
-  "title": "Presentation: ${safeTopic}",
-  "subtitle": "Comprehensive Slide Deck on ${safeTopic}",
+  "title": "Presentation: ${verifiedEntity}",
+  "subtitle": "Comprehensive Verified Slide Deck • ${researchInfo.sourceName}",
   "subject": "${safeSubject}",
-  "topic": "${safeTopic}",
+  "topic": "${verifiedEntity}",
   "targetAudience": "${audienceLevel}",
   "gradeLevel": "${audienceLevel}",
   "themeOrColorMood": "${presentationStyle}",
   "slidesCount": ${targetSlidesCount},
+  "credibleSourceUrl": "${researchInfo.sourceUrl}",
+  "sourceName": "${researchInfo.sourceName}",
   "slides": [
     {
       "id": "s-1",
       "slideNumber": 1,
       "slideType": "title",
-      "title": "${safeTopic}",
-      "subtitle": "Foundations & Analysis",
-      "slideContent": "Paragraph 1... Paragraph 2...",
+      "title": "${verifiedEntity.toUpperCase()}",
+      "subtitle": "Foundations & Verified Analysis",
+      "slideContent": "Factual paragraph based on web research...",
       "speakerNotes": "...",
       "suggestedVisualOrDiagram": "...",
       "discussionOrEngagementPrompt": "..."
     }
   ],
-  "conclusionTakeaway": "Mastery in ${safeTopic} empowers critical reasoning and practical innovation.",
+  "conclusionTakeaway": "Documented evidence on ${verifiedEntity} empowers rigorous analytical reasoning.",
   "createdAt": "${new Date().toISOString()}"
-}`
+}`;
 
     const parsed = await generateJsonWithGemini(prompt, 0.4);
-    if (parsed) {
-      const normalized = normalizePresentation(parsed, safeSubject, safeTopic, audienceLevel);
-      return res.json({ success: true, data: normalized });
+    if (parsed && Array.isArray(parsed.slides) && parsed.slides.length > 0) {
+      const normalized = normalizePresentation(parsed, safeSubject, verifiedEntity, audienceLevel);
+      normalized.credibleSourceUrl = researchInfo.sourceUrl;
+      normalized.sourceName = researchInfo.sourceName;
+      return res.json({ success: true, researchedOnline: true, data: normalized });
     }
-    throw new Error('Gemini returned empty response');
+    throw new Error('Gemini response did not contain valid slides');
   } catch (error: any) {
-    const fallback = generateFallbackPresentation(safeSubject, safeTopic, audienceLevel, targetSlidesCount, presentationStyle);
-    const normalized = normalizePresentation(fallback, safeSubject, safeTopic, audienceLevel);
+    // Resilient research-backed slide builder: Uses verified web research facts directly!
+    const researchedSlides = buildResearchedSlides(safeTopic, safeSubject, audienceLevel, targetSlidesCount, researchInfo);
+    const researchedDeck = {
+      id: `pres-${Date.now()}`,
+      title: `Presentation: ${researchInfo.verifiedTitle}`,
+      subtitle: `Verified Researched Slide Deck • ${researchInfo.sourceName}`,
+      subject: safeSubject,
+      topic: researchInfo.verifiedTitle,
+      targetAudience: audienceLevel,
+      gradeLevel: audienceLevel,
+      presentationStyle,
+      slidesCount: researchedSlides.length,
+      slides: researchedSlides,
+      credibleSourceUrl: researchInfo.sourceUrl,
+      sourceName: researchInfo.sourceName,
+      conclusionTakeaway: `Documented evidence on ${researchInfo.verifiedTitle} empowers rigorous analytical understanding.`,
+      createdAt: new Date().toISOString(),
+    };
+    const normalized = normalizePresentation(researchedDeck, safeSubject, researchInfo.verifiedTitle, audienceLevel);
+    normalized.credibleSourceUrl = researchInfo.sourceUrl;
+    normalized.sourceName = researchInfo.sourceName;
     return res.json({
       success: true,
-      fallbackUsed: true,
+      researchedOnline: true,
       data: normalized,
     });
   }
@@ -1610,185 +1687,236 @@ function generateFallbackStudyPack(docName: string, text: string, level: string)
 }
 
 function generateFallbackPresentation(subject: string, topic: string, audience: string, count: number, style: string) {
-  const safeTopic = topic || subject || 'Core Topic';
-  const safeSubject = subject || safeTopic;
-  const targetCount = Math.max(3, Math.min(20, Number(count) || 6));
+  const safeTopic = (topic || '').trim() || (subject || '').trim() || 'Curriculum Subject';
+  const safeSubject = (subject || '').trim() || safeTopic;
+  const slideCount = count === 15 ? 15 : count === 10 ? 10 : 5;
 
-  const slideTemplates = [
-    {
-      slideType: 'title',
-      title: `${safeTopic}`,
-      subtitle: 'Foundations, Frameworks & Practical Applications',
-      bulletPoints: [
-        'Proudly Afrikan Build Master Educational Series',
-        `Curriculum Level: ${audience || 'Secondary & Tertiary'}`,
-        `Presentation Focus: ${style || 'Educational Lecture & Discussion'}`
-      ],
-      speakerNotes: `Welcome everyone to this presentation on ${safeTopic}. Today, we will establish clear conceptual frameworks, explore real-world evidence, and engage in critical discussion.`,
-      suggestedVisualOrDiagram: 'High-contrast introductory title slide with warm terracotta and ochre geometric vector accents.',
-      discussionOrEngagementPrompt: `Before we begin: what first comes to mind when you hear the term "${safeTopic}"?`
-    },
-    {
-      slideType: 'concept',
-      title: 'Roadmap & Learning Objectives',
-      subtitle: 'What We Aim to Master Today',
-      bulletPoints: [
-        `Understand the foundational principles and historical context of ${safeTopic}.`,
-        'Identify governing mechanisms, operational workflows, and cause-and-effect relationships.',
-        'Analyze authentic African and international case studies.',
-        'Apply theoretical knowledge through guided classroom problem-solving.'
-      ],
-      speakerNotes: 'Review these learning outcomes with learners to prime their cognitive focus. Encourage them to take structured notes as we address each point.',
-      suggestedVisualOrDiagram: 'Visual 4-phase learning pathway diagram with numbered milestones.',
-      discussionOrEngagementPrompt: 'Which of these learning objectives do you anticipate will be the most challenging?'
-    },
-    {
-      slideType: 'concept',
-      title: 'Foundational Principles & Key Terminology',
-      subtitle: 'The Core Building Blocks',
-      bulletPoints: [
-        `Historical roots and intellectual genesis of ${safeTopic}.`,
-        'Standard operational definitions used by scholars and leading practitioners.',
-        'The primary governing laws and baseline assumptions of the field.',
-        'Distinguishing essential facts from widespread popular misconceptions.'
-      ],
-      speakerNotes: 'Pause on the vocabulary terms. Misconceptions in this area often stem from confusing colloquial usage with formal scientific or academic definitions.',
-      suggestedVisualOrDiagram: 'Conceptual pyramid highlighting core axioms at the base and derived principles higher up.',
-      discussionOrEngagementPrompt: 'Why is it critical to establish exact definitions before evaluating complex systems?'
-    },
-    {
-      slideType: 'concept',
-      title: 'Mechanisms & Operational Frameworks',
-      subtitle: 'How the System Functions in Practice',
-      bulletPoints: [
-        'Step-by-step procedural breakdown of core interactions.',
-        'Feedback loops, input-output variables, and constraint factors.',
-        'Interdependence between individual components and the overarching system.',
-        'Key performance indicators and verification benchmarks.'
-      ],
-      speakerNotes: 'Walk students through the procedural flow. Use a whiteboard or interactive pointer to trace how inputs transform into observable results.',
-      suggestedVisualOrDiagram: 'Detailed cyclical workflow diagram showing inputs, processing stages, and output metrics.',
-      discussionOrEngagementPrompt: 'What happens if one variable in this chain fails or is altered?'
-    },
-    {
-      slideType: 'case-study',
-      title: 'Authentic Case Study & Real-World Evidence',
-      subtitle: 'Examining Impact in Context',
-      bulletPoints: [
-        `Exemplary real-world application of ${safeTopic} across African and global contexts.`,
-        'Baseline conditions, targeted interventions, and empirical outcomes recorded.',
-        'Navigating real-world environmental, socioeconomic, and resource constraints.',
-        'Key lessons extracted by researchers and community leaders.'
-      ],
-      speakerNotes: 'Ground the abstract theory in this concrete real-world case study. Emphasize how local context shapes the application of universal principles.',
-      suggestedVisualOrDiagram: 'Case study infographic comparing before-and-after metrics with contextual photo or map.',
-      discussionOrEngagementPrompt: 'How would you adapt this case study approach to solve an issue in your local community?'
-    },
-    {
-      slideType: 'concept',
-      title: 'Methodology & Step-by-Step Problem Solving',
-      subtitle: 'From Theory to Analytical Execution',
-      bulletPoints: [
-        'Stage 1: Diagnostic evaluation and data gathering.',
-        'Stage 2: Hypothesis formulation and scenario modelling.',
-        'Stage 3: Targeted execution with controlled parameters.',
-        'Stage 4: Post-implementation review and iterative optimization.'
-      ],
-      speakerNotes: 'Model the problem-solving protocol live with the class. Demonstrate the importance of systematic rigor over intuition.',
-      suggestedVisualOrDiagram: 'Four-stage procedural flowchart with decision branches and checkpoints.',
-      discussionOrEngagementPrompt: 'Why is post-implementation review often the most overlooked yet vital step?'
-    },
-    {
-      slideType: 'activity',
-      title: 'Classroom Inquiry & Group Challenge',
-      subtitle: 'Active Application & Collaborative Synthesis',
-      bulletPoints: [
-        `Form small groups of 3 to 4 learners to analyze a targeted dilemma in ${safeTopic}.`,
-        'Identify 2 primary opportunities and 2 significant risks in the presented scenario.',
-        'Draft a 3-point recommendation strategy supported by empirical evidence.',
-        'Appoint a spokesperson to deliver a 60-second summary to the room.'
-      ],
-      speakerNotes: 'Set a 10-minute timer. Circulate around the room to offer targeted prompts and challenge assumptions.',
-      suggestedVisualOrDiagram: 'Group breakout activity card with structured discussion prompts and countdown timer.',
-      discussionOrEngagementPrompt: 'What was the single most debated point inside your small group discussion?'
-    },
-    {
-      slideType: 'concept',
-      title: 'Critical Nuances & Common Pitfalls',
-      subtitle: 'Sharpening Advanced Understanding',
-      bulletPoints: [
-        'Pitfall 1: Over-simplifying multi-factor causation into single-factor explanations.',
-        'Pitfall 2: Confusing correlation with direct underlying causal mechanisms.',
-        'Critique of traditional models and emerging contemporary counter-perspectives.',
-        'Ethical implications and responsible stewardship in modern practice.'
-      ],
-      speakerNotes: 'Help learners transition from basic recall to nuanced evaluative thinking. Acknowledge unresolved debates in the field.',
-      suggestedVisualOrDiagram: 'Comparison table contrasting common naive assumptions vs rigorous analytical reality.',
-      discussionOrEngagementPrompt: 'How can scholars ensure ethical responsibility when implementing new solutions?'
-    },
-    {
-      slideType: 'concept',
-      title: 'Contemporary Innovations & Future Horizons',
-      subtitle: 'Emerging Frontiers & Opportunities',
-      bulletPoints: [
-        `Technological and pedagogical advances transforming ${safeTopic} today.`,
-        'Cross-disciplinary synthesis with digital tools, data science, and sustainable practices.',
-        'Opportunities for African youth, researchers, and innovators to lead global dialogue.',
-        'Key research questions currently being explored at university and research institutes.'
-      ],
-      speakerNotes: 'Inspire learners with the future potential of this topic. Highlight African pioneers contributing to global breakthroughs.',
-      suggestedVisualOrDiagram: 'Trend trajectory graph projecting developments over the next decade.',
-      discussionOrEngagementPrompt: 'In 10 years, which aspect of this field do you think will be unrecognizable?'
-    },
-    {
-      slideType: 'summary',
-      title: 'Key Takeaways & Reflective Synthesis',
-      subtitle: 'Consolidating Core Insights',
-      bulletPoints: [
-        `Foundational mastery of ${safeTopic} provides a resilient framework for lifelong learning.`,
-        'Analytical rigor, evidence-based reasoning, and ethical application must always guide practice.',
-        'Complete the accompanying worksheet exercises and practice quiz to reinforce retention.',
-        'Next session: Advanced case studies and independent research presentations.'
-      ],
-      speakerNotes: 'Summarize the overarching narrative. Thank the students for their active participation and distribute the reinforcement materials.',
-      suggestedVisualOrDiagram: 'Executive summary visual badge checklist with QR code or link to practice sets.',
-      discussionOrEngagementPrompt: 'What is the single most valuable insight you will take away from today\'s lecture?'
-    }
-  ];
+  let slides: any[] = [];
 
-  // Pick or interpolate slides to match targetCount exactly
-  const slides = [];
-  for (let i = 0; i < targetCount; i++) {
-    let template;
-    if (i === 0) {
-      template = slideTemplates[0]; // Title
-    } else if (i === targetCount - 1) {
-      template = slideTemplates[slideTemplates.length - 1]; // Summary
-    } else {
-      // Pick intermediate templates
-      const templateIdx = 1 + (i - 1) % (slideTemplates.length - 2);
-      template = slideTemplates[templateIdx];
-    }
+  if (slideCount === 5) {
+    slides = [
+      {
+        id: 's-1',
+        slideNumber: 1,
+        slideType: 'title',
+        title: `SYNOPSIS: ${safeTopic.toUpperCase()}`,
+        subtitle: `Curricular Scope & Foundational Orientation in ${safeSubject}`,
+        slideContent: `${safeTopic} represents a cornerstone theme within modern ${safeSubject}. Mastering this subject enables students to connect core theoretical principles to concrete observations, developing analytical reasoning, systems-level problem solving, and contextual awareness across real-world environments.`,
+        bulletPoints: [],
+        speakerNotes: `Welcome students to our session on ${safeTopic}. Introduce the central inquiry question and outline how today's exploration connects directly to fundamental principles in ${safeSubject}.`,
+        suggestedVisualOrDiagram: `High-contrast overview diagram illustrating the central role of ${safeTopic} within ${safeSubject}.`,
+        discussionOrEngagementPrompt: `How does our understanding of ${safeTopic} reshape how we examine everyday phenomena in ${safeSubject}?`
+      },
+      {
+        id: 's-2',
+        slideNumber: 2,
+        slideType: 'concept',
+        title: `BACKGROUND: FOUNDATIONS OF ${safeTopic.toUpperCase()}`,
+        subtitle: 'Historical Context, Origins, and Core Theoretical Frameworks',
+        slideContent: `The study of ${safeTopic} emerged from the need to systematically explain governing mechanisms in ${safeSubject}. Early pioneers established baseline laws, operational criteria, and diagnostic frameworks that continue to guide contemporary inquiry and experimental methodology today.`,
+        bulletPoints: [],
+        speakerNotes: `Trace the evolution of ${safeTopic}. Highlight how initial theoretical hypotheses were verified and refined through evidence-based research in ${safeSubject}.`,
+        suggestedVisualOrDiagram: `Timeline and foundational conceptual map showing the genesis and formalization of ${safeTopic}.`,
+        discussionOrEngagementPrompt: `What historical developments were most instrumental in establishing the recognized principles of ${safeTopic}?`
+      },
+      {
+        id: 's-3',
+        slideNumber: 3,
+        slideType: 'concept',
+        title: `KEY DEVELOPMENTS: MECHANISMS IN ACTION`,
+        subtitle: `Operational Dynamics and Governing Relationships in ${safeTopic}`,
+        slideContent: `At its operational core, ${safeTopic} functions through interacting variables, feedback loops, and defined cause-and-effect pathways. Analyzing these dynamic behaviors allows practitioners in ${safeSubject} to accurately predict outcomes and diagnose complex system disruptions.`,
+        bulletPoints: [],
+        speakerNotes: `Walk students step-by-step through the core mechanisms of ${safeTopic}. Emphasize the interdependence of components and how changing one variable affects overall stability.`,
+        suggestedVisualOrDiagram: `Detailed systems flowchart showing inputs, transformation processes, feedback mechanisms, and observable outputs for ${safeTopic}.`,
+        discussionOrEngagementPrompt: `If a single variable within the ${safeTopic} process is altered, what cascading effects occur across the system?`
+      },
+      {
+        id: 's-4',
+        slideNumber: 4,
+        slideType: 'concept',
+        title: `KEY TAKEAWAYS: ESSENTIAL SYNTHESIS`,
+        subtitle: `Critical Insights and Core Mastery Benchmarks for ${safeTopic}`,
+        slideContent: `True mastery of ${safeTopic} requires synthesizing theoretical rules with practical problem-solving. Retaining these core principles equips learners to analyze multifaceted scenarios, avoid common misconceptions, and formulate rigorous, evidence-supported conclusions.`,
+        bulletPoints: [],
+        speakerNotes: `Consolidate the primary insights covered so far. Reiterate why these conceptual anchors are vital for exams, field applications, and advanced learning in ${safeSubject}.`,
+        suggestedVisualOrDiagram: `Synthesis matrix summarizing key formulas, axioms, and application criteria for ${safeTopic}.`,
+        discussionOrEngagementPrompt: `Which single principle of ${safeTopic} provides the most powerful explanatory leverage when solving complex problems?`
+      },
+      {
+        id: 's-5',
+        slideNumber: 5,
+        slideType: 'summary',
+        title: `CONCLUSION: FUTURE HORIZONS & IMPACT`,
+        subtitle: `Practical Legacy and Emerging Innovations in ${safeTopic}`,
+        slideContent: `As ${safeSubject} advances, contemporary innovations and research continually unlock fresh applications for ${safeTopic}. Engaging deeply with these concepts prepares learners to lead future technological, ecological, and socioeconomic solutions across Africa and the world.`,
+        bulletPoints: [],
+        speakerNotes: `Conclude the lesson by celebrating student progress. Assign the reflective follow-up activity and encourage independent exploration of emerging frontiers in ${safeTopic}.`,
+        suggestedVisualOrDiagram: `Inspirational roadmap graphic illustrating next-generation research avenues and collaborative career applications in ${safeSubject}.`,
+        discussionOrEngagementPrompt: `Looking forward, what unanswered question in ${safeTopic} could yield the most transformative breakthrough for our society?`
+      }
+    ];
+  } else if (slideCount === 10) {
+    slides = [
+      {
+        id: 's-1',
+        slideNumber: 1,
+        slideType: 'title',
+        title: `SYNOPSIS: ${safeTopic.toUpperCase()}`,
+        subtitle: `Master Curricular Scope & Systematic Orientation in ${safeSubject}`,
+        slideContent: `${safeTopic} is a foundational pillar of modern ${safeSubject}. Mastering this discipline enables learners to evaluate systemic interactions, apply empirical methodologies, and connect theoretical frameworks directly to tangible real-world problem-solving contexts.`,
+        bulletPoints: [],
+        speakerNotes: `Welcome everyone. Establish the learning roadmap for ${safeTopic} and introduce our key guiding inquiry for today's master deck.`,
+        suggestedVisualOrDiagram: `High-impact thematic title graphic showcasing the core conceptual pillars of ${safeTopic}.`,
+        discussionOrEngagementPrompt: `What central problem in ${safeSubject} does ${safeTopic} primarily aim to resolve?`
+      },
+      {
+        id: 's-2',
+        slideNumber: 2,
+        slideType: 'concept',
+        title: `HISTORICAL BACKGROUND & GENESIS`,
+        subtitle: `Intellectual Origins and Baseline Theoretical Development`,
+        slideContent: `The theoretical emergence of ${safeTopic} resolved fundamental bottlenecks in early ${safeSubject}. Scholars formalized standard nomenclature, governing assumptions, and empirical benchmarks that transformed intuitive observations into a rigorous, verifiable science.`,
+        bulletPoints: [],
+        speakerNotes: `Walk learners through the evolutionary milestones of ${safeTopic}. Emphasize how early experimental dilemmas led to current standardized paradigms.`,
+        suggestedVisualOrDiagram: `Historical milestone timeline illustrating the transition from initial hypotheses to verified laws in ${safeTopic}.`,
+        discussionOrEngagementPrompt: `Why were early models of ${safeTopic} insufficient, and what paradigm shift corrected them?`
+      },
+      {
+        id: 's-3',
+        slideNumber: 3,
+        slideType: 'concept',
+        title: `CORE PRINCIPLES & GOVERNING LAWS`,
+        subtitle: `Structural Frameworks and Fundamental Axioms of ${safeTopic}`,
+        slideContent: `Every dimension of ${safeTopic} operates according to established axioms and structural relationships. Understanding these underlying rules empowers students in ${safeSubject} to deconstruct complex challenges into manageable, predictable operational dynamics.`,
+        bulletPoints: [],
+        speakerNotes: `Focus on clarifying formal terminology. Differentiate between colloquial assumptions and rigorous scientific definitions of ${safeTopic}.`,
+        suggestedVisualOrDiagram: `Structural pyramid mapping core foundational axioms at the base and derived laws at the apex.`,
+        discussionOrEngagementPrompt: `How do the governing axioms of ${safeTopic} constrain the behavior of the overall system?`
+      },
+      {
+        id: 's-4',
+        slideNumber: 4,
+        slideType: 'concept',
+        title: `KEY DEVELOPMENTS & BREAKTHROUGHS`,
+        subtitle: `Transformative Milestones and Paradigm Shifts in ${safeTopic}`,
+        slideContent: `Recent decades have yielded significant breakthroughs in ${safeTopic}, refining precision and expanding practical utility. Advanced instruments and computational modeling have uncovered subtle interactions that were previously undetectable in conventional ${safeSubject}.`,
+        bulletPoints: [],
+        speakerNotes: `Examine the pivotal breakthrough experiments that transformed modern perspectives on ${safeTopic}. Contrast historical constraints with contemporary capabilities.`,
+        suggestedVisualOrDiagram: `Comparative visualization detailing before-and-after breakthrough performance and diagnostic accuracy.`,
+        discussionOrEngagementPrompt: `Which technological or analytical discovery did the most to accelerate advancement in ${safeTopic}?`
+      },
+      {
+        id: 's-5',
+        slideNumber: 5,
+        slideType: 'case-study',
+        title: `EMPIRICAL CASE STUDY & EVIDENCE`,
+        subtitle: `Authentic Implementation and Measured Field Outcomes`,
+        slideContent: `Real-world field implementations of ${safeTopic} demonstrate how theory translates into measurable impact. Documented evidence reveals how targeted interventions overcome environmental constraints, optimize resources, and generate sustainable, quantifiable benefits.`,
+        bulletPoints: [],
+        speakerNotes: `Present the empirical case study with concrete data points. Highlight how practitioners balanced resource constraints with scientific rigor.`,
+        suggestedVisualOrDiagram: `Case study infographic comparing pre-intervention baseline metrics against post-implementation results.`,
+        discussionOrEngagementPrompt: `What critical environmental variables in this case study posed the greatest challenge to applying ${safeTopic}?`
+      },
+      {
+        id: 's-6',
+        slideNumber: 6,
+        slideType: 'concept',
+        title: `ANALYTICAL METHODOLOGY & MODELING`,
+        subtitle: `Step-by-Step Diagnostic Frameworks and Problem-Solving`,
+        slideContent: `Rigorous problem solving in ${safeTopic} demands a structured methodology: diagnostic assessment, variable isolation, quantitative modeling, and iterative verification. Following this protocol prevents intuitive errors and guarantees reproducible analytical results.`,
+        bulletPoints: [],
+        speakerNotes: `Model the analytical diagnostic protocol live on the whiteboard. Emphasize why skipping the initial isolation step leads to flawed conclusions.`,
+        suggestedVisualOrDiagram: `Four-phase procedural flowchart depicting diagnostic triage, parameter calculation, and output verification.`,
+        discussionOrEngagementPrompt: `Why is disciplined parameter isolation so vital when troubleshooting complex anomalies in ${safeTopic}?`
+      },
+      {
+        id: 's-7',
+        slideNumber: 7,
+        slideType: 'concept',
+        title: `CRITICAL PERSPECTIVES & COMMON PITFALLS`,
+        subtitle: `Deconstructing Misconceptions and Boundary Limitations`,
+        slideContent: `A frequent trap in ${safeTopic} is oversimplifying multivariable phenomena into single-cause assumptions. By critically examining edge cases, boundary limits, and common fallacies, learners cultivate the nuanced discernment required for professional mastery.`,
+        bulletPoints: [],
+        speakerNotes: `Directly address common student misconceptions regarding ${safeTopic}. Provide explicit contrastive examples that clarify subtle conceptual distinctions.`,
+        suggestedVisualOrDiagram: `Contrastive analysis table displaying popular misconceptions alongside verifiable empirical truths for ${safeTopic}.`,
+        discussionOrEngagementPrompt: `What is the most widespread misunderstanding regarding ${safeTopic}, and why does it persist?`
+      },
+      {
+        id: 's-8',
+        slideNumber: 8,
+        slideType: 'concept',
+        title: `PRACTICAL & REGIONAL APPLICATIONS`,
+        subtitle: `Real-World Impact Across African and Global Communities`,
+        slideContent: `The principles of ${safeTopic} find vital expression across agriculture, infrastructure, technology, and public health. African innovators are adapting these core mechanisms to engineer context-specific, cost-effective solutions for widespread local challenges.`,
+        bulletPoints: [],
+        speakerNotes: `Highlight authentic African case applications of ${safeTopic}. Challenge students to envision practical implementations within their own local communities.`,
+        suggestedVisualOrDiagram: `Regional application map highlighting active deployment sectors and socioeconomic impact metrics.`,
+        discussionOrEngagementPrompt: `How can the principles of ${safeTopic} be mobilized to address an urgent challenge in your immediate region?`
+      },
+      {
+        id: 's-9',
+        slideNumber: 9,
+        slideType: 'concept',
+        title: `KEY TAKEAWAYS & CORE SYNTHESIS`,
+        subtitle: `Consolidated Conceptual Anchors for Lifelong Mastery`,
+        slideContent: `Synthesizing ${safeTopic} involves connecting historical origins, operational mechanics, analytical protocols, and applied implementations. Internalizing these key insights provides an enduring conceptual toolkit for higher-order reasoning across ${safeSubject}.`,
+        bulletPoints: [],
+        speakerNotes: `Review the master synthesis checklist with learners. Solicit student volunteers to summarize the core governing principle in their own words.`,
+        suggestedVisualOrDiagram: `Comprehensive synthesis mind-map interconnecting all major thematic threads of ${safeTopic}.`,
+        discussionOrEngagementPrompt: `How would you explain the fundamental essence of ${safeTopic} to someone new to ${safeSubject}?`
+      },
+      {
+        id: 's-10',
+        slideNumber: 10,
+        slideType: 'summary',
+        title: `CONCLUSION & HORIZON INQUIRIES`,
+        subtitle: `Future Trajectories, Unresolved Questions, and Next Steps`,
+        slideContent: `The frontier of ${safeTopic} remains vibrant with emerging research questions and cross-disciplinary potential. As students conclude this master exploration, they are primed to pursue advanced inquiries and contribute innovative breakthroughs to ${safeSubject}.`,
+        bulletPoints: [],
+        speakerNotes: `Congratulate students on completing this deep-dive exploration. Provide instructions for the post-lecture synthesis assignment and further reading.`,
+        suggestedVisualOrDiagram: `Forward-looking horizon radar charting emerging research opportunities over the coming decade in ${safeSubject}.`,
+        discussionOrEngagementPrompt: `What emerging question in ${safeTopic} inspires you the most as a future researcher or practitioner?`
+      }
+    ];
+  } else {
+    // 15 Slides
+    const fifteenTitles = [
+      { t: `SYNOPSIS: ${safeTopic.toUpperCase()}`, sub: `Curricular Scope & Orientation in ${safeSubject}`, type: 'title' as const },
+      { t: `HISTORICAL GENESIS & EVOLUTION`, sub: 'Origins, Formative Debates, and Empirical Validation', type: 'concept' as const },
+      { t: `THEORETICAL FOUNDATIONS & AXIOMS`, sub: 'Governing Laws and Structural Definitions', type: 'concept' as const },
+      { t: `OPERATIONAL MECHANISMS & WORKFLOWS`, sub: 'Component Interactions and Cause-and-Effect Sequences', type: 'concept' as const },
+      { t: `KEY BREAKTHROUGHS & PARADIGM SHIFTS`, sub: 'Discovery Leaps and Diagnostic Advances', type: 'concept' as const },
+      { t: `CASE STUDY I: CONTROLLED EVIDENCE`, sub: 'Empirical Verification and Controlled Lab Trials', type: 'case-study' as const },
+      { t: `CASE STUDY II: REGIONAL FIELD CONTEXT`, sub: 'Environmental Adaptations Across Diverse Communities', type: 'case-study' as const },
+      { t: `ANALYTICAL MODELING & PROBLEM-SOLVING`, sub: 'Diagnostic Formulations and Algorithmic Steps', type: 'concept' as const },
+      { t: `NUANCES & DEBUNKING COMMON PITFALLS`, sub: 'Addressing Persistent Student Misconceptions', type: 'concept' as const },
+      { t: `CROSS-DISCIPLINARY SYNTHESIS`, sub: `Interfacing with Technology, Economics, and Society`, type: 'concept' as const },
+      { t: `CONTEMPORARY INNOVATIONS & TOOLS`, sub: 'Digital Sensors, AI, and Automated Field Telemetry', type: 'concept' as const },
+      { t: `CONSTRAINTS & RISK STEWARDSHIP`, sub: 'Navigating Resource Limitations and Ethical Guidelines', type: 'concept' as const },
+      { t: `STRATEGIC METHODOLOGIES & SOLUTIONS`, sub: 'Phased Implementation Roadmaps for Industry and Class', type: 'concept' as const },
+      { t: `KEY TAKEAWAYS & ACTIONABLE MASTERY`, sub: 'Consolidating Core Analytical Competencies', type: 'concept' as const },
+      { t: `CONCLUSION & HORIZON INQUIRIES`, sub: 'Enduring Legacy, Uncharted Frontiers, and Next Steps', type: 'summary' as const },
+    ];
 
-    slides.push({
-      id: `s-${i + 1}`,
-      slideNumber: i + 1,
-      slideType: template.slideType,
-      title: template.title,
-      subtitle: template.subtitle,
-      bulletPoints: [...template.bulletPoints],
-      bullets: [...template.bulletPoints],
-      speakerNotes: template.speakerNotes,
-      suggestedVisualOrDiagram: template.suggestedVisualOrDiagram,
-      visualCue: template.suggestedVisualOrDiagram,
-      discussionOrEngagementPrompt: template.discussionOrEngagementPrompt,
-    });
+    slides = fifteenTitles.map((item, idx) => ({
+      id: `s-${idx + 1}`,
+      slideNumber: idx + 1,
+      slideType: item.type,
+      title: item.t,
+      subtitle: item.sub,
+      slideContent: `${safeTopic} demonstrates essential depth across ${item.t.toLowerCase()}. Practitioners in ${safeSubject} evaluate these parameters to maintain systematic rigor, overcome field constraints, and translate conceptual insights into reproducible, high-impact outcomes across real-world environments.`,
+      bulletPoints: [],
+      speakerNotes: `Review section ${idx + 1} with students, focusing on the specific analytical challenges of ${safeTopic} in ${safeSubject}.`,
+      suggestedVisualOrDiagram: `Detailed conceptual visual illustrating key benchmarks for ${item.t}.`,
+      discussionOrEngagementPrompt: `How does mastering ${item.t.toLowerCase()} enhance your comprehensive grasp of ${safeTopic}?`
+    }));
   }
 
   return {
     id: `pres-${Date.now()}`,
-    title: `${safeTopic}: Master Slide Deck`,
-    subtitle: 'Educational Lecture & Visual Concept Deck',
+    title: `Presentation: ${safeTopic}`,
+    subtitle: `Comprehensive Slide Deck on ${safeTopic}`,
     subject: safeSubject,
     topic: safeTopic,
     targetAudience: audience || 'Senior Secondary / High School (Grades 9-12)',

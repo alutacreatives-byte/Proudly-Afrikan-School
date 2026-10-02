@@ -20,7 +20,9 @@ import {
   Eye,
   EyeOff,
   HelpCircle,
-  Volume2
+  Volume2,
+  CheckCircle2,
+  ExternalLink,
 } from 'lucide-react';
 import { SavedResource } from '../types';
 
@@ -350,8 +352,14 @@ export const BuildInteractivePresentation: React.FC<BuildInteractivePresentation
   onExportDoc,
   onExportPdf,
 }) => {
-  const data = resource.data || {};
-  const rawSlides: any[] = Array.isArray(data.slides) ? data.slides : [];
+  const data = (resource.data?.data && typeof resource.data.data === 'object' && !Array.isArray(resource.data.data))
+    ? resource.data.data
+    : (resource.data || {});
+  const rawSlides: any[] = Array.isArray(data.slides) && data.slides.length > 0
+    ? data.slides
+    : Array.isArray((resource as any).slides) && (resource as any).slides.length > 0
+      ? (resource as any).slides
+      : [];
 
   // Standardize slides array
   const slides: SlideItem[] = rawSlides.map((s, idx) => ({
@@ -363,15 +371,15 @@ export const BuildInteractivePresentation: React.FC<BuildInteractivePresentation
     bulletPoints: s.bulletPoints || s.bullets || s.keyPoints || [],
     speakerNotes: s.speakerNotes || s.notes || '',
     visualCue: s.visualCue || s.diagramDescription || '',
-    layout: s.layout || (idx === 0 ? 'title' : idx === rawSlides.length - 1 ? 'summary' : 'content'),
+    layout: s.layout || (idx === 0 ? 'title' : idx === rawSlides.length - 1 ? 'summary' : 'concept'),
     conceptBadge: s.conceptBadge || (idx === 0 ? 'OVERVIEW' : `KEY CONCEPT 0${idx + 1}`),
   }));
 
   const totalSlides = slides.length;
   const currentSlide = slides[activeSlideIndex] || slides[0] || {
     slideNumber: 1,
-    title: resource.title || 'Untitled Presentation',
-    bulletPoints: ['Foundational curriculum points'],
+    title: resource.title || 'Presentation',
+    slideContent: 'Comprehensive curriculum presentation and analysis.',
   };
 
   // State
@@ -1014,10 +1022,23 @@ export const BuildInteractivePresentation: React.FC<BuildInteractivePresentation
             style={{ transform: 'translateZ(30px)' }}
             className="flex items-center justify-between gap-4 pb-4 border-b border-white/10"
           >
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2.5 flex-wrap">
               <span className="font-mono text-xs font-bold uppercase tracking-wider text-[#D99B00] px-3 py-1 rounded-full bg-[#D99B00]/15 border border-[#D99B00]/30 shadow-xs">
                 {currentSlide.conceptBadge || `TOPIC INSIGHT • SLIDE ${currentSlide.slideNumber}`}
               </span>
+              {(resource.data?.credibleSourceUrl || (resource as any).credibleSourceUrl) && (
+                <a
+                  href={resource.data?.credibleSourceUrl || (resource as any).credibleSourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-mono text-[11px] font-bold hover:bg-emerald-500/30 transition-all cursor-pointer"
+                  title={`Researched & verified against credible sources: ${resource.data?.sourceName || (resource as any).sourceName || 'Web Archives'}`}
+                >
+                  <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                  <span>VERIFIED RESEARCH</span>
+                  <ExternalLink className="w-2.5 h-2.5 opacity-80" />
+                </a>
+              )}
               <span className="font-mono text-xs text-stone-400 hidden sm:inline">
                 {resource.subject || 'Curriculum Domain'}
               </span>

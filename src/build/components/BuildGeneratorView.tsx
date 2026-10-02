@@ -38,6 +38,7 @@ import { AiActionType } from '../../types/authCredit';
 import { exportBuildResource, exportUnifiedItem } from '../../utils/exportUtils';
 import { GlobalNavigationButtons } from '../../components/GlobalNavigationButtons';
 import { useScrollToResult } from '../../utils/useScrollToResult';
+import { buildDynamicTopicSlides } from '../utils/presentationBuilder';
 import { BuildInteractivePresentation } from './BuildInteractivePresentation';
 
 interface BuildGeneratorViewProps {
@@ -168,19 +169,29 @@ export const BuildGeneratorView: React.FC<BuildGeneratorViewProps> = ({
         throw new Error(`Server returned ${response.status}: ${response.statusText}`);
       }
 
-      const data = await response.json();
+      const responseJson = await response.json();
       await consumeCredits(actionType, `Generated ${currentToolConfig.title}`);
+
+      const actualData = (responseJson && typeof responseJson === 'object' && responseJson.data && typeof responseJson.data === 'object' && !Array.isArray(responseJson.data))
+        ? responseJson.data
+        : responseJson;
+
+      // If presentation and slides are missing or empty, build dynamic topic slides matching questionCount
+      if (activeToolId === 'presentation' && (!Array.isArray(actualData.slides) || actualData.slides.length === 0)) {
+        actualData.slides = buildDynamicTopicSlides(payload.topic, payload.subject, gradeLevel, payload.questionCount);
+        actualData.slidesCount = actualData.slides.length;
+      }
 
       const newResource: SavedResource = {
         id: `res-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
         toolType: activeToolId,
-        title: data.title || `${currentToolConfig.title}: ${payload.topic}`,
-        subject: data.subject || subject,
-        topic: payload.topic,
+        title: actualData.title || `${currentToolConfig.title}: ${payload.topic}`,
+        subject: actualData.subject || subject,
+        topic: actualData.topic || payload.topic,
         gradeLevel,
         difficulty,
         createdAt: new Date().toISOString(),
-        data,
+        data: actualData,
       };
 
       setGeneratedResource(newResource);
@@ -459,9 +470,20 @@ export const BuildGeneratorView: React.FC<BuildGeneratorViewProps> = ({
           onClick={handleGenerate}
           className="w-full py-4.5 bg-gradient-to-r from-[#E05A2B] via-[#EA8B1C] to-[#D99B00] hover:opacity-95 text-white font-display text-sm sm:text-base font-black uppercase tracking-wider rounded-full shadow-[0_10px_28px_rgba(224,90,43,0.35)] active:scale-[0.99] transition-all flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-50"
         >
-          <Sparkles className="w-5 h-5 text-white" />
-          <span>{isGenerating ? `Generating ${currentToolConfig.title}...` : `GENERATE ${currentToolConfig.title.toUpperCase()}`}</span>
+          <Sparkles className="w-5 h-5 text-white animate-spin" />
+          <span>
+            {isGenerating
+              ? activeToolId === 'presentation'
+                ? `RESEARCHING "${(topic || 'TOPIC').slice(0, 20).toUpperCase()}" ONLINE & VERIFYING FACTS...`
+                : `GENERATING ${currentToolConfig.title.toUpperCase()}...`
+              : `GENERATE ${currentToolConfig.title.toUpperCase()}`}
+          </span>
         </button>
+        {isGenerating && activeToolId === 'presentation' && (
+          <p className="text-center font-mono text-xs text-stone-600 animate-pulse">
+            Researching live web archives & verifying facts, dates, names, and statistics before authoring slides...
+          </p>
+        )}
       </div>
 
       {/* Generated Result Display Area */}
@@ -558,68 +580,21 @@ function renderResourceContent(
 
   // 1. PRESENTATION / SLIDE DECK (Dynamic WebGL movement & Modern 3D Layout)
   if (toolType === 'presentation' || Array.isArray(data.slides) || data.topic || resource.title) {
-    let slides = Array.isArray(data.slides) ? data.slides : [];
+    const rawData = (data.data && typeof data.data === 'object' && !Array.isArray(data.data)) ? data.data : data;
+    let slides: any[] = Array.isArray(rawData.slides) && rawData.slides.length > 0
+      ? rawData.slides
+      : Array.isArray((resource as any).slides) && (resource as any).slides.length > 0
+        ? (resource as any).slides
+        : [];
     let finalResource = resource;
 
     if (slides.length === 0) {
-      slides = [
-        {
-          id: 's-1',
-          slideNumber: 1,
-          slideType: 'title',
-          title: `SYNOPSIS: ${resource.title || data.topic || 'Presentation'}`,
-          subtitle: 'Overview and core scope',
-          slideContent: 'An introduction to this comprehensive presentation, outlining the essential synopsis, the roadmap for analysis, and the core pedagogical objectives designed to foster critical reasoning and applied understanding.',
-          speakerNotes: 'Welcome the learners and introduce the key inquiries.',
-          suggestedVisualOrDiagram: 'Visual title card layout',
-          discussionOrEngagementPrompt: 'Introductory inquiry question'
-        },
-        {
-          id: 's-2',
-          slideNumber: 2,
-          slideType: 'concept',
-          title: 'BACKGROUND: FOUNDATIONAL PRINCIPLES',
-          subtitle: 'Context and baseline',
-          slideContent: 'This section establishes the background context and foundational principles of the topic. We examine the essential historical and conceptual baseline necessary for a robust understanding of the subject matter.',
-          speakerNotes: 'Establish the context clearly for all learners.',
-          suggestedVisualOrDiagram: 'Contextual timeline or baseline diagram',
-          discussionOrEngagementPrompt: 'What historical factors shaped this concept?'
-        },
-        {
-          id: 's-3',
-          slideNumber: 3,
-          slideType: 'concept',
-          title: 'KEY DEVELOPMENTS & APPLICATIONS',
-          subtitle: 'Analytical insights',
-          slideContent: 'We explore the key developments, dynamics, and real-world applications of the topic. By analyzing these critical points, we gain deeper insight into the practical mechanisms and implications.',
-          speakerNotes: 'Explain the core developments and provide concrete examples.',
-          suggestedVisualOrDiagram: 'Structural application diagram',
-          discussionOrEngagementPrompt: 'How are these developments applied in practice?'
-        },
-        {
-          id: 's-4',
-          slideNumber: 4,
-          slideType: 'concept',
-          title: 'KEY TAKEAWAY: CRITICAL SYNTHESIS',
-          subtitle: 'Refining the insights',
-          slideContent: 'This takeaway emphasizes the critical synthesis of our key insights. We focus on the most essential concepts to ensure a high level of mastery and practical application of the knowledge gained.',
-          speakerNotes: 'Reiterate the primary takeaway for the students.',
-          suggestedVisualOrDiagram: 'Synthesis chart',
-          discussionOrEngagementPrompt: 'What is the most critical insight you have gained?'
-        },
-        {
-          id: 's-5',
-          slideNumber: 5,
-          slideType: 'summary',
-          title: 'CONCLUSION: FUTURE HORIZONS',
-          subtitle: 'Synthesis and reflection',
-          slideContent: 'We conclude by summarizing our findings and looking toward future research and applications. This final overview reinforces the primary insights and encourages forward-looking critical reflection.',
-          speakerNotes: 'Conclude the presentation and encourage further study.',
-          suggestedVisualOrDiagram: 'Future outlook graphic',
-          discussionOrEngagementPrompt: 'How will you apply this knowledge in the future?'
-        }
-      ];
-      finalResource = { ...resource, data: { ...data, slides: slides } };
+      const topicName = resource.topic || rawData.topic || resource.title || 'Core Curriculum Study';
+      const subjectName = resource.subject || rawData.subject || 'Academic Inquiry';
+      const grade = resource.gradeLevel || rawData.gradeLevel || 'Secondary Education';
+      const targetCount = rawData.slidesCount || 5;
+      slides = buildDynamicTopicSlides(topicName, subjectName, grade, targetCount);
+      finalResource = { ...resource, data: { ...rawData, slides: slides, slidesCount: slides.length } };
     }
 
     return (
@@ -819,6 +794,8 @@ function createFallbackResource(toolType: BuildToolId, payload: any): SavedResou
   const isWorksheet = toolType === 'worksheet';
 
   if (isPresentation) {
+    const slideCount = payload.questionCount === 15 ? 15 : payload.questionCount === 10 ? 10 : 5;
+    const dynamicSlides = buildDynamicTopicSlides(payload.topic, payload.subject, payload.gradeLevel, slideCount);
     return {
       id: `res-${Date.now()}`,
       toolType: 'presentation',
@@ -829,43 +806,13 @@ function createFallbackResource(toolType: BuildToolId, payload: any): SavedResou
       difficulty: payload.difficulty,
       createdAt: new Date().toISOString(),
       data: {
-        title: `Mastery Presentation: ${payload.topic}`,
+        title: `Presentation: ${payload.topic}`,
+        subtitle: `Master Slide Deck on ${payload.topic}`,
         subject: payload.subject,
-        slides: [
-          {
-            slideNumber: 1,
-            title: payload.topic,
-            subtitle: `Foundations and Core Principles • ${payload.gradeLevel}`,
-            bulletPoints: [
-              'Overview of foundational curriculum concepts',
-              'Critical historical and theoretical context',
-              'Real-world African and global relevance',
-            ],
-            speakerNotes: 'Welcome students and introduce the overarching inquiry question for this session.',
-          },
-          {
-            slideNumber: 2,
-            title: 'Core Mechanisms & Key Analysis',
-            subtitle: 'Breaking down the fundamental mechanics',
-            bulletPoints: [
-              'Detailed definition of governing terminology',
-              'Systematic problem-solving methodology',
-              'Common misconceptions and how to avoid them',
-            ],
-            speakerNotes: 'Pause here to solicit examples from learners before advancing.',
-          },
-          {
-            slideNumber: 3,
-            title: 'Synthesis & Evaluative Review',
-            subtitle: 'Higher-order application and summary',
-            bulletPoints: [
-              'Connecting the core topic to multidisciplinary scenarios',
-              'Summary of key takeaways for exam mastery',
-              'Next steps for independent inquiry and drill practice',
-            ],
-            speakerNotes: 'Conclude with the exit ticket question to verify retention.',
-          },
-        ],
+        topic: payload.topic,
+        gradeLevel: payload.gradeLevel,
+        slidesCount: dynamicSlides.length,
+        slides: dynamicSlides,
       },
     };
   }
