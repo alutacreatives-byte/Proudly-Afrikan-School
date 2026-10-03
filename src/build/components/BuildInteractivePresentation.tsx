@@ -428,9 +428,9 @@ function useWebGLShaderCanvas(
       if (uDistStrengthLoc) gl.uniform1f(uDistStrengthLoc, (isTransitioningRef.current ? 1.6 : 0.8) * distortionLevelRef.current);
       if (uSlideSeedLoc) gl.uniform1f(uSlideSeedLoc, currentSlideIndexRef.current * 1.37);
 
-      // Alternating BUILD orange-to-mustard-yellow color treatments
-      const prevPalette = BUILD_PALETTES[prevSlideIndexRef.current % BUILD_PALETTES.length];
-      const curPalette = BUILD_PALETTES[currentSlideIndexRef.current % BUILD_PALETTES.length];
+      // Apply the same fluid background effect across every slide
+      const prevPalette = BUILD_PALETTES[0];
+      const curPalette = BUILD_PALETTES[0];
 
       if (uColorALoc) gl.uniform3fv(uColorALoc, curPalette.primary);
       if (uColorBLoc) gl.uniform3fv(uColorBLoc, curPalette.secondary);
@@ -1123,18 +1123,19 @@ export const BuildInteractivePresentation: React.FC<BuildInteractivePresentation
         onTouchEnd={handleTouchEnd}
         onWheel={handleWheel}
         style={{ perspective: '1200px' }}
-        className={`relative w-full rounded-[2.5rem] bg-[#0E0E12] overflow-hidden flex items-center justify-center transition-all ${
+        className={`relative w-full rounded-[2.5rem] overflow-hidden flex items-center justify-center transition-all ${
           isFullscreen ? 'h-full rounded-none' : 'min-h-[520px] sm:min-h-[580px] lg:min-h-[640px]'
         }`}
       >
-        {/* Dynamic WebGL Shader Canvas in Background (Grisum gOEQVMO fluid displacement) */}
-        <canvas
-          ref={shaderCanvasRef}
-          className="absolute inset-0 w-full h-full pointer-events-none opacity-95 z-0"
-        />
+        {/* Animated Fluid Gradient Background matching CodePen wvzMexO on every slide */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none z-0 bg-gradient-to-br from-indigo-950 via-slate-950 to-neutral-950">
+          <div className="absolute -top-48 -left-48 w-[40rem] h-[40rem] bg-gradient-to-br from-[#E05A2B] via-[#FF8A00] to-[#D92B8A] rounded-full filter blur-[110px] opacity-80 animate-fluid-blob-1" />
+          <div className="absolute top-1/3 -right-40 w-[42rem] h-[42rem] bg-gradient-to-tr from-[#8A2387] via-[#E94057] to-[#F27121] rounded-full filter blur-[120px] opacity-75 animate-fluid-blob-2" />
+          <div className="absolute -bottom-48 left-1/4 w-[38rem] h-[38rem] bg-gradient-to-r from-[#1A2980] via-[#26D0CE] to-[#E05A2B] rounded-full filter blur-[130px] opacity-80 animate-fluid-blob-3" />
+        </div>
 
-        {/* Ambient Topographical Overlay Grid & Subtle Contrast Mask */}
-        <div className="absolute inset-0 bg-radial from-transparent via-black/20 to-black/55 pointer-events-none z-1" />
+        {/* Subtle glass/contrast readability overlay */}
+        <div className="absolute inset-0 bg-black/25 backdrop-blur-[1px] pointer-events-none z-1" />
 
         {/* Active Center Slide (Layered 3D Tilt Card with Parallax Depth) */}
         <div
