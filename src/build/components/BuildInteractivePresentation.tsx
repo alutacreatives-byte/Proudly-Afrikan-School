@@ -1127,11 +1127,23 @@ export const BuildInteractivePresentation: React.FC<BuildInteractivePresentation
           isFullscreen ? 'h-full rounded-none' : 'min-h-[520px] sm:min-h-[580px] lg:min-h-[640px]'
         }`}
       >
-        {/* Dynamic WebGL Shader Canvas in Background (Grisum gOEQVMO fluid displacement) */}
-        <canvas
-          ref={shaderCanvasRef}
-          className="absolute inset-0 w-full h-full pointer-events-none opacity-95 z-0"
-        />
+        {/* Animated Gradient Background inspired by CodePen wvzMexO with multiple radial gradients in violet, orange, green, and blue */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none z-0 bg-[#0B0B10]">
+          {/* Violet Radial Gradient Blob */}
+          <div className="absolute -top-[25%] -left-[25%] w-[75%] h-[75%] rounded-full bg-[radial-gradient(circle,rgba(139,92,246,0.5)_0%,rgba(124,58,237,0.2)_50%,transparent_80%)] blur-[100px] animate-[float-blob-1_10s_ease-in-out_infinite]" />
+          
+          {/* Orange Radial Gradient Blob */}
+          <div className="absolute top-[15%] -right-[25%] w-[70%] h-[70%] rounded-full bg-[radial-gradient(circle,rgba(249,115,22,0.5)_0%,rgba(234,88,12,0.2)_50%,transparent_80%)] blur-[110px] animate-[float-blob-2_12s_ease-in-out_infinite_1s]" />
+          
+          {/* Green Radial Gradient Blob */}
+          <div className="absolute -bottom-[25%] left-[15%] w-[75%] h-[75%] rounded-full bg-[radial-gradient(circle,rgba(16,185,129,0.45)_0%,rgba(5,150,105,0.18)_50%,transparent_80%)] blur-[120px] animate-[float-blob-3_11s_ease-in-out_infinite_2s]" />
+          
+          {/* Blue Radial Gradient Blob */}
+          <div className="absolute top-[30%] left-[20%] w-[65%] h-[65%] rounded-full bg-[radial-gradient(circle,rgba(59,130,246,0.5)_0%,rgba(37,99,235,0.2)_50%,transparent_80%)] blur-[105px] animate-[float-blob-4_13s_ease-in-out_infinite_1.5s]" />
+
+          {/* Depth vignette overlay to ensure text contrast */}
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,rgba(11,11,16,0.78)_100%)]" />
+        </div>
 
         {/* Ambient Topographical Overlay Grid & Subtle Contrast Mask */}
         <div className="absolute inset-0 bg-radial from-transparent via-black/20 to-black/55 pointer-events-none z-1" />
