@@ -1127,17 +1127,10 @@ export const BuildInteractivePresentation: React.FC<BuildInteractivePresentation
           isFullscreen ? 'h-full rounded-none' : 'min-h-[520px] sm:min-h-[580px] lg:min-h-[640px]'
         }`}
       >
-        {/* Animated Fluid Gradient Background matching CodePen wvzMexO */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none z-0 opacity-85">
-          <div className="absolute -top-40 -left-40 w-96 h-96 bg-gradient-to-br from-[#E05A2B] via-[#FF8A00] to-[#D92B8A] rounded-full filter blur-[80px] animate-fluid-blob-1" />
-          <div className="absolute top-1/2 -right-32 w-[30rem] h-[30rem] bg-gradient-to-tr from-[#8A2387] via-[#E94057] to-[#F27121] rounded-full filter blur-[90px] animate-fluid-blob-2" />
-          <div className="absolute -bottom-32 left-1/3 w-[28rem] h-[28rem] bg-gradient-to-r from-[#1A2980] via-[#26D0CE] to-[#E05A2B] rounded-full filter blur-[100px] animate-fluid-blob-3" />
-        </div>
-
         {/* Dynamic WebGL Shader Canvas in Background (Grisum gOEQVMO fluid displacement) */}
         <canvas
           ref={shaderCanvasRef}
-          className="absolute inset-0 w-full h-full pointer-events-none opacity-90 z-0"
+          className="absolute inset-0 w-full h-full pointer-events-none opacity-95 z-0"
         />
 
         {/* Ambient Topographical Overlay Grid & Subtle Contrast Mask */}
