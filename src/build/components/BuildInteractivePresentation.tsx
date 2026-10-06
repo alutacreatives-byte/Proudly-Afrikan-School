@@ -1127,22 +1127,22 @@ export const BuildInteractivePresentation: React.FC<BuildInteractivePresentation
           isFullscreen ? 'h-full rounded-none' : 'min-h-[520px] sm:min-h-[580px] lg:min-h-[640px]'
         }`}
       >
-        {/* Animated Gradient Background inspired by CodePen wvzMexO with multiple radial gradients in violet, orange, green, and blue */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none z-0 bg-[#0B0B10]">
-          {/* Violet Radial Gradient Blob */}
-          <div className="absolute -top-[25%] -left-[25%] w-[75%] h-[75%] rounded-full bg-[radial-gradient(circle,rgba(139,92,246,0.5)_0%,rgba(124,58,237,0.2)_50%,transparent_80%)] blur-[100px] animate-[float-blob-1_10s_ease-in-out_infinite]" />
+        {/* Animated multi-colour gradient background inspired by CodePen wvzMexO with continuous 20s animation applied to every slide */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none z-0 presentation-bg-animated bg-[#0A0A12]">
+          {/* Violet Blob */}
+          <div className="absolute -top-[30%] -left-[20%] w-[70vw] h-[70vw] rounded-full bg-gradient-to-tr from-violet-600/60 via-purple-500/50 to-fuchsia-500/40 blur-[120px] animate-[meshFloat1_20s_ease-in-out_infinite]" />
           
-          {/* Orange Radial Gradient Blob */}
-          <div className="absolute top-[15%] -right-[25%] w-[70%] h-[70%] rounded-full bg-[radial-gradient(circle,rgba(249,115,22,0.5)_0%,rgba(234,88,12,0.2)_50%,transparent_80%)] blur-[110px] animate-[float-blob-2_12s_ease-in-out_infinite_1s]" />
+          {/* Blue Blob */}
+          <div className="absolute top-[10%] -right-[20%] w-[65vw] h-[65vw] rounded-full bg-gradient-to-bl from-blue-600/60 via-indigo-600/50 to-cyan-400/40 blur-[130px] animate-[meshFloat2_22s_ease-in-out_infinite_1s]" />
           
-          {/* Green Radial Gradient Blob */}
-          <div className="absolute -bottom-[25%] left-[15%] w-[75%] h-[75%] rounded-full bg-[radial-gradient(circle,rgba(16,185,129,0.45)_0%,rgba(5,150,105,0.18)_50%,transparent_80%)] blur-[120px] animate-[float-blob-3_11s_ease-in-out_infinite_2s]" />
+          {/* Orange Blob */}
+          <div className="absolute -bottom-[30%] left-[10%] w-[75vw] h-[75vw] rounded-full bg-gradient-to-tr from-orange-500/60 via-amber-500/50 to-rose-500/40 blur-[140px] animate-[meshFloat3_18s_ease-in-out_infinite_2s]" />
           
-          {/* Blue Radial Gradient Blob */}
-          <div className="absolute top-[30%] left-[20%] w-[65%] h-[65%] rounded-full bg-[radial-gradient(circle,rgba(59,130,246,0.5)_0%,rgba(37,99,235,0.2)_50%,transparent_80%)] blur-[105px] animate-[float-blob-4_13s_ease-in-out_infinite_1.5s]" />
+          {/* Green Blob */}
+          <div className="absolute top-[30%] left-[25%] w-[60vw] h-[60vw] rounded-full bg-gradient-to-br from-emerald-500/50 via-teal-500/40 to-green-600/40 blur-[125px] animate-[meshFloat4_24s_ease-in-out_infinite_1.5s]" />
 
-          {/* Depth vignette overlay to ensure text contrast */}
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,rgba(11,11,16,0.78)_100%)]" />
+          {/* Vignette overlay */}
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_20%,rgba(10,10,18,0.8)_100%)]" />
         </div>
 
         {/* Ambient Topographical Overlay Grid & Subtle Contrast Mask */}
@@ -1199,9 +1199,9 @@ export const BuildInteractivePresentation: React.FC<BuildInteractivePresentation
             style={{ transform: 'translateZ(50px)' }}
             className="my-auto py-6 sm:py-8 space-y-6"
           >
-            {/* Slide Title with Brand Accent */}
+            {/* Slide Title with Brand Accent (slightly reduced headline size) */}
             <div className="space-y-3">
-              <h2 className="font-display font-black text-3xl sm:text-5xl lg:text-6xl uppercase tracking-tight text-white leading-[1.05] drop-shadow-md">
+              <h2 className="font-display font-black text-2xl sm:text-4xl lg:text-5xl uppercase tracking-tight text-white leading-[1.05] drop-shadow-md">
                 {currentSlide.title}
               </h2>
               {currentSlide.subtitle && (
@@ -1228,19 +1228,6 @@ export const BuildInteractivePresentation: React.FC<BuildInteractivePresentation
                     {point}
                   </p>
                 ))}
-              </div>
-            )}
-
-            {/* Visual Cue or Suggested Diagram */}
-            {currentSlide.visualCue && (
-              <div
-                style={{ transform: 'translateZ(25px)' }}
-                className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-200/90 font-mono text-xs flex items-center gap-2.5 backdrop-blur-sm"
-              >
-                <Sparkles className="w-4 h-4 text-[#D99B00] shrink-0" />
-                <span className="truncate">
-                  Suggested Pedagogical Visual: {currentSlide.visualCue}
-                </span>
               </div>
             )}
           </div>
