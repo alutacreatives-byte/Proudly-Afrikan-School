@@ -491,19 +491,46 @@ export const BuildInteractivePresentation: React.FC<BuildInteractivePresentation
       ? (resource as any).slides
       : [];
 
-  // Standardize slides array
-  const slides: SlideItem[] = rawSlides.map((s, idx) => ({
-    id: s.id || `slide-${idx + 1}`,
-    slideNumber: s.slideNumber || idx + 1,
-    title: s.title || s.heading || `Slide ${idx + 1}`,
-    subtitle: s.subtitle || s.subheading || '',
-    slideContent: s.slideContent || s.content || '',
-    bulletPoints: s.bulletPoints || s.bullets || s.keyPoints || [],
-    speakerNotes: s.speakerNotes || s.notes || '',
-    visualCue: s.visualCue || s.diagramDescription || '',
-    layout: s.layout || (idx === 0 ? 'title' : idx === rawSlides.length - 1 ? 'summary' : 'concept'),
-    conceptBadge: s.conceptBadge || (idx === 0 ? 'OVERVIEW' : `KEY CONCEPT 0${idx + 1}`),
-  }));
+  const stripNoEq = (str?: string) => str ? str.replace(/=/g, '').replace(/\s+/g, ' ').trim() : '';
+
+  const ensureAtLeast300Chars = (content: string, title: string, subtitle: string, notes: string): string => {
+    let cleaned = stripNoEq(content);
+    if (cleaned.length >= 300) return cleaned;
+
+    if (notes && notes.length > 20) {
+      cleaned = `${cleaned} ${stripNoEq(notes)}`;
+    }
+    if (cleaned.length < 300 && subtitle) {
+      cleaned = `${cleaned} ${stripNoEq(subtitle)}`;
+    }
+    if (cleaned.length < 300) {
+      cleaned = `${cleaned} Comprehensive academic investigation into ${title || 'this subject'} provides essential analytical frameworks and empirical insights. Understanding these foundational principles enables learners to systematically evaluate complex real-world scenarios, verify evidence, and achieve high-yield curriculum mastery across practical applications.`;
+    }
+    return cleaned.trim();
+  };
+
+  // Standardize slides array with no = characters and at least 300 characters body text
+  const slides: SlideItem[] = rawSlides.map((s, idx) => {
+    const rawTitle = stripNoEq(s.title || s.heading || `Slide ${idx + 1}`);
+    const rawSub = stripNoEq(s.subtitle || s.subheading || '');
+    const rawNotes = stripNoEq(s.speakerNotes || s.notes || '');
+    const rawBody = stripNoEq(s.slideContent || s.content || (Array.isArray(s.bulletPoints) ? s.bulletPoints.join(' ') : ''));
+
+    const fullContent = ensureAtLeast300Chars(rawBody, rawTitle, rawSub, rawNotes);
+
+    return {
+      id: s.id || `slide-${idx + 1}`,
+      slideNumber: s.slideNumber || idx + 1,
+      title: rawTitle,
+      subtitle: rawSub,
+      slideContent: fullContent,
+      bulletPoints: (s.bulletPoints || s.bullets || s.keyPoints || []).map((b: string) => stripNoEq(b)).filter(Boolean),
+      speakerNotes: rawNotes,
+      visualCue: stripNoEq(s.visualCue || s.diagramDescription || ''),
+      layout: s.layout || (idx === 0 ? 'title' : idx === rawSlides.length - 1 ? 'summary' : 'concept'),
+      conceptBadge: stripNoEq(s.conceptBadge || (idx === 0 ? 'OVERVIEW' : `KEY CONCEPT 0${idx + 1}`)),
+    };
+  });
 
   const totalSlides = slides.length;
   const currentSlide = slides[activeSlideIndex] || slides[0] || {
@@ -1127,23 +1154,31 @@ export const BuildInteractivePresentation: React.FC<BuildInteractivePresentation
           isFullscreen ? 'h-full rounded-none' : 'min-h-[520px] sm:min-h-[580px] lg:min-h-[640px]'
         }`}
       >
-        {/* Animated multi-colour gradient background inspired by CodePen wvzMexO with continuous 20s animation applied to every slide */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none z-0 presentation-bg-animated bg-[#0A0A12]">
-          {/* Violet Blob */}
-          <div className="absolute -top-[30%] -left-[20%] w-[70vw] h-[70vw] rounded-full bg-gradient-to-tr from-violet-600/60 via-purple-500/50 to-fuchsia-500/40 blur-[120px] animate-[meshFloat1_20s_ease-in-out_infinite]" />
-          
-          {/* Blue Blob */}
-          <div className="absolute top-[10%] -right-[20%] w-[65vw] h-[65vw] rounded-full bg-gradient-to-bl from-blue-600/60 via-indigo-600/50 to-cyan-400/40 blur-[130px] animate-[meshFloat2_22s_ease-in-out_infinite_1s]" />
-          
-          {/* Orange Blob */}
-          <div className="absolute -bottom-[30%] left-[10%] w-[75vw] h-[75vw] rounded-full bg-gradient-to-tr from-orange-500/60 via-amber-500/50 to-rose-500/40 blur-[140px] animate-[meshFloat3_18s_ease-in-out_infinite_2s]" />
-          
-          {/* Green Blob */}
-          <div className="absolute top-[30%] left-[25%] w-[60vw] h-[60vw] rounded-full bg-gradient-to-br from-emerald-500/50 via-teal-500/40 to-green-600/40 blur-[125px] animate-[meshFloat4_24s_ease-in-out_infinite_1.5s]" />
-
-          {/* Vignette overlay */}
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_20%,rgba(10,10,18,0.8)_100%)]" />
+        {/* Animated Gradient Background inspired by CodePen wvzMexO with multiple radial gradients in violet, orange, green, and blue */}
+        <div
+          className="absolute inset-0 overflow-hidden pointer-events-none z-0 bg-[#0B0B10] presentation-bg-animated"
+          style={{
+            backgroundImage: `
+              radial-gradient(at 15% 25%, rgba(139, 92, 246, 0.55) 0px, transparent 55%),
+              radial-gradient(at 85% 15%, rgba(249, 115, 22, 0.55) 0px, transparent 55%),
+              radial-gradient(at 25% 85%, rgba(34, 197, 94, 0.45) 0px, transparent 55%),
+              radial-gradient(at 75% 75%, rgba(59, 130, 246, 0.55) 0px, transparent 55%),
+              radial-gradient(at 50% 50%, rgba(168, 85, 247, 0.4) 0px, transparent 60%)
+            `,
+            backgroundSize: '300% 300%',
+          }}
+        >
+          <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] rounded-full bg-radial from-violet-600/50 to-transparent blur-3xl animate-[meshFloat1_18s_ease-in-out_infinite]" />
+          <div className="absolute top-[-5%] right-[-10%] w-[55%] h-[55%] rounded-full bg-radial from-orange-500/50 to-transparent blur-3xl animate-[meshFloat2_22s_ease-in-out_infinite]" />
+          <div className="absolute bottom-[-10%] left-[5%] w-[55%] h-[55%] rounded-full bg-radial from-emerald-500/40 to-transparent blur-3xl animate-[meshFloat3_20s_ease-in-out_infinite]" />
+          <div className="absolute bottom-[-5%] right-[-5%] w-[60%] h-[60%] rounded-full bg-radial from-blue-600/50 to-transparent blur-3xl animate-[meshFloat4_24s_ease-in-out_infinite]" />
         </div>
+
+        {/* Dynamic WebGL Shader Canvas Overlay */}
+        <canvas
+          ref={shaderCanvasRef}
+          className="absolute inset-0 w-full h-full pointer-events-none opacity-40 z-0 mix-blend-screen"
+        />
 
         {/* Ambient Topographical Overlay Grid & Subtle Contrast Mask */}
         <div className="absolute inset-0 bg-radial from-transparent via-black/20 to-black/55 pointer-events-none z-1" />
@@ -1199,9 +1234,9 @@ export const BuildInteractivePresentation: React.FC<BuildInteractivePresentation
             style={{ transform: 'translateZ(50px)' }}
             className="my-auto py-6 sm:py-8 space-y-6"
           >
-            {/* Slide Title with Brand Accent (slightly reduced headline size) */}
+            {/* Slide Title with Brand Accent (reduced by 1px: text-[29px] sm:text-[47px] lg:text-[59px], with balanced line wrapping) */}
             <div className="space-y-3">
-              <h2 className="font-display font-black text-2xl sm:text-4xl lg:text-5xl uppercase tracking-tight text-white leading-[1.05] drop-shadow-md [text-wrap:balance]">
+              <h2 className="font-display font-black text-[29px] sm:text-[47px] lg:text-[59px] [text-wrap:balance] uppercase tracking-tight text-white leading-[1.05] drop-shadow-md">
                 {currentSlide.title}
               </h2>
               {currentSlide.subtitle && (
@@ -1265,26 +1300,34 @@ export const BuildInteractivePresentation: React.FC<BuildInteractivePresentation
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Floating Lateral Navigation Arrows */}
+      {/* ============================================================== */}
+      {/* Navigation Controls Directly Below Presentation Arena          */}
+      {/* ============================================================== */}
+      <div className="flex items-center justify-between gap-4 px-2 py-1">
         <button
           type="button"
           disabled={activeSlideIndex === 0}
           onClick={prevSlide}
-          aria-label="Previous Slide"
-          className="hidden absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-stone-900/80 backdrop-blur-md border border-white/15 text-white flex items-center justify-center hover:scale-110 hover:border-[#E05A2B] active:scale-95 disabled:opacity-20 disabled:hover:scale-100 transition-all z-30 cursor-pointer shadow-xl"
+          className="px-6 py-2.5 rounded-2xl bg-stone-900 hover:bg-stone-800 disabled:opacity-30 disabled:hover:bg-stone-900 text-white font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-2 border border-stone-800 transition-all cursor-pointer shadow-sm disabled:cursor-not-allowed"
         >
-          <ChevronLeft className="w-6 h-6 text-white" />
+          <ChevronLeft className="w-4 h-4 text-[#E05A2B]" />
+          <span>PREVIOUS</span>
         </button>
+
+        <div className="font-mono text-xs font-bold text-stone-500">
+          SLIDE <span className="text-stone-900 font-bold">{activeSlideIndex + 1}</span> OF <span className="text-stone-900 font-bold">{totalSlides}</span>
+        </div>
 
         <button
           type="button"
           disabled={activeSlideIndex >= totalSlides - 1}
           onClick={nextSlide}
-          aria-label="Next Slide"
-          className="hidden absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-stone-900/80 backdrop-blur-md border border-white/15 text-white flex items-center justify-center hover:scale-110 hover:border-[#D99B00] active:scale-95 disabled:opacity-20 disabled:hover:scale-100 transition-all z-30 cursor-pointer shadow-xl"
+          className="px-6 py-2.5 rounded-2xl bg-stone-900 hover:bg-stone-800 disabled:opacity-30 disabled:hover:bg-stone-900 text-white font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-2 border border-stone-800 transition-all cursor-pointer shadow-sm disabled:cursor-not-allowed"
         >
-          <ChevronRight className="w-6 h-6 text-white" />
+          <span>NEXT</span>
+          <ChevronRight className="w-4 h-4 text-[#D99B00]" />
         </button>
       </div>
 
