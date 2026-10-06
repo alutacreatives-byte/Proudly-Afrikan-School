@@ -1201,7 +1201,7 @@ export const BuildInteractivePresentation: React.FC<BuildInteractivePresentation
           >
             {/* Slide Title with Brand Accent (slightly reduced headline size) */}
             <div className="space-y-3">
-              <h2 className="font-display font-black text-2xl sm:text-4xl lg:text-5xl uppercase tracking-tight text-white leading-[1.05] drop-shadow-md">
+              <h2 className="font-display font-black text-2xl sm:text-4xl lg:text-5xl uppercase tracking-tight text-white leading-[1.05] drop-shadow-md [text-wrap:balance]">
                 {currentSlide.title}
               </h2>
               {currentSlide.subtitle && (
